@@ -31,7 +31,7 @@ while True:
     ...
 
 """
-from typing import Callable, Literal, List, Optional
+from typing import Callable, Literal, List, Optional, Union
 import threading, time, logging
 
 logger = logging.getLogger(__name__)
@@ -183,7 +183,7 @@ class HTTP(_SpotHTTP):
         :return: A dictionary containing the retrieved trades.
         :rtype: dict
         """
-        return self.call("GET", "/api/v3/trades", 
+        return self.call("GET", "/api/v3/aggTrades", 
                             params = dict(
                                     symbol    = symbol,
                                     startTime = start_time,
@@ -341,7 +341,7 @@ class HTTP(_SpotHTTP):
                             ))
 
 
-    def query_sub_account_list(self, 
+    def sub_account_list(self, 
                                sub_account: Optional[str] = None, 
                                is_freeze: Optional[bool]  = None, 
                                page: Optional[int]        = 1, 
@@ -377,7 +377,11 @@ class HTTP(_SpotHTTP):
     def create_sub_account_api_key(self, 
                                    sub_account: str, 
                                    note:        str, 
-                                   permissions: str, 
+                                   permissions: Union[str, List[Literal["SPOT_ACCOUNT_READ",     "SPOT_ACCOUNT_WRITE", 
+                                                                        "SPOT_DEAL_READ",        "SPOT_DEAL_WRITE",
+                                                                        "CONTRACT_ACCOUNT_READ", "CONTRACT_ACCOUNT_WRITE",
+                                                                        "CONTRACT_DEAL_READ",    "CONTRACT_DEAL_WRITE", 
+                                                                        "SPOT_TRANSFER_READ",    "SPOT_TRANSFER_WRITE"]]], 
                                    ip:          Optional[str] = None) -> dict:
         """
         ### Create an APIKey for a sub-account.
@@ -392,7 +396,7 @@ class HTTP(_SpotHTTP):
         :param note: APIKey note
         :type note: str
         :param permissions: Permission of APIKey: SPOT_ACCOUNT_READ, SPOT_ACCOUNT_WRITE, SPOT_DEAL_READ, SPOT_DEAL_WRITE, CONTRACT_ACCOUNT_READ, CONTRACT_ACCOUNT_WRITE, CONTRACT_DEAL_READ, CONTRACT_DEAL_WRITE, SPOT_TRANSFER_READ, SPOT_TRANSFER_WRITE
-        :type permissions: str
+        :type permissions: list
         :param ip: (optional) Link IP addresses, separate with commas if more than one. Support up to 20 addresses.
         :type ip: str
 
@@ -403,7 +407,7 @@ class HTTP(_SpotHTTP):
                         params = dict(
                             subAccount = sub_account,
                             note = note,
-                            permissions = permissions,
+                            permissions = ','.join(permissions) if isinstance(permissions, list) else permissions,
                             ip = ip
                         ))
 
@@ -451,9 +455,50 @@ class HTTP(_SpotHTTP):
                             apiKey = api_key
                         ))
 
+    def universal_transfer(self,
+                           from_account_type: Literal["SPOT", "FUTURES"],
+                           to_account_type:   Literal["SPOT", "FUTURES"],
+                           asset:             str,
+                           amount:            float,
+                           from_account:      Optional[str] = None,
+                           to_account:        Optional[str] = None) -> dict:
+        """
+        ### Universal Transfer (For Master Account)
+        #### Required permission: SPOT_TRANSFER_WRITE
+
+        Weight(IP): 1
+
+        https://mxcdevelop.github.io/apidocs/spot_v3_en/#query-universal-transfer-history-for-master-account
+
+        :param from_account: (optional) Transfer from master account by default if fromAccount is not sent
+        :type from_account: str
+        :param to_account: (optional) Transfer to master account by default if toAccount is not sent
+        :type to_account: str
+        :param from_account_type: fromAccountType:"SPOT","FUTURES"
+        :type from_account_type: str
+        :param to_account_type: toAccountType:"SPOT","FUTURES"
+        :type to_account_type: str
+        :param asset: asset,eg:USDT
+        :type asset: str
+        :param amount: amount,eg:1.82938475
+        :type amount: float
+
+        :return: response dictionary
+        :rtype: dict
+        """
+        return self.call("POST", "api/v3/capital/sub-account/universalTransfer",
+                        params = dict(
+                            fromAccount = from_account,
+                            toAccount = to_account,
+                            fromAccountType = from_account_type,
+                            toAccountType = to_account_type,
+                            asset = asset,
+                            amount = amount
+                        ))
+
     def query_universal_transfer_history(self,
-                                        from_account_type: str,
-                                        to_account_type:   str,
+                                        from_account_type: Literal["SPOT", "FUTURES"],
+                                        to_account_type:   Literal["SPOT", "FUTURES"],
                                         from_account:      Optional[str] = None,
                                         to_account:        Optional[str] = None,
                                         start_time:        Optional[str] = None,
@@ -470,8 +515,7 @@ class HTTP(_SpotHTTP):
 
         :param from_account: (optional) Transfer from master account by default if fromAccount is not sent
         :type from_account: str
-        :param to_account: (optional) Transfer to master account by default if toAccount is not 
-    sent
+        :param to_account: (optional) Transfer to master account by default if toAccount is not sent
         :type to_account: str
         :param from_account_type: fromAccountType:"SPOT","FUTURES"
         :type from_account_type: str
@@ -521,7 +565,7 @@ class HTTP(_SpotHTTP):
                                     limit     = limit
                             ))
                    
-    def get_self_symbols(self) -> dict:
+    def get_default_symbols(self) -> dict:
         """
         ### User API default symbol.
         #### Required permission: SPOT_ACCOUNT_R
@@ -534,6 +578,63 @@ class HTTP(_SpotHTTP):
         :rtype: dict
         """
         return self.call("GET", "api/v3/selfSymbols")
+
+    def test_new_order(self, 
+                       symbol:              str, 
+                       side:                str, 
+                       order_type:          str, 
+                       quantity:            Optional[int] = None, 
+                       quote_order_qty:     Optional[int] = None, 
+                       price:               Optional[int] = None, 
+                       new_client_order_id: Optional[str] = None, 
+                       stop_price:          Optional[int] = None, 
+                       iceberg_qty:         Optional[int] = None, 
+                       time_in_force:       Optional[str] = None) -> dict:
+        """
+        ### New Order.
+        #### Required permission: SPOT_DEAL_WRITE
+
+        Weight(IP): 1, Weight(UID): 1
+
+        https://mxcdevelop.github.io/apidocs/spot_v3_en/#new-order
+
+        :param symbol: 
+        :type symbol: str
+        :param side: ENUM:Order Side
+        :type side: str
+        :param order_type: ENUM:Order Type
+        :type order_type: str
+        :param quantity: (optional) Quantity
+        :type quantity: int
+        :param quote_order_qty: (optional) Quote order quantity
+        :type quote_order_qty: int
+        :param price: (optional) Price
+        :type price: int
+        :param new_client_order_id: (optional) Unique order id
+        :type new_client_order_id: str
+        :param stop_price: (optional) Stop price
+        :type stop_price: int
+        :param iceberg_qty: (optional) Iceberg quantity
+        :type iceberg_qty: int
+        :param time_in_force: (optional) ENUM:Time In Force
+        :type time_in_force: str
+
+        :return: response dictionary
+        :rtype: dict
+        """
+        return self.call("POST", "/api/v3/order/test", 
+                            params = dict(
+                                    symbol = symbol, 
+                                    side = side, 
+                                    type = order_type, 
+                                    quantity = quantity, 
+                                    quoteOrderQty = quote_order_qty, 
+                                    price = price, 
+                                    newClientOrderId = new_client_order_id, 
+                                    stopPrice = stop_price, 
+                                    icebergQty = iceberg_qty, 
+                                    timeInForce = time_in_force
+                            ))   
 
     def new_order(self, 
                   symbol:              str, 
@@ -580,30 +681,27 @@ class HTTP(_SpotHTTP):
         """
         return self.call("POST", "api/v3/order", 
                             params = dict(
-                                            symbol = symbol, 
-                                            side = side, 
-                                            type = order_type, 
-                                            quantity = quantity, 
-                                            quoteOrderQty = quote_order_qty, 
-                                            price = price, 
-                                            newClientOrderId = new_client_order_id, 
-                                            stopPrice = stop_price, 
-                                            icebergQty = iceberg_qty, 
-                                            timeInForce = time_in_force
-                                ))    
+                                    symbol = symbol, 
+                                    side = side, 
+                                    type = order_type, 
+                                    quantity = quantity, 
+                                    quoteOrderQty = quote_order_qty, 
+                                    price = price, 
+                                    newClientOrderId = new_client_order_id, 
+                                    stopPrice = stop_price, 
+                                    icebergQty = iceberg_qty, 
+                                    timeInForce = time_in_force
+                            ))    
     
     def batch_orders(self,
-                batch_orders:        List[dict],
-                symbol:              str, 
-                side:                str,
-                order_type:          str,
-                quantity:            Optional[int] = None,
-                quote_order_qty:     Optional[int] = None,
-                price:               Optional[int] = None,
-                new_client_order_id: Optional[str] = None,
-                stop_price:          Optional[int] = None,
-                iceberg_qty:         Optional[int] = None,
-                time_in_force:       Optional[str] = None) -> dict:
+                     batch_orders:        List[str],
+                     symbol:              str, 
+                     side:                Literal["BUY", "SELL"],
+                     order_type:          Literal["LIMIT", "MARKET", "LIMIT_MARKET", "IMMEDIATE_OR_CANCEL", "FILL_OR_KILL"],
+                     quantity:            Optional[int] = None,
+                     quote_order_qty:     Optional[int] = None,
+                     price:               Optional[int] = None,
+                     new_client_order_id: Optional[str] = None) -> dict:
 
         """
         ### Batch Orders
@@ -631,12 +729,6 @@ class HTTP(_SpotHTTP):
         :type price: int
         :param new_client_order_id: (optional) ClientOrderId
         :type new_client_order_id: str
-        :param stop_price: (optional) Stop price
-        :type stop_price: int
-        :param iceberg_qty: (optional) Iceberg quantity
-        :type iceberg_qty: int
-        :param time_in_force: (optional) ENUM:Time In Force
-        :type time_in_force: str
 
 
         :return: response dictionary
@@ -651,17 +743,14 @@ class HTTP(_SpotHTTP):
                                 quantity = quantity,
                                 quoteOrderQty = quote_order_qty,
                                 price = price,
-                                newClientOrderId = new_client_order_id,
-                                stopPrice = stop_price,
-                                icebergQty = iceberg_qty,
-                                timeInForce = time_in_force
+                                newClientOrderId = new_client_order_id
                         ))
 
     def cancel_order(self,
-                symbol:               str,
-                order_id:             Optional[str] = None,
-                orig_client_order_id: Optional[str] = None,
-                new_client_order_id:  Optional[str] = None) -> dict:
+                     symbol:               str,
+                     order_id:             Optional[str] = None,
+                     orig_client_order_id: Optional[str] = None,
+                     new_client_order_id:  Optional[str] = None) -> dict:
         """
         ### Cancel Order.
         #### Required permission: SPOT_DEAL_WRITE
@@ -690,8 +779,7 @@ class HTTP(_SpotHTTP):
                                 newClientOrderId = new_client_order_id
                         ))    
 
-
-    def cancel_all_open_orders_on_symbol(self, symbol: str) -> dict:
+    def cancel_all_open_orders(self, symbol: str) -> dict:
 
         """
         ### Cancel all Open Orders on a Symbol.
@@ -709,24 +797,22 @@ class HTTP(_SpotHTTP):
         """
         return self.call("DELETE", "api/v3/openOrders",
                         params = dict(
-                            symbol = symbol
+                                symbol = symbol
                         ))
 
     def query_order(self,
                     symbol:               str, 
                     orig_client_order_id: Optional[str] = None,
-                    order_id:             Optional[str] = None,
-                    recv_window:          Optional[int] = None) -> dict:
+                    order_id:             Optional[str] = None) -> dict:
 
         """
         ### Query Order.
         #### Required permission: SPOT_DEAL_READ
+        Check an order's status.
 
         Weight(IP): 2
 
         https://mxcdevelop.github.io/apidocs/spot_v3_en/#query-order
-
-        Check an order's status.
 
         :param symbol: 
         :type symbol: str
@@ -744,8 +830,7 @@ class HTTP(_SpotHTTP):
                         params = dict(
                                 symbol = symbol,
                                 origClientOrderId = orig_client_order_id,
-                                orderId = order_id,
-                                recvWindow = recv_window
+                                orderId = order_id
                         ))
 
     def current_open_orders(self, symbol: str) -> dict:
@@ -767,10 +852,10 @@ class HTTP(_SpotHTTP):
         return self.call("GET", "api/v3/openOrders", params = dict(symbol = symbol))
 
     def all_orders(self, 
-                symbol:     str, 
-                start_time: Optional[int] = None, 
-                end_time:   Optional[int] = None, 
-                limit:      Optional[int] = None) -> dict:
+                   symbol:     str, 
+                   start_time: Optional[int] = None, 
+                   end_time:   Optional[int] = None, 
+                   limit:      Optional[int] = None) -> dict:
 
         """
         ### All Orders.
@@ -796,10 +881,10 @@ class HTTP(_SpotHTTP):
         """
         return self.call("GET", "api/v3/allOrders",
                         params=dict(
-                            symbol=symbol,
-                            startTime=start_time,
-                            endTime=end_time,
-                            limit=limit
+                                symbol=symbol,
+                                startTime=start_time,
+                                endTime=end_time,
+                                limit=limit
                         ))
 
     def account_information(self) -> dict:
@@ -832,7 +917,10 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 10
 
-        Get trades for a specific account and symbol,Only the transaction records in the past 1 month can be queried. If you want to view more transaction records, please use the export function on the web side, which supports exporting transaction records of the past 3 years at most.
+        Get trades for a specific account and symbol,
+        Only the transaction records in the past 1 month can be queried.
+        If you want to view more transaction records, please use the export function on the web side, 
+        which supports exporting transaction records of the past 3 years at most.
 
         https://mxcdevelop.github.io/apidocs/spot_v3_en/#account-trade-list
 
@@ -860,11 +948,10 @@ class HTTP(_SpotHTTP):
                         ))
 
     def enable_mx_deduct(self, mx_deduct_enable: bool) -> dict:
-
         """
         ### Enable MX Deduct.
-        #### Enable or disable MX deduct for spot commission fee
         #### Required permission: SPOT_DEAL_WRITE
+        Enable or disable MX deduct for spot commission fee
 
         Weight(IP): 1
 
@@ -924,7 +1011,6 @@ class HTTP(_SpotHTTP):
                  network:           Optional[str] = None,
                  memo:              Optional[str] = None,
                  remark:            Optional[str] = None) -> dict:
-
         """
         ### Withdraw.
         #### Required permission: SPOT_WITHDRAW_WRITE
@@ -1049,17 +1135,16 @@ class HTTP(_SpotHTTP):
         """
         return self.call("GET", "api/v3/capital/withdraw/history",
                         params = dict(
-                            coin = coin,
-                            status = status,
-                            limit = limit,
-                            startTime = start_time,
-                            endTime = end_time
+                                coin = coin,
+                                status = status,
+                                limit = limit,
+                                startTime = start_time,
+                                endTime = end_time
                         ))
 
     def generate_deposit_address(self, 
-                                 coin:      str, 
-                                 network:   str) -> dict:
-
+                                 coin:    str, 
+                                 network: str) -> dict:
         """
         ### Generate deposit address (supporting network).
         #### Required permission: SPOT_WITHDRAW_WRITE
@@ -1085,7 +1170,6 @@ class HTTP(_SpotHTTP):
     def deposit_address(self, 
                         coin: str, 
                         network: Optional[str] = None) -> dict:
-
         """
         ### Deposit Address (supporting network).
         #### Required permission: SPOT_WITHDRAW_READ
@@ -1108,11 +1192,10 @@ class HTTP(_SpotHTTP):
                                 network = network,
                         ))
 
-    def withdraw_address_supporting_network(self, 
-                                            coin:  Optional[str] = None, 
-                                            page:  Optional[int] = None, 
-                                            limit: Optional[int] = None) -> dict:
-
+    def withdraw_address(self, 
+                         coin:  Optional[str] = None, 
+                         page:  Optional[int] = None, 
+                         limit: Optional[int] = None) -> dict:
         """
         ### Withdraw Address (supporting network).
         #### Required permission: SPOT_WITHDRAW_R
@@ -1140,12 +1223,11 @@ class HTTP(_SpotHTTP):
                                 limit = limit
                         ))
 
-    def user_universal_transfer(self,
-                            from_account_type: str,
-                            to_account_type:   str,
-                            asset:             str,
-                            amount:            int) -> dict:
-
+    def user_universal_transfer(self, 
+                                from_account_type: str,
+                                to_account_type:   str,
+                                asset:             str,
+                                amount:            int) -> dict:
         """
         ### User Universal Transfer.
         #### Required permission: SPOT_TRANSFER_WRITE
@@ -1174,16 +1256,18 @@ class HTTP(_SpotHTTP):
                                 amount = amount
                         ))
 
-    def query_user_universal_transfer_history(self,
-                                        from_account_type: str,
-                                        to_account_type:   str,
+    def user_universal_transfer_history(self,
+                                        from_account_type: Literal["SPOT", "FUTURES"],
+                                        to_account_type:   Literal["SPOT", "FUTURES"],
                                         start_time:        Optional[str] = None,
                                         end_time:          Optional[str] = None,
-                                        page:              Optional[int] = None,
-                                        size:              Optional[int] = None) -> dict:
+                                        page:              Optional[int] = 1,
+                                        size:              Optional[int] = 10) -> dict:
         """
         ### Query User Universal Transfer History.
         #### Required permission: SPOT_TRANSFER_READ
+        Only can quary the data for the last six months
+        If 'startTime' and 'endTime' are not send, will return the last seven days' data by default
 
         Weight(IP): 1
 
@@ -1215,10 +1299,11 @@ class HTTP(_SpotHTTP):
                                 size = size
                         ))
 
-    def query_user_universal_transfer_history_by_tranid(self, tran_id: str) -> dict:
+    def user_universal_transfer_history_by_tranid(self, tran_id: str) -> dict:
         """
         ### Query User Universal Transfer History (by tranId).
         #### Required permission: SPOT_TRANSFER_R
+        Only can quary the data for the last six months
 
         Weight(IP): 1
 
@@ -1246,7 +1331,7 @@ class HTTP(_SpotHTTP):
         """
         return self.call("GET", "api/v3/capital/convert/list")
 
-    def dust_transfer(self, asset: str, amount: str) -> dict:
+    def dust_transfer(self, asset: Union[str, List[str]]) -> dict:
         """
         ### Dust Transfer.
         #### Required permission: SPOT_ACCOUNT_W
@@ -1256,17 +1341,14 @@ class HTTP(_SpotHTTP):
         https://mxcdevelop.github.io/apidocs/spot_v3_en/#dust-transfer
 
         :param asset: The asset being converted.(max 15 assert)eg:asset=BTC,FIL,ETH
-        :type asset: str
-        :param amount: The amount of the asset being converted. eg:amount=10,10,10
-        :type amount: str
+        :type asset: Union[str, List[str]]
 
         :return: response dictionary
         :rtype: dict
         """
         return self.call("POST", "api/v3/capital/convert",
                         params = dict(
-                                asset = asset,
-                                amount = amount
+                                asset = ','.join(asset) if isinstance(asset, list) else asset
                         ))
 
     def dustlog(self, 
@@ -1274,7 +1356,6 @@ class HTTP(_SpotHTTP):
                 end_time:   Optional[int] = None, 
                 page:       Optional[int] = None, 
                 limit:      Optional[int] = None) -> dict:
-
         """
         ### DustLog.
         #### Required permission: SPOT_DEAL_READ
@@ -1312,7 +1393,6 @@ class HTTP(_SpotHTTP):
     # <=================================================================>
 
     def get_etf_info(self, symbol: Optional[str] = None) -> dict:
-
         """
         ### Get ETF info.
         #### Weight(IP): 1
@@ -1335,6 +1415,8 @@ class HTTP(_SpotHTTP):
     #                     Websocket Market Streams
     #
     # <=================================================================>
+    
+    # realized in spot.WebSocket class
 
     # <=================================================================>
     #
@@ -1385,8 +1467,6 @@ class HTTP(_SpotHTTP):
         """
         return self.call("DELETE", "api/v3/userDataStream", params = {"please_sign_it": None})
 
-
-
     # <=================================================================>
     #
     #                          Rabate Endpoints
@@ -1395,9 +1475,7 @@ class HTTP(_SpotHTTP):
     def get_rebate_history_records(self, 
                                    start_time: Optional[int] = None, 
                                    end_time:   Optional[int] = None, 
-                                   page:       Optional[int] = None, 
-                                   limit:      Optional[int] = None) -> dict:
-
+                                   page:       Optional[int] = None) -> dict:
         """
         ### Get Rebate History Records.
         #### Required permission: SPOT_ACCOUNT_READ
@@ -1413,10 +1491,6 @@ class HTTP(_SpotHTTP):
         :type end_time: int
         :param page: (optional) default 1
         :type page: int
-        :param limit: (optional) default 100
-        :type limit: int
-
-
 
         :return: response dictionary
         :rtype: dict
@@ -1425,11 +1499,13 @@ class HTTP(_SpotHTTP):
                         params = dict(
                                 startTime = start_time,
                                 endTime = end_time,
-                                page = page,
-                                limit = limit
+                                page = page
                         ))
 
-    def get_rebate_records_detail(self, start_time: Optional[int] = None, end_time: Optional[int] = None, page: Optional[int] = None, limit: Optional[int] = None) -> dict:
+    def get_rebate_records_detail(self, 
+                                  start_time: Optional[int] = None,
+                                  end_time:   Optional[int] = None, 
+                                  page:       Optional[int] = None) -> dict:
 
         """
         ### Get Rebate Records Detail.
@@ -1446,8 +1522,6 @@ class HTTP(_SpotHTTP):
         :type end_time: int
         :param page: (optional) default 1
         :type page: int
-        :param limit: (optional) default 100
-        :type limit: int
 
 
         :return: response dictionary
@@ -1457,16 +1531,13 @@ class HTTP(_SpotHTTP):
                             params = dict(
                                     startTime = start_time, 
                                     endTime = end_time, 
-                                    page = page, 
-                                    limit = limit
+                                    page = page
                             ))
 
     def get_self_rebate_records_detail(self, 
                                        start_time: Optional[int] = None, 
                                        end_time:   Optional[int] = None, 
-                                       page:       Optional[int] = None, 
-                                       limit:      Optional[int] = None) -> dict:
-
+                                       page:       Optional[int] = None) -> dict:
         """
         ### Get Self Rebate Records Detail.
         #### Required permission: SPOT_ACCOUNT_READ
@@ -1481,8 +1552,6 @@ class HTTP(_SpotHTTP):
         :type end_time: int
         :param page: (optional) default 1
         :type page: int
-        :param limit: (optional) default 20
-        :type limit: int
 
         :return: response dictionary
         :rtype: dict
@@ -1491,11 +1560,10 @@ class HTTP(_SpotHTTP):
                         params = dict(
                                 startTime = start_time,
                                 endTime = end_time,
-                                page = page,
-                                limit = limit
+                                page = page
                         ))
 
-    def query_refercode(self, symbol: str) -> dict:
+    def query_refercode(self) -> dict:
         """
         ### Query ReferCode.
         #### Required permission: SPOT_ACCOUNT_READ
@@ -1504,13 +1572,10 @@ class HTTP(_SpotHTTP):
 
         https://mxcdevelop.github.io/apidocs/spot_v3_en/#query-refercode
 
-        :param symbol: 
-        :type symbol: str
-
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", "api/v3/rebate/referCode", params=dict(symbol=symbol))
+        return self.call("GET", "api/v3/rebate/referCode", params=dict(please_sign_me = None))
 
 class WebSocket(_SpotWebSocket):
     def __init__(self, 

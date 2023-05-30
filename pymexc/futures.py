@@ -129,7 +129,7 @@ class HTTP(_FuturesHTTP):
 
         :param symbol: the name of the contract
         :type symbol: str
-        :param limit: (optional) the limit of the depth
+        :param limit: count
         :type limit: int
 
 
@@ -303,8 +303,8 @@ class HTTP(_FuturesHTTP):
         """
         return self.call("GET", f"api/v1/contract/deals/{symbol}",
                             params = dict(
-                                    symbol    = symbol,
-                                    limit     = limit
+                                    symbol = symbol,
+                                    limit  = limit
                             ))
     
     def ticker(self, symbol: Optional[str] = None) -> dict: 
@@ -323,7 +323,7 @@ class HTTP(_FuturesHTTP):
         """
         return self.call("GET", "api/v1/contract/ticker",
                             params = dict(
-                                    symbol    = symbol
+                                    symbol = symbol
                             ))
     
     def risk_reverse(self) -> dict: 
@@ -340,8 +340,8 @@ class HTTP(_FuturesHTTP):
         return self.call("GET", "api/v1/contract/risk_reverse")
     
     def risk_reverse_history(self, 
-                             symbol: str, 
-                             page_num: Optional[int] = 1, 
+                             symbol:    str, 
+                             page_num:  Optional[int] = 1, 
                              page_size: Optional[int] = 20) -> dict: 
         """
         ### Get contract risk fund balance history
@@ -429,8 +429,8 @@ class HTTP(_FuturesHTTP):
     
     def transfer_record(self, 
                         currency:  Optional[str] = None, 
-                        state:     Optional[Union[Literal["WAIT"], Literal["SUCCESS"], Literal["FAILED"]]] = None, 
-                        type:      Optional[Union[Literal["IN"], Literal["OUT"]]] = None, 
+                        state:     Literal["WAIT", "SUCCESS", "FAILED"] = None, 
+                        type:      Literal["IN", "OUT"] = None, 
                         page_num:  Optional[int] = 1, 
                         page_size: Optional[int] = 20) -> dict:
         """
@@ -629,7 +629,7 @@ class HTTP(_FuturesHTTP):
                                     page_size = page_size
                             ))
     
-    def external(self, symbol: str, external_oid: int) -> dict:
+    def get_order_external(self, symbol: str, external_oid: int) -> dict:
         """
         ### Query the order based on the external number
         #### Required permissions: Trade reading permission
@@ -649,7 +649,7 @@ class HTTP(_FuturesHTTP):
 
         return self.call("GET", f"api/v1/private/order/external/{symbol}/{external_oid}")
     
-    def get(self, order_id: int) -> dict:
+    def get_order(self, order_id: int) -> dict:
         """
         ### Query the order based on the order number
         #### Required permissions: Trade reading permission
@@ -664,10 +664,9 @@ class HTTP(_FuturesHTTP):
         :return: A dictionary containing the queried order based on the order number.
         :rtype: dict
         """
-
         return self.call("GET", f"api/v1/private/order/{order_id}")
     
-    def batch_query(self, order_ids: list) -> dict:
+    def batch_query(self, order_ids: List[int]) -> dict:
         """
         ### Query the order in bulk based on the order number
         #### Required permissions: Trade reading permission
@@ -682,7 +681,6 @@ class HTTP(_FuturesHTTP):
         :return: A dictionary containing the queried orders in bulk based on the order number.
         :rtype: dict
         """
-
         return self.call("GET", "api/v1/private/order/batch_query",
                             params = dict(
                                     order_ids = ','.join(order_ids) if isinstance(order_ids, list) else order_ids
@@ -703,7 +701,6 @@ class HTTP(_FuturesHTTP):
         :return: A dictionary containing the transaction details for the given order ID.
         :rtype: dict
         """
-
         return self.call("GET", f"api/v1/private/order/deal_details/{order_id}")
     
     def order_deals(self, 
@@ -743,7 +740,7 @@ class HTTP(_FuturesHTTP):
                                     page_size = page_size
                             ))
     
-    def planorder_orders(self, 
+    def get_trigger_orders(self, 
                          symbol:     Optional[str] = None, 
                          states:     Optional[str] = None, 
                          start_time: Optional[int] = None, 
@@ -774,7 +771,6 @@ class HTTP(_FuturesHTTP):
         :return: response dictionary
         :rtype: dict
         """
-
         return self.call("GET", f"api/v1/private/planorder/list/orders",
                             params = dict(
                                     symbol = symbol,
@@ -785,7 +781,7 @@ class HTTP(_FuturesHTTP):
                                     page_size = page_size
                             ))
 
-    def stoporder_orders(self, 
+    def get_stop_limit_orders(self, 
                          symbol:      Optional[str] = None, 
                          is_finished: Optional[int] = None, 
                          start_time:  Optional[int] = None, 
@@ -1057,7 +1053,6 @@ class HTTP(_FuturesHTTP):
                                     reduceOnly = reduce_only
                             ))
 
-
     def bulk_order(self, 
                    symbol:            str, 
                    price:             float, 
@@ -1254,7 +1249,6 @@ class HTTP(_FuturesHTTP):
                                     trend = trend
                             ))
 
-
     def cancel_trigger_order(self, order_id: int) -> dict:
         """
         ### Cancel the trigger order (Under maintenance)
@@ -1277,7 +1271,7 @@ class HTTP(_FuturesHTTP):
                                     order_id = order_id
                             ))
 
-    def cancel_all_trigger_order(self, symbol: Optional[str] = None) -> dict:
+    def cancel_all_trigger_orders(self, symbol: Optional[str] = None) -> dict:
         """
         ### Cancel all trigger orders (Under maintenance)
 
