@@ -130,3 +130,4 @@ dmypy.json
 
 # db files
 *.db
+testfile.py

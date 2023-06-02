@@ -42,7 +42,7 @@ class MexcSDK(ABC):
 
 class _SpotHTTP(MexcSDK):
     def __init__(self, api_key: str = None, api_secret: str = None, proxies: dict = None):
-        super().__init__(api_key, api_secret, "https://api.mexc.com")
+        super().__init__(api_key, api_secret, "https://api.mexc.com", proxies = proxies)
 
         self.session.headers.update({
             "X-MEXC-APIKEY": self.api_key
@@ -86,7 +86,12 @@ class _SpotHTTP(MexcSDK):
     
 class _FuturesHTTP(MexcSDK):
     def __init__(self, api_key: str = None, api_secret: str = None, proxies: dict = None):
-        super().__init__(api_key, api_secret, "https://contract.mexc.com")
+        super().__init__(api_key, api_secret, "https://contract.mexc.com", proxies = proxies)
+
+        self.session.headers.update({
+            "Content-Type": "application/json",
+            "ApiKey": self.api_key
+        })
 
     def sign(self, timestamp: str, **kwargs) -> str:
         """
@@ -137,8 +142,6 @@ class _FuturesHTTP(MexcSDK):
                     timestamp = str(int(time.time() * 1000))
 
                     kwargs['headers'] = {
-                        "Content-Type": "application/json",
-                        "ApiKey": self.api_key,
                         "Request-Time": timestamp,
                         "Signature": self.sign(timestamp, **kwargs[variant])
                     }
