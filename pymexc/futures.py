@@ -1386,13 +1386,18 @@ class HTTP(_FuturesHTTP):
 
 class WebSocket(_FuturesWebSocket):
     def __init__(self, 
-                 api_key:          Optional[str]  = None, 
-                 api_secret:       Optional[str]  = None,
-                 ping_interval:    Optional[int]  = 20, 
-                 ping_timeout:     Optional[int]  = 10, 
-                 retries:          Optional[int]  = 10,
-                 restart_on_error: Optional[bool] = True, 
-                 trace_logging:    Optional[bool] = False):
+                 api_key:            Optional[str]   = None, 
+                 api_secret:         Optional[str]   = None,
+                 ping_interval:      Optional[int]   = 20, 
+                 ping_timeout:       Optional[int]   = 10, 
+                 retries:            Optional[int]   = 10,
+                 restart_on_error:   Optional[bool]  = True, 
+                 trace_logging:      Optional[bool]  = False,
+                 http_proxy_host:    Optional[str]   = None,
+                 http_proxy_port:    Optional[int]   = None,
+                 http_no_proxy:      Optional[list]  = None,
+                 http_proxy_auth:    Optional[tuple] = None,
+                 http_proxy_timeout: Optional[int]   = None):
 
         kwargs = dict(
             api_key = api_key,
@@ -1401,7 +1406,12 @@ class WebSocket(_FuturesWebSocket):
             ping_timeout = ping_timeout,
             retries = retries,
             restart_on_error = restart_on_error,
-            trace_logging = trace_logging
+            trace_logging = trace_logging,
+            http_proxy_host = http_proxy_host,
+            http_proxy_port = http_proxy_port,
+            http_no_proxy = http_no_proxy,
+            http_proxy_auth = http_proxy_auth,
+            http_proxy_timeout = http_proxy_timeout
         )
         
         super().__init__(**kwargs)

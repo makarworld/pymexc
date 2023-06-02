@@ -15,7 +15,7 @@ class MexcSDK(ABC):
     :param api_secret: A string representing the API secret.
     :param base_url: A string representing the base URL of the API.
     """
-    def __init__(self, api_key: str, api_secret: str, base_url: str):
+    def __init__(self, api_key: str, api_secret: str, base_url: str, proxies: dict = None):
         self.api_key = api_key
         self.api_secret = api_secret
 
@@ -25,8 +25,11 @@ class MexcSDK(ABC):
 
         self.session = requests.Session()
         self.session.headers.update({
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         })
+
+        if proxies:
+            self.session.proxies.update(proxies)
 
 
     @abstractclassmethod
@@ -38,7 +41,7 @@ class MexcSDK(ABC):
         ...
 
 class _SpotHTTP(MexcSDK):
-    def __init__(self, api_key: str = None, api_secret: str = None):
+    def __init__(self, api_key: str = None, api_secret: str = None, proxies: dict = None):
         super().__init__(api_key, api_secret, "https://api.mexc.com")
 
         self.session.headers.update({
@@ -82,7 +85,7 @@ class _SpotHTTP(MexcSDK):
         return response.json()
     
 class _FuturesHTTP(MexcSDK):
-    def __init__(self, api_key: str = None, api_secret: str = None):
+    def __init__(self, api_key: str = None, api_secret: str = None, proxies: dict = None):
         super().__init__(api_key, api_secret, "https://contract.mexc.com")
 
     def sign(self, timestamp: str, **kwargs) -> str:
