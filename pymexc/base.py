@@ -72,13 +72,15 @@ class _SpotHTTP(MexcSDK):
 
         if kwargs.get('params'):
             kwargs['params'] = {k: v for k, v in kwargs['params'].items() if v is not None}
-            
-            if self.api_key and self.api_secret:
-                # add signature
-                timestamp = str(int(time.time() * 1000))
-                kwargs['params']['recvWindow'] = self.recvWindow
-                kwargs['params']['timestamp']  = timestamp
-                kwargs['params']['signature']  = self.sign(**kwargs['params'])
+        else:
+            kwargs['params'] = {}
+
+        if self.api_key and self.api_secret:
+            # add signature
+            timestamp = str(int(time.time() * 1000))
+        kwargs['params']['recvWindow'] = self.recvWindow
+        kwargs['params']['timestamp']  = timestamp
+        kwargs['params']['signature']  = self.sign(**kwargs['params'])
 
         response = self.session.request(method, f"{self.base_url}{router}", *args, **kwargs)
 
