@@ -7,6 +7,8 @@ import time
 
 logger = logging.getLogger(__name__)
 
+class MexcAPIError(Exception): pass
+
 class MexcSDK(ABC):
     """
     Initializes a new instance of the class with the given `api_key` and `api_secret` parameters.
@@ -83,6 +85,9 @@ class _SpotHTTP(MexcSDK):
         kwargs['params']['signature']  = self.sign(**kwargs['params'])
 
         response = self.session.request(method, f"{self.base_url}{router}", *args, **kwargs)
+
+        if not response.ok:
+            raise MexcAPIError(f'(code={response.json()["code"]}): {response.json()["msg"]}')
 
         return response.json()
     
