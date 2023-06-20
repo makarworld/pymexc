@@ -2,6 +2,7 @@ from abc import ABC, abstractclassmethod
 from typing import Union, Literal
 import hmac, hashlib
 import requests
+from urllib.parse import urlencode
 import logging
 import time
 
@@ -50,7 +51,7 @@ class _SpotHTTP(MexcSDK):
             "X-MEXC-APIKEY": self.api_key
         })
 
-    def sign(self, **kwargs) -> str:
+    def sign(self, query_string: str) -> str:
         """
         Generates a signature for an API request using HMAC SHA256 encryption.
 
@@ -61,7 +62,6 @@ class _SpotHTTP(MexcSDK):
             A hexadecimal string representing the signature of the request.
         """
         # Generate signature
-        query_string = "&".join([f"{k}={v}" for k, v in kwargs.items()]) 
         signature = hmac.new(self.api_secret.encode('utf-8'), query_string.encode('utf-8'), hashlib.sha256).hexdigest()
         return signature
 
@@ -83,9 +83,11 @@ class _SpotHTTP(MexcSDK):
         kwargs['params']['recvWindow'] = self.recvWindow
         kwargs['params']['timestamp']  = timestamp
         kwargs['params'] = {k: v for k, v in sorted(kwargs['params'].items())}
-        kwargs['params']['signature']  = self.sign(**kwargs['params'])
+        
+        params = urlencode(kwargs.pop('params'), doseq=True).replace('+', '%20')
+        params += "&signature=" + self.sign(params)
 
-        response = self.session.request(method, f"{self.base_url}{router}", *args, **kwargs)
+        response = self.session.request(method, f"{self.base_url}{router}", params = params, *args, **kwargs)
 
         if not response.ok:
             raise MexcAPIError(f'(code={response.json()["code"]}): {response.json()["msg"]}')
