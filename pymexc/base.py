@@ -61,7 +61,7 @@ class _SpotHTTP(MexcSDK):
             A hexadecimal string representing the signature of the request.
         """
         # Generate signature
-        query_string = "&".join([f"{k}={v}" for k, v in sorted(kwargs.items())])
+        query_string = "&".join([f"{k}={v}" for k, v in kwargs.items()]) 
         signature = hmac.new(self.api_secret.encode('utf-8'), query_string.encode('utf-8'), hashlib.sha256).hexdigest()
         return signature
 
@@ -82,6 +82,7 @@ class _SpotHTTP(MexcSDK):
             timestamp = str(int(time.time() * 1000))
         kwargs['params']['recvWindow'] = self.recvWindow
         kwargs['params']['timestamp']  = timestamp
+        kwargs['params'] = {k: v for k, v in sorted(kwargs['params'].items())}
         kwargs['params']['signature']  = self.sign(**kwargs['params'])
 
         response = self.session.request(method, f"{self.base_url}{router}", *args, **kwargs)
