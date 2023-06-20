@@ -386,7 +386,7 @@ class _FuturesWebSocket(_FuturesWebSocketManager):
     def is_connected(self):
         return self._are_connections_connected(self.active_connections)
 
-    def _ws_subscribe(self, topic, callback, params: dict = {}):
+    def _ws_subscribe(self, topic, callback, params: list = []):
         if not self.ws:
             self.ws = _FuturesWebSocketManager(
                 self.ws_name, **self.kwargs)
@@ -404,11 +404,12 @@ class _SpotWebSocketManager(_WebSocketManager):
 
         self.last_subsctiption = None
 
-    def subscribe(self, topic, callback, params: dict = {}):
+    def subscribe(self, topic: str, callback, params_list: list):
         subscription_args = {
             "method": "SUBSCRIPTION",
             "params": [
                 '@'.join([f"spot@{topic}.v3.api"] + list(map(str, params.values())))
+                for params in params_list
             ]
         }
         self._check_callback_directory(subscription_args)
@@ -430,15 +431,6 @@ class _SpotWebSocketManager(_WebSocketManager):
         except KeyError:
             self.data[topic] = []
 
-    #def _process_auth_message(self, message):
-    #    # If we get successful futures auth, notify user
-    #    if message.get("data") == "success":
-    #        logger.debug(f"Authorization for {self.ws_name} successful.")
-    #        self.auth = True
-    #    # If we get unsuccessful auth, notify user.
-    #    elif message.get("data") != "success": 
-    #        logger.debug(f"Authorization for {self.ws_name} failed. Please "
-    #                     f"check your API keys and restart.")
 
     def _process_subscription_message(self, message):
         sub = message["msg"].replace("spot@", "").split(".v3.api")[0]

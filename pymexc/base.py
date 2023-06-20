@@ -80,12 +80,15 @@ class _SpotHTTP(MexcSDK):
         if self.api_key and self.api_secret:
             # add signature
             timestamp = str(int(time.time() * 1000))
-        kwargs['params']['recvWindow'] = self.recvWindow
-        kwargs['params']['timestamp']  = timestamp
+            kwargs['params']['recvWindow'] = self.recvWindow
+            kwargs['params']['timestamp'] = timestamp
+
         kwargs['params'] = {k: v for k, v in sorted(kwargs['params'].items())}
-        
         params = urlencode(kwargs.pop('params'), doseq=True).replace('+', '%20')
-        params += "&signature=" + self.sign(params)
+
+        if self.api_key and self.api_secret:
+            params += "&signature=" + self.sign(params)
+
 
         response = self.session.request(method, f"{self.base_url}{router}", params = params, *args, **kwargs)
 

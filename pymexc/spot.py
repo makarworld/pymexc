@@ -1696,9 +1696,9 @@ class WebSocket(_SpotWebSocket):
 
         :return: None
         """
-        params = dict(
+        params = [dict(
             symbol = symbol
-        )
+        )]
         topic = "public.deals"
         self._ws_subscribe(topic, callback, params)
 
@@ -1721,10 +1721,10 @@ class WebSocket(_SpotWebSocket):
 
         :return: None
         """
-        params = dict(
+        params = [dict(
             symbol   = symbol,
             interval = interval
-        )
+        )]
         topic = "public.kline"
         self._ws_subscribe(topic, callback, params)
 
@@ -1744,9 +1744,9 @@ class WebSocket(_SpotWebSocket):
 
         :return: None
         """
-        params = dict(
+        params = [dict(
             symbol = symbol
-        )
+        )]
         topic = "public.increase.depth"
         self._ws_subscribe(topic, callback, params)
 
@@ -1769,14 +1769,14 @@ class WebSocket(_SpotWebSocket):
 
         :return: None
         """
-        params = dict(
+        params = [dict(
             symbol = symbol,
             level  = level
-        )
+        )]
         topic = "public.limit.depth"
         self._ws_subscribe(topic, callback, params)
 
-    def limit_depth_stream(self, 
+    def book_ticker(self, 
                      callback: Callable[..., None],
                      symbol:   str):
         """
@@ -1787,14 +1787,14 @@ class WebSocket(_SpotWebSocket):
 
         :param callback: the callback function
         :type callback: Callable[..., None]
-        :param symbol: the name of the contract
-        :type symbol: str
+        :param symbols: the names of the contracts
+        :type symbols: str
 
         :return: None
         """
-        params = dict(
+        params = [dict(
             symbol = symbol
-        )
+        )]
         topic = "public.bookTicker"
         self._ws_subscribe(topic, callback, params)
 
@@ -1816,7 +1816,7 @@ class WebSocket(_SpotWebSocket):
 
         :return: None
         """
-        params = {}
+        params = [{}]
         topic = "private.account"
         self._ws_subscribe(topic, callback, params)
 
@@ -1831,7 +1831,7 @@ class WebSocket(_SpotWebSocket):
 
         :return: None
         """
-        params = {}
+        params = [{}]
         topic = "private.deals"
         self._ws_subscribe(topic, callback, params)
     
@@ -1846,7 +1846,7 @@ class WebSocket(_SpotWebSocket):
 
         :return: None
         """
-        params = {}
+        params = [{}]
         topic = "private.orders"
         self._ws_subscribe(topic, callback, params)
 
