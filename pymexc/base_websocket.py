@@ -499,7 +499,7 @@ class _SpotWebSocket(_SpotWebSocketManager):
     def is_connected(self):
         return self._are_connections_connected(self.active_connections)
 
-    def _ws_subscribe(self, topic, callback, params: dict = {}):
+    def _ws_subscribe(self, topic, callback, params: list = []):
         if not self.ws:
             self.ws = _SpotWebSocketManager(
                 self.ws_name, **self.kwargs)
