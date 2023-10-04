@@ -1577,6 +1577,45 @@ class HTTP(_SpotHTTP):
         """
         return self.call("GET", "api/v3/rebate/referCode", params=dict(please_sign_me = None))
 
+
+    def get_affiliate_commission_detail_record(self, 
+                                       start_time: Optional[int] = None, 
+                                       end_time:   Optional[int] = None, 
+                                       inviteCode: Optional[str] = None,
+                                       page:       Optional[int] = None,
+                                       pageSize:   Optional[int] = None,
+                                       type:       Optional[int] = None) -> dict:
+        """
+        ### Get Affiliate Detail Records.
+        #### Required permission: SPOT_ACCOUNT_READ
+
+        Weight(IP): 1
+
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-affiliate-withdraw-record-affiliate-only
+
+        :param start_time: (optional) 
+        :type start_time: int
+        :param end_time: (optional) 
+        :type end_time: int
+        :param page: (optional) default 1
+        :type page: int
+        :param pageSize (optional) default 10
+        :type pageSize int
+        :param type: (optional) default 1
+        :type type: int
+
+        :return: response dictionary
+        :rtype: dict
+        """
+        return self.call("GET", "api/v3/rebate/affiliate/commission/detail",
+                        params = dict(
+                                startTime = start_time,
+                                endTime = end_time,
+                                page = page,
+                                pageSize = pageSize,
+                                type = type
+                        ))
+
 class WebSocket(_SpotWebSocket):
     def __init__(self, 
                  api_key:            Optional[str]  = None, 
