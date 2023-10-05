@@ -1,3 +1,8 @@
+[![PyPI version](https://badge.fury.io/py/pymexc.svg)](https://badge.fury.io/py/pymexc)
+[![License](https://img.shields.io/github/license/makarworld/pymexc.svg?label=License&logo=apache&cacheSeconds=2592000)](https://github.com/makarworld/pymexc/blob/main/LICENSE)
+[![image](https://img.shields.io/pypi/pyversions/pymexc.svg)](https://pypi.org/project/pymexc/)
+[![Github last commit date](https://img.shields.io/github/last-commit/makarworld/pymexc.svg?label=Updated&logo=github&cacheSeconds=600)](https://github.com/makarworld/pymexc/commits)
+
 # pymexc
 `pymexc` is an unofficial Python library for interacting with the [MEXC crypto exchange](https://www.mexc.com/). It provides a simple and intuitive API for making requests to the [MEXC API endpoints](https://mxcdevelop.github.io/apidocs/spot_v3_en/#introduction).
 
