@@ -1,6 +1,7 @@
 from abc import ABC, abstractclassmethod
 from typing import Union, Literal
-import hmac, hashlib
+import hmac
+import hashlib
 import requests
 from urllib.parse import urlencode
 import logging
@@ -8,7 +9,8 @@ import time
 
 logger = logging.getLogger(__name__)
 
-class MexcAPIError(Exception): pass
+class MexcAPIError(Exception): 
+    pass
 
 class MexcSDK(ABC):
     """

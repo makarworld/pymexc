@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 try:
     from base import _FuturesHTTP
     from base_websocket import _FuturesWebSocket
-except:
+except ImportError:
     from .base import _FuturesHTTP
     from .base_websocket import _FuturesWebSocket
 
@@ -731,7 +731,7 @@ class HTTP(_FuturesHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", f"api/v1/private/order/list/order_deals",
+        return self.call("GET", "api/v1/private/order/list/order_deals",
                             params = dict(
                                     symbol = symbol,
                                     start_time = start_time,
@@ -771,7 +771,7 @@ class HTTP(_FuturesHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", f"api/v1/private/planorder/list/orders",
+        return self.call("GET", "api/v1/private/planorder/list/orders",
                             params = dict(
                                     symbol = symbol,
                                     states = states,
@@ -811,7 +811,7 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
 
-        return self.call("GET", f"api/v1/private/stoporder/list/orders",
+        return self.call("GET", "api/v1/private/stoporder/list/orders",
                             params = dict(
                                     symbol = symbol,
                                     is_finished = is_finished,
@@ -836,7 +836,7 @@ class HTTP(_FuturesHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", f"api/v1/private/account/risk_limit",
+        return self.call("GET", "api/v1/private/account/risk_limit",
                             params = dict(
                                     symbol = symbol
                             ))
@@ -857,7 +857,7 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
 
-        return self.call("GET", f"api/v1/private/account/tiered_fee_rate",
+        return self.call("GET", "api/v1/private/account/tiered_fee_rate",
                             params = dict(
                                     symbol = symbol
                             ))
@@ -884,7 +884,7 @@ class HTTP(_FuturesHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("POST", f"api/v1/private/position/change_margin",
+        return self.call("POST", "api/v1/private/position/change_margin",
                             params = dict(
                                     positionId = position_id,
                                     amount = amount,
@@ -907,7 +907,7 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
 
-        return self.call("GET", f"api/v1/private/position/leverage",
+        return self.call("GET", "api/v1/private/position/leverage",
                             params = dict(
                                     symbol = symbol
                             ))
@@ -941,7 +941,7 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
 
-        return self.call("POST", f"api/v1/private/position/change_leverage",
+        return self.call("POST", "api/v1/private/position/change_leverage",
                             params = dict(
                                     positionId = position_id,
                                     leverage = leverage,

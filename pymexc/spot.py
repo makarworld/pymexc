@@ -32,14 +32,16 @@ while True:
 
 """
 from typing import Callable, Literal, List, Optional, Union
-import threading, time, logging
+import threading
+import time
+import logging
 
 logger = logging.getLogger(__name__)
 
 try:
     from base import _SpotHTTP
     from base_websocket import _SpotWebSocket
-except:
+except ImportError:
     from .base import _SpotHTTP
     from .base_websocket import _SpotWebSocket
 
@@ -551,20 +553,6 @@ class HTTP(_SpotHTTP):
     #
     # <=================================================================>
 
-    def all_orders(self, 
-                   symbol:     str,
-                   start_time: Optional[int] = None,
-                   end_time:   Optional[int] = None,
-                   limit:      Optional[int] = 500) -> dict:
-        
-        return self.call("GET", "/api/v3/allOrders",
-                            params = dict(
-                                    symbol    = symbol,
-                                    startTime = start_time,
-                                    endTime   = end_time,
-                                    limit     = limit
-                            ))
-                   
     def get_default_symbols(self) -> dict:
         """
         ### User API default symbol.
@@ -1315,7 +1303,7 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", f"api/v3/capital/transfer/tranId", params=dict(tranId=tran_id))
+        return self.call("GET", "api/v3/capital/transfer/tranId", params=dict(tranId=tran_id))
 
     def get_assets_convert_into_mx(self) -> dict:
         """
@@ -1576,6 +1564,121 @@ class HTTP(_SpotHTTP):
         :rtype: dict
         """
         return self.call("GET", "api/v3/rebate/referCode", params=dict(please_sign_me = None))
+
+    def affiliate_commission_record(self,
+                                    start_time:  Optional[int] = None, 
+                                    end_time:    Optional[int] = None, 
+                                    invite_code: Optional[int] = None,
+                                    page:        Optional[int] = None,
+                                    page_size:   Optional[int] = None) -> dict:
+        """
+        ### Get Affiliate Commission Record (affiliate only)
+        #### Required permission: SPOT_ACCOUNT_READ
+
+        Weight(IP): 1
+
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-affiliate-commission-record-affiliate-only
+
+        :param start_time: (optional) 
+        :type start_time: int
+        :param end_time: (optional) 
+        :type end_time: int
+        :param invite_code: (optional) 
+        :type invite_code: int
+        :param page: (optional) default 1
+        :type page: int
+        :param page_size: (optional) default 10
+        :type page_size: int
+
+        :return: response dictionary
+        :rtype: dict
+        """
+        return self.call("GET", "/api/v3/rebate/affiliate/commission",
+                        params = dict(
+                                startTime = start_time,
+                                endTime = end_time,
+                                inviteCode = invite_code,
+                                page = page,
+                                pageSize = page_size
+                        ))
+
+    def affiliate_withdraw_record(self,
+                             start_time:  Optional[int] = None, 
+                             end_time:    Optional[int] = None, 
+                             invite_code: Optional[int] = None,
+                             page:        Optional[int] = None,
+                             page_size:   Optional[int] = None) -> dict:
+        """
+        ### Get Affiliate Withdraw Record (affiliate only)
+        #### Required permission: SPOT_ACCOUNT_READ
+
+        Weight(IP): 1
+
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-affiliate-withdraw-record-affiliate-only
+
+        :param start_time: (optional) 
+        :type start_time: int
+        :param end_time: (optional) 
+        :type end_time: int
+        :param invite_code: (optional) 
+        :type invite_code: int
+        :param page: (optional) default 1
+        :type page: int
+        :param page_size: (optional) default 10
+        :type page_size: int
+
+        :return: response dictionary
+        :rtype: dict
+        """
+        return self.call("GET", "/api/v3/rebate/affiliate/withdraw",
+                        params = dict(
+                                startTime = start_time,
+                                endTime = end_time,
+                                inviteCode = invite_code,
+                                page = page,
+                                pageSize = page_size
+                        ))
+
+    def affiliate_commission_detail_record(self,
+                                           start_time:  Optional[int] = None, 
+                                           end_time:    Optional[int] = None, 
+                                           invite_code: Optional[int] = None,
+                                           page:        Optional[int] = None,
+                                           page_size:   Optional[int] = None,
+                                           type:        Optional[Literal[1, 2, 3]] = None) -> dict:
+        """
+        ### Get Affiliate Withdraw Record (affiliate only)
+        #### Required permission: SPOT_ACCOUNT_READ
+
+        Weight(IP): 1
+
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-affiliate-withdraw-record-affiliate-only
+
+        :param start_time: (optional) 
+        :type start_time: int
+        :param end_time: (optional) 
+        :type end_time: int
+        :param invite_code: (optional) 
+        :type invite_code: int
+        :param page: (optional) default 1
+        :type page: int
+        :param page_size: (optional) default 10
+        :type page_size: int
+        :param type: (optional) commission type, 1:spot, 2:futures, 3:ETF
+        :type type: int
+
+        :return: response dictionary
+        :rtype: dict
+        """
+        return self.call("GET", "/api/v3/rebate/affiliate/commission/detail",
+                        params = dict(
+                                startTime = start_time,
+                                endTime = end_time,
+                                inviteCode = invite_code,
+                                page = page,
+                                pageSize = page_size,
+                                type = type
+                        ))
 
 class WebSocket(_SpotWebSocket):
     def __init__(self, 

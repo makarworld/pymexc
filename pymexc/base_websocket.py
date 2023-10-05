@@ -184,7 +184,8 @@ class _WebSocketManager:
         # make auth if futures. spot has a different auth system.
 
         isspot = self.endpoint.startswith(SPOT)
-        if isspot: return
+        if isspot: 
+            return
 
         timestamp = str(int(time.time() * 1000))
         _val = self.api_key + timestamp 
