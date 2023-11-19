@@ -1,6 +1,6 @@
 """
 ### Futures API
-Documentation: https://mxcdevelop.github.io/apidocs/contract_v1_en/#update-log
+Documentation: https://mexcdevelop.github.io/apidocs/contract_v1_en/#update-log
 
 ### Usage
 
@@ -57,7 +57,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#get-the-server-time
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-the-server-time
         """
         return self.call("GET", "api/v1/contract/ping")
 
@@ -67,7 +67,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 1 times / 5 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#get-the-contract-information
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-the-contract-information
 
         :param symbol: (optional) the name of the contract
         :type symbol: str
@@ -86,7 +86,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#get-the-transferable-currencies
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-the-transferable-currencies
 
         :return: response dictionary
         :rtype: dict
@@ -101,7 +101,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#get-the-contract-s-depth-information
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-the-contract-s-depth-information
 
         :param symbol: the name of the contract
         :type symbol: str
@@ -125,7 +125,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#get-a-snapshot-of-the-latest-n-depth-information-of-the-contract
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-a-snapshot-of-the-latest-n-depth-information-of-the-contract
 
         :param symbol: the name of the contract
         :type symbol: str
@@ -144,7 +144,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#get-contract-index-price
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-contract-index-price
 
         :param symbol: the name of the contract
         :type symbol: str
@@ -160,7 +160,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#get-contract-fair-price
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-contract-fair-price
 
         :param symbol: the name of the contract
         :type symbol: str
@@ -176,7 +176,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#get-contract-funding-rate
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-contract-funding-rate
 
         :param symbol: the name of the contract
         :type symbol: str
@@ -196,7 +196,7 @@ class HTTP(_FuturesHTTP):
         
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#k-line-data
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#k-line-data
 
         :param symbol: the name of the contract
         :type symbol: str
@@ -229,7 +229,7 @@ class HTTP(_FuturesHTTP):
         
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#get-k-line-data-of-the-index-price
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-k-line-data-of-the-index-price
 
         :param symbol: the name of the contract
         :type symbol: str
@@ -261,7 +261,7 @@ class HTTP(_FuturesHTTP):
         
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#get-k-line-data-of-the-index-price
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-k-line-data-of-the-index-price
 
         :param symbol: the name of the contract
         :type symbol: str
@@ -291,7 +291,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#get-contract-transaction-data
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-contract-transaction-data
 
         :param symbol: the name of the contract
         :type symbol: str
@@ -313,7 +313,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#get-contract-trend-data
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-contract-trend-data
 
         :param symbol: (optional)the name of the contract
         :type symbol: str
@@ -332,7 +332,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#get-all-contract-risk-fund-balance
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-all-contract-risk-fund-balance
 
         :return: response dictionary
         :rtype: dict
@@ -348,7 +348,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#get-contract-risk-fund-balance-history
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-contract-risk-fund-balance-history
 
         :param symbol: the name of the contract
         :type symbol: str
@@ -375,7 +375,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#get-contract-funding-rate-history
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-contract-funding-rate-history
 
         :param symbol: the name of the contract
         :type symbol: str
@@ -406,7 +406,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#get-all-informations-of-user-39-s-asset
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-all-informations-of-user-39-s-asset
 
         :return: response dictionary
         :rtype: dict
@@ -420,7 +420,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#get-the-user-39-s-single-currency-asset-information
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-the-user-39-s-single-currency-asset-information
         
         :return: response dictionary
         :rtype: dict
@@ -439,7 +439,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#get-the-user-39-s-asset-transfer-records
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-the-user-39-s-asset-transfer-records
         
         :param currency: (optional) The currency.
         :type currency: str
@@ -475,7 +475,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#get-the-user-s-history-position-information
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-the-user-s-history-position-information
         
         :param symbol: (optional) the name of the contract
         :type symbol: str
@@ -504,7 +504,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#get-the-user-39-s-current-holding-position
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-the-user-39-s-current-holding-position
 
         :param symbol: (optional) the name of the contract
         :type symbol: str
@@ -528,7 +528,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#get-details-of-user-s-funding-rate
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-details-of-user-s-funding-rate
 
         :param symbol: the name of the contract
         :type symbol: str
@@ -561,7 +561,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#get-the-user-39-s-current-pending-order
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-the-user-39-s-current-pending-order
 
         :param symbol: The name of the contract. Returns all contract parameters if not specified.
         :type symbol: str
@@ -595,7 +595,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#get-all-of-the-user-39-s-historical-orders
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-all-of-the-user-39-s-historical-orders
 
         :param symbol: The name of the contract. Returns all contract parameters if not specified.
         :type symbol: str
@@ -636,7 +636,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#query-the-order-based-on-the-external-number
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#query-the-order-based-on-the-external-number
 
         :param symbol: The name of the contract.
         :type symbol: str
@@ -656,7 +656,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#query-the-order-based-on-the-order-number
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#query-the-order-based-on-the-order-number
 
         :param order_id: The ID of the order to query.
         :type order_id: int
@@ -673,7 +673,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 5 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#query-the-order-in-bulk-based-on-the-order-number
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#query-the-order-in-bulk-based-on-the-order-number
 
         :param order_ids: An array of order IDs, separated by ",". Maximum of 50 orders.
         :type order_ids: str
@@ -693,7 +693,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#get-order-transaction-details-based-on-the-order-id
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-order-transaction-details-based-on-the-order-id
 
         :param order_id: The ID of the order to retrieve transaction details for.
         :type order_id: int
@@ -715,7 +715,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#get-all-transaction-details-of-the-user-s-order
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-all-transaction-details-of-the-user-s-order
 
         :param symbol: the name of the contact
         :type symbol: str
@@ -753,7 +753,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#gets-the-trigger-order-list
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#gets-the-trigger-order-list
 
         :param symbol: (optional) the name of the contract
         :type symbol: str
@@ -792,7 +792,7 @@ class HTTP(_FuturesHTTP):
         ### Get the Stop-Limit order list
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#get-the-stop-limit-order-list
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-the-stop-limit-order-list
 
         :param symbol: (optional) the name of the contact
         :type symbol: str
@@ -828,7 +828,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#get-risk-limits
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-risk-limits
 
         :param symbol: (optional) the name of the contract , not uploaded will return all
         :type symbol: str
@@ -848,7 +848,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#gets-the-user-39-s-current-trading-fee-rate
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#gets-the-user-39-s-current-trading-fee-rate
 
         :param symbol: the name of the contract
         :type symbol: str
@@ -872,7 +872,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#increase-or-decrease-margin
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#increase-or-decrease-margin
 
         :param positionId: position id
         :type positionId: int
@@ -898,7 +898,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#get-leverage
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-leverage
 
         :param symbol: symbol
         :type symbol: str
@@ -924,7 +924,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#switch-leverage
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#switch-leverage
 
         :param positionId: position id
         :type positionId: int
@@ -957,7 +957,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#get-position-mode
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-position-mode
 
         :return: response dictionary
         :rtype: dict
@@ -971,7 +971,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#change-position-mode
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#change-position-mode
 
         :param positionMode: 1: Hedge, 2: One-way, the modification of the position mode must ensure that there are no active orders, planned orders, or unfinished positions, otherwise it cannot be modified. When switching the one-way mode in both directions, the risk limit level will be reset to level 1. If you need to change the call interface, modify
         :type positionMode: int
@@ -1004,7 +1004,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#order-under-maintenance
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#order-under-maintenance
 
         :param symbol: the name of the contract
         :type symbol: str
@@ -1070,7 +1070,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 1/2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#bulk-order-under-maintenance
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#bulk-order-under-maintenance
 
         :param symbol: the name of the contract
         :type symbol: str
@@ -1119,7 +1119,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#cancel-the-order-under-maintenance
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#cancel-the-order-under-maintenance
 
         :param order_id_list: list of order ids to cancel, maximum 50
         :type order_id_list: List[int]
@@ -1139,7 +1139,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#cancel-the-order-according-to-the-external-order-id-under-maintenance
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#cancel-the-order-according-to-the-external-order-id-under-maintenance
 
         :param symbol: the name of the contract
         :type symbol: str
@@ -1164,7 +1164,7 @@ class HTTP(_FuturesHTTP):
 
         Rate limit: 20 times / 2 seconds
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#cancel-all-orders-under-a-contract-under-maintenance
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#cancel-all-orders-under-a-contract-under-maintenance
 
         :param symbol: (optional) the name of the contract, cancel specific orders placed under this contract when fill the symbol , otherwise , cancel all orders without filling
         :type symbol: str
@@ -1182,7 +1182,7 @@ class HTTP(_FuturesHTTP):
         """
         ### Switch the risk level
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#switch-the-risk-level
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#switch-the-risk-level
 
         :return: None
         :rtype: None
@@ -1205,7 +1205,7 @@ class HTTP(_FuturesHTTP):
         """
         ### Trigger order (Under maintenance)
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#trigger-order-under-maintenance
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#trigger-order-under-maintenance
 
         :param symbol: the name of the contract
         :type symbol: str
@@ -1253,7 +1253,7 @@ class HTTP(_FuturesHTTP):
         """
         ### Cancel the trigger order (Under maintenance)
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#cancel-the-trigger-order-under-maintenance
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#cancel-the-trigger-order-under-maintenance
 
         :param orderList: list of orders to be cancelled (maximum of 50)
         :type orderList: list[dict]
@@ -1275,7 +1275,7 @@ class HTTP(_FuturesHTTP):
         """
         ### Cancel all trigger orders (Under maintenance)
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#cancel-all-trigger-orders-under-maintenance
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#cancel-all-trigger-orders-under-maintenance
 
         :param symbol: (optional) the name of the contract, cancel specific orders placed under this contract when filled, otherwise, cancel all orders without filling
         :type symbol: str
@@ -1293,7 +1293,7 @@ class HTTP(_FuturesHTTP):
         """
         ### Cancel the Stop-Limit trigger order (Under maintenance)
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#cancel-the-stop-limit-trigger-order-under-maintenance
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#cancel-the-stop-limit-trigger-order-under-maintenance
 
         :param orderList: list of orders to be cancelled (maximum of 50)
         :type orderList: list[str]
@@ -1313,7 +1313,7 @@ class HTTP(_FuturesHTTP):
         """
         ### Cancel all Stop-Limit price trigger orders (Under maintenance)
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#cancel-all-stop-limit-price-trigger-orders-under-maintenance
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#cancel-all-stop-limit-price-trigger-orders-under-maintenance
 
         :param positionId: (optional) position id, fill in positionId to only cancel the trigger order of the corresponding position, otherwise check the symbol without filling
         :type positionId: int
@@ -1337,7 +1337,7 @@ class HTTP(_FuturesHTTP):
         """
         ### Switch Stop-Limit limited order price
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#switch-stop-limit-limited-order-price
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#switch-stop-limit-limited-order-price
 
         :param orderId: the limit order ID
         :type orderId: int
@@ -1364,7 +1364,7 @@ class HTTP(_FuturesHTTP):
         """
         ### Switch the Stop-Limit price of trigger orders
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#switch-the-stop-limit-price-of-trigger-orders
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#switch-the-stop-limit-price-of-trigger-orders
 
         :param stopPlanOrderId: the Stop-Limit price of trigger order ID
         :type stopPlanOrderId: int
@@ -1423,7 +1423,7 @@ class WebSocket(_FuturesWebSocket):
         Get the latest transaction price, buy-price, sell-price and 24 transaction volume of all the perpetual contracts on the platform without login. 
         Send once a second after subscribing.
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#public-channels
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#public-channels
 
         :param callback: the callback function
         :type callback: Callable[..., None]
@@ -1440,7 +1440,7 @@ class WebSocket(_FuturesWebSocket):
         Get the latest transaction price, buy price, sell price and 24 transaction volume of a contract, 
         send the transaction data without users' login, and send once a second after subscription.
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#public-channels
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#public-channels
 
         :param callback: the callback function
         :type callback: Callable[..., None]
@@ -1464,7 +1464,7 @@ class WebSocket(_FuturesWebSocket):
         ### Transaction
         Access to the latest data without login, and keep updating.
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#public-channels
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#public-channels
 
         :param callback: the callback function
         :type callback: Callable[..., None]
@@ -1489,7 +1489,7 @@ class WebSocket(_FuturesWebSocket):
 
         Tip: [411.8, 10, 1] 411.8 is price, 10 is the order numbers of the contract ,1 is the order quantity
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#public-channels
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#public-channels
 
         :param callback: the callback function
         :type callback: Callable[..., None]
@@ -1512,7 +1512,7 @@ class WebSocket(_FuturesWebSocket):
         """
         ### Depth full
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#public-channels
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#public-channels
 
         :param callback: the callback function
         :type callback: Callable[..., None]
@@ -1544,7 +1544,7 @@ class WebSocket(_FuturesWebSocket):
         ### K-line
         Get the k-line data of the contract and keep updating.
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#public-channels
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#public-channels
 
         :param callback: the callback function
         :type callback: Callable[..., None]
@@ -1573,7 +1573,7 @@ class WebSocket(_FuturesWebSocket):
         ### Funding rate
         Get the contract funding rate, and keep updating.
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#public-channels
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#public-channels
 
         :param callback: the callback function
         :type callback: Callable[..., None]
@@ -1599,7 +1599,7 @@ class WebSocket(_FuturesWebSocket):
         ### Index price
         Get the index price, and will keep updating if there is any changes.
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#public-channels
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#public-channels
 
         :param callback: the callback function
         :type callback: Callable[..., None]
@@ -1624,7 +1624,7 @@ class WebSocket(_FuturesWebSocket):
         """
         ### Fair price
 
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#public-channels
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#public-channels
 
         :param callback: the callback function
         :type callback: Callable[..., None]
@@ -1651,42 +1651,42 @@ class WebSocket(_FuturesWebSocket):
 
     def order_stream(self, callback, params: dict = {}):
         """
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#public-channels
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#public-channels
         """
         topic = "sub.personal.order"
         self._ws_subscribe(topic, callback, params)
 
     def asset_stream(self, callback, params: dict = {}):
         """
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#public-channels
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#public-channels
         """
         topic = "sub.personal.asset"
         self._ws_subscribe(topic, callback, params)
 
     def position_stream(self, callback, params: dict = {}):
         """
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#public-channels
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#public-channels
         """
         topic = "sub.personal.position"
         self._ws_subscribe(topic, callback, params)
 
     def risk_limit_stream(self, callback, params: dict = {}):
         """
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#public-channels
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#public-channels
         """
         topic = "sub.personal.risk.limit"
         self._ws_subscribe(topic, callback, params)
 
     def adl_level_stream(self, callback, params: dict = {}):
         """
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#public-channels
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#public-channels
         """
         topic = "sub.personal.adl.level"
         self._ws_subscribe(topic, callback, params)
 
     def position_mode_stream(self, callback, params: dict = {}):
         """
-        https://mxcdevelop.github.io/apidocs/contract_v1_en/#public-channels
+        https://mexcdevelop.github.io/apidocs/contract_v1_en/#public-channels
         """
         topic = "sub.personal.position.mode"
         self._ws_subscribe(topic, callback, params)
