@@ -1,5 +1,5 @@
 # This example for use subscribe method for many parameters at one topic.
-# Goal - subscribe websocket with topic public.deals to all symbols from /api/v3/ticker/24hr (https://mxcdevelop.github.io/apidocs/spot_v3_en/#24hr-ticker-price-change-statistics)
+# Goal - subscribe websocket with topic public.deals to all symbols from /api/v3/ticker/24hr (https://mexcdevelop.github.io/apidocs/spot_v3_en/#24hr-ticker-price-change-statistics)
 # Use 30 symbols per each websocket connection
 from pymexc import spot 
 
@@ -8,7 +8,7 @@ def handle_message(msg: dict):
 
 
 # get list of symbols from /api/v3/ticker/24hr
-# https://mxcdevelop.github.io/apidocs/spot_v3_en/#24hr-ticker-price-change-statistics
+# https://mexcdevelop.github.io/apidocs/spot_v3_en/#24hr-ticker-price-change-statistics
 ticker_24h = spot.HTTP().ticker_24h()
 
 # create list with only symbols
