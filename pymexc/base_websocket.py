@@ -322,7 +322,7 @@ class _FuturesWebSocketManager(_WebSocketManager):
                 self._pop_callback(self.last_subsctiption)
 
     def _process_normal_message(self, message):
-        topic = message["channel"].replace("push.", "")
+        topic = message["channel"].replace("push.", "").replace("rs.sub.", "")
         callback_data = message
         callback_function = self._get_callback(topic)
         callback_function(callback_data)
