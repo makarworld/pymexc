@@ -60,7 +60,7 @@ class HTTP(_SpotHTTP):
 
         https://mxcdevelop.github.io/apidocs/spot_v3_en/#test-connectivity
         """
-        return self.call("GET", "/api/v3/ping")
+        return self.call("GET", "/api/v3/ping", auth = False)
     
     def time(self) -> dict:
         """
@@ -70,9 +70,9 @@ class HTTP(_SpotHTTP):
 
         https://mxcdevelop.github.io/apidocs/spot_v3_en/#check-server-time    
         """
-        return self.call("GET", "/api/v3/time")
+        return self.call("GET", "/api/v3/time", auth = False)
     
-    def default_symbol(self) -> dict:
+    def default_symbols(self) -> dict:
         """
         ### API default symbol
 
@@ -80,7 +80,7 @@ class HTTP(_SpotHTTP):
 
         https://mxcdevelop.github.io/apidocs/spot_v3_en/#api-default-symbol
         """
-        return self.call("GET", "/api/v3/defaultSymbols")
+        return self.call("GET", "/api/v3/defaultSymbols", auth = False)
 
     def exchange_info(self, 
                       symbol:  Optional[str] = None, 
@@ -106,7 +106,8 @@ class HTTP(_SpotHTTP):
                             params = dict(
                                     symbol  = symbol, 
                                     symbols = ','.join(symbols) if symbols else None
-                            ))
+                            ),
+                            auth = False)
 
     def order_book(self, 
                    symbol: str, 
@@ -130,7 +131,8 @@ class HTTP(_SpotHTTP):
                             params = dict(
                                     symbol = symbol, 
                                     limit  = limit
-                            ))
+                            ), 
+                            auth = False)
 
     def trades(self, 
                symbol: str, 
@@ -155,7 +157,8 @@ class HTTP(_SpotHTTP):
                             params = dict(
                                     symbol  = symbol, 
                                     limit   = limit
-                            ))
+                            ),
+                            auth = False)
     
     def agg_trades(self, 
                    symbol:     str, 
@@ -191,7 +194,8 @@ class HTTP(_SpotHTTP):
                                     startTime = start_time,
                                     endTime   = end_time,
                                     limit     = limit
-                            ))
+                            ), 
+                            auth = False)
     
     def klines(self, 
                symbol:     str, 
@@ -231,7 +235,8 @@ class HTTP(_SpotHTTP):
                                     startTime = start_time,
                                     endTime   = end_time,
                                     limit     = limit
-                            ))
+                            ),
+                            auth = False)
 
     def avg_price(self, symbol: str):
         """
@@ -250,7 +255,7 @@ class HTTP(_SpotHTTP):
         return self.call("GET", "/api/v3/avgPrice",
                             params = dict(
                                     symbol = symbol
-                            ))
+                            ), auth = False)
 
     def ticker_24h(self, symbol: Optional[str] = None):
         """
@@ -270,7 +275,8 @@ class HTTP(_SpotHTTP):
         return self.call("GET", "/api/v3/ticker/24hr",
                             params = dict(
                                     symbol = symbol
-                            ))
+                            ),
+                            auth = False)
 
     def ticker_price(self, symbol: Optional[str] = None):
         """
@@ -290,7 +296,8 @@ class HTTP(_SpotHTTP):
         return self.call("GET", "/api/v3/ticker/price",
                             params = dict(
                                     symbol = symbol
-                            ))
+                            ),
+                            auth = False)
 
     def ticker_book_price(self, symbol: Optional[str] = None):
         """
@@ -311,7 +318,8 @@ class HTTP(_SpotHTTP):
         return self.call("GET", "/api/v3/ticker/bookTicker",
                             params = dict(
                                     symbol = symbol
-                            ))
+                            ),
+                            auth = False)
     
     # <=================================================================>
     #

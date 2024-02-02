@@ -67,7 +67,7 @@ class _SpotHTTP(MexcSDK):
         signature = hmac.new(self.api_secret.encode('utf-8'), query_string.encode('utf-8'), hashlib.sha256).hexdigest()
         return signature
 
-    def call(self, method: Union[Literal["GET"], Literal["POST"], Literal["PUT"], Literal["DELETE"]], router: str, *args, **kwargs) -> dict:
+    def call(self, method: Union[Literal["GET"], Literal["POST"], Literal["PUT"], Literal["DELETE"]], router: str, auth: bool = True, *args, **kwargs) -> dict:
         if not router.startswith("/"):
             router = f"/{router}"
 
@@ -79,16 +79,14 @@ class _SpotHTTP(MexcSDK):
         else:
             kwargs['params'] = {}
 
-        if self.api_key and self.api_secret:
-            # add signature
-            timestamp = str(int(time.time() * 1000))
-            kwargs['params']['recvWindow'] = self.recvWindow
-            kwargs['params']['timestamp'] = timestamp
+        timestamp = str(int(time.time() * 1000))
+        kwargs['params']['timestamp'] = timestamp
+        kwargs['params']['recvWindow'] = self.recvWindow
 
         kwargs['params'] = {k: v for k, v in sorted(kwargs['params'].items())}
         params = urlencode(kwargs.pop('params'), doseq=True).replace('+', '%20')
 
-        if self.api_key and self.api_secret:
+        if self.api_key and self.api_secret and auth:
             params += "&signature=" + self.sign(params)
 
 
