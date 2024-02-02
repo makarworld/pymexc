@@ -1,6 +1,6 @@
 """
 ### Spot API
-Documentation: https://mxcdevelop.github.io/apidocs/spot_v3_en/#introduction
+Documentation: https://mexcdevelop.github.io/apidocs/spot_v3_en/#introduction
 
 ### Usage
 
@@ -58,7 +58,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#test-connectivity
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#test-connectivity
         """
         return self.call("GET", "/api/v3/ping", auth = False)
     
@@ -68,7 +68,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#check-server-time    
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#check-server-time    
         """
         return self.call("GET", "/api/v3/time", auth = False)
     
@@ -78,7 +78,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#api-default-symbol
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#api-default-symbol
         """
         return self.call("GET", "/api/v3/defaultSymbols", auth = False)
 
@@ -92,7 +92,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 10
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#exchange-information
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#exchange-information
 
         :param symbol: (optional) The symbol for a specific trading pair.
         :type symbol: str
@@ -117,7 +117,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#order-book
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#order-book
 
         :param symbol: A string representing the trading pair symbol, e.g. "BTCUSDT".
         :type symbol: str
@@ -142,7 +142,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 5
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#recent-trades-list
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#recent-trades-list
         
         :param symbol: A string representing the trading pair symbol.
         :type symbol: str
@@ -174,7 +174,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#compressed-aggregate-trades-list
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#compressed-aggregate-trades-list
 
         :param symbol: The symbol to retrieve trades for.
         :type symbol: str
@@ -212,7 +212,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#kline-candlestick-data
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#kline-candlestick-data
 
         :param symbol: The symbol to retrieve trades for.
         :type symbol: str
@@ -244,7 +244,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#current-average-price
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#current-average-price
 
         :param symbol: The symbol.
         :type symbol: str
@@ -264,7 +264,7 @@ class HTTP(_SpotHTTP):
         Weight(IP): 1 - 1 symbol; 
         Weight(IP): 40 - all symbols; 
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#24hr-ticker-price-change-statistics
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#24hr-ticker-price-change-statistics
 
         :param symbol: (optional) If the symbol is not sent, tickers for all symbols will be returned in an array.
         :type symbol: str
@@ -285,7 +285,7 @@ class HTTP(_SpotHTTP):
         Weight(IP): 1 - 1 symbol; 
         Weight(IP): 2 - all symbols; 
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#symbol-price-ticker
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#symbol-price-ticker
 
         :param symbol: (optional) If the symbol is not sent, all symbols will be returned in an array.
         :type symbol: str
@@ -307,7 +307,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1 
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#symbol-order-book-ticker
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#symbol-order-book-ticker
 
         :param symbol: (optional) If the symbol is not sent, all symbols will be returned in an array.
         :type symbol: str
@@ -334,7 +334,7 @@ class HTTP(_SpotHTTP):
         
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#create-a-sub-account-for-master-account
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#create-a-sub-account-for-master-account
 
         :param sub_account: Sub-account Name
         :type sub_account: str
@@ -362,7 +362,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#query-sub-account-list-for-master-account
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-sub-account-list-for-master-account
 
         :param sub_account: (optional) Sub-account Name
         :type sub_account: str
@@ -399,7 +399,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#create-an-apikey-for-a-sub-account-for-master-account
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#create-an-apikey-for-a-sub-account-for-master-account
 
         :param sub_account: Sub-account Name
         :type sub_account: str
@@ -429,7 +429,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#query-the-apikey-of-a-sub-account-for-master-account
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-the-apikey-of-a-sub-account-for-master-account
 
         :param sub_account: Sub-account Name
         :type sub_account: str
@@ -449,7 +449,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#delete-the-apikey-of-a-sub-account-for-master-account
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#delete-the-apikey-of-a-sub-account-for-master-account
 
         :param sub_account: Sub-account Name
         :type sub_account: str
@@ -478,7 +478,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#query-universal-transfer-history-for-master-account
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-universal-transfer-history-for-master-account
 
         :param from_account: (optional) Transfer from master account by default if fromAccount is not sent
         :type from_account: str
@@ -521,7 +521,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#query-universal-transfer-history-for-master-account
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-universal-transfer-history-for-master-account
 
         :param from_account: (optional) Transfer from master account by default if fromAccount is not sent
         :type from_account: str
@@ -568,7 +568,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#user-api-default-symbol
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#user-api-default-symbol
 
         :return: response dictionary
         :rtype: dict
@@ -592,7 +592,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1, Weight(UID): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#new-order
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#new-order
 
         :param symbol: 
         :type symbol: str
@@ -649,7 +649,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1, Weight(UID): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#new-order
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#new-order
 
         :param symbol: 
         :type symbol: str
@@ -706,7 +706,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1,Weight(UID): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#batch-orders
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#batch-orders
 
 
         :param batch_orders: list of batchOrders,supports max 20 orders
@@ -753,7 +753,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#cancel-order
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#cancel-order
 
         :param symbol: 
         :type symbol: str
@@ -783,7 +783,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#cancel-all-open-orders-on-a-symbol
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#cancel-all-open-orders-on-a-symbol
 
         :param symbol: maximum input 5 symbols,separated by ",". e.g. "BTCUSDT,MXUSDT,ADAUSDT"
         :type symbol: str
@@ -808,7 +808,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 2
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#query-order
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-order
 
         :param symbol: 
         :type symbol: str
@@ -837,7 +837,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 3
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#current-open-orders
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#current-open-orders
 
         :param symbol: 
         :type symbol: str
@@ -859,7 +859,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 10
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#all-orders
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#all-orders
 
         Get all account orders including active, cancelled or completed orders(the query period is the latest 24 hours by default). You can query a maximum of the latest 7 days.
 
@@ -893,7 +893,7 @@ class HTTP(_SpotHTTP):
 
         Get current account information,rate limit:2 times/s.
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#account-information
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#account-information
 
         :return: response dictionary
         :rtype: dict
@@ -918,7 +918,7 @@ class HTTP(_SpotHTTP):
         If you want to view more transaction records, please use the export function on the web side, 
         which supports exporting transaction records of the past 3 years at most.
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#account-trade-list
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#account-trade-list
 
         :param symbol: 
         :type symbol: str
@@ -951,7 +951,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#enable-mx-deduct
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#enable-mx-deduct
 
         :param mx_deduct_enable: true:enable,false:disable
         :type mx_deduct_enable: bool
@@ -971,7 +971,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#query-mx-deduct-status
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-mx-deduct-status
 
         :return: response dictionary
         :rtype: dict
@@ -992,7 +992,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 10
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#query-the-currency-information
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-the-currency-information
 
         :return: response dictionary
         :rtype: dict
@@ -1013,7 +1013,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#withdraw
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#withdraw
 
         :param coin: coin
         :type coin: str
@@ -1051,7 +1051,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#cancel-withdraw
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#cancel-withdraw
 
         :param id: withdraw id
         :type id: str
@@ -1074,7 +1074,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#deposit-history-supporting-network
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#deposit-history-supporting-network
 
         Ensure that the default timestamp of 'startTime' and 'endTime' does not exceed 90 days.
 
@@ -1113,7 +1113,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#withdraw-history-supporting-network
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#withdraw-history-supporting-network
 
         :param coin: (optional) coin
         :type coin: str
@@ -1147,7 +1147,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#generate-deposit-address-supporting-network
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#generate-deposit-address-supporting-network
 
         :param coin: coin
         :type coin: str
@@ -1172,7 +1172,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 10
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#deposit-address-supporting-network
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#deposit-address-supporting-network
 
         :param coin: coin
         :type coin: str
@@ -1198,7 +1198,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 10
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#withdraw-address-supporting-network
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#withdraw-address-supporting-network
 
 
         :param coin: (optional) coin
@@ -1230,7 +1230,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#user-universal-transfer
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#user-universal-transfer
 
         :param from_account_type: fromAccountType:"SPOT","FUTURES"
         :type from_account_type: str
@@ -1267,7 +1267,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#query-user-universal-transfer-history
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-user-universal-transfer-history
 
         :param from_account_type: fromAccountType:"SPOT","FUTURES"
         :type from_account_type: str
@@ -1303,7 +1303,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#query-user-universal-transfer-history-by-tranid
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-user-universal-transfer-history-by-tranid
 
         :param tran_id: tranId
         :type tran_id: str
@@ -1320,7 +1320,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#get-assets-that-can-be-converted-into-mx
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-assets-that-can-be-converted-into-mx
 
         :return: response dictionary
         :rtype: dict
@@ -1334,7 +1334,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 10
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#dust-transfer
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#dust-transfer
 
         :param asset: The asset being converted.(max 15 assert)eg:asset=BTC,FIL,ETH
         :type asset: Union[str, List[str]]
@@ -1358,7 +1358,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#dustlog
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#dustlog
 
         
         :param start_time: (optional) startTime
@@ -1393,7 +1393,7 @@ class HTTP(_SpotHTTP):
         ### Get ETF info.
         #### Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#get-etf-info
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-etf-info
 
         :param symbol: (optional) ETF symbol
         :type symbol: str
@@ -1425,7 +1425,7 @@ class HTTP(_SpotHTTP):
         ### Create a ListenKey.
         #### Required permission: SPOT_ACCOUNT_R
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#listen-key
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#listen-key
 
         Start a new user data stream. The stream will close after 60 minutes unless a keepalive is sent.
 
@@ -1439,7 +1439,7 @@ class HTTP(_SpotHTTP):
         ### Keep-alive a ListenKey.
         #### Required permission: none
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#listen-key
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#listen-key
 
         :param listen_key: Listen key
         :type listen_key: str
@@ -1456,7 +1456,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1, Weight(UID): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#listen-key
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#listen-key
 
         :return: response dictionary
         :rtype: dict
@@ -1478,7 +1478,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#rebate-endpoints
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#rebate-endpoints
 
         
         :param start_time: (optional) 
@@ -1509,7 +1509,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#get-rebate-records-detail
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-rebate-records-detail
 
 
         :param start_time: (optional) 
@@ -1540,7 +1540,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#get-self-rebate-records-detail
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-self-rebate-records-detail
 
         :param start_time: (optional) 
         :type start_time: int
@@ -1566,7 +1566,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#query-refercode
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-refercode
 
         :return: response dictionary
         :rtype: dict
@@ -1798,7 +1798,7 @@ class WebSocket(_SpotWebSocket):
         ### Trade Streams
         The Trade Streams push raw trade information; each trade has a unique buyer and seller.
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#trade-streams
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#trade-streams
 
         :param callback: the callback function
         :type callback: Callable[..., None]
@@ -1821,7 +1821,7 @@ class WebSocket(_SpotWebSocket):
         ### Kline Streams
         The Kline/Candlestick Stream push updates to the current klines/candlestick every second.
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#kline-streams
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#kline-streams
 
         :param callback: the callback function
         :type callback: Callable[..., None]
@@ -1846,7 +1846,7 @@ class WebSocket(_SpotWebSocket):
         ### Diff.Depth Stream
         If the quantity is 0, it means that the order of the price has been cancel or traded,remove the price level.
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#diff-depth-stream
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#diff-depth-stream
 
         :param callback: the callback function
         :type callback: Callable[..., None]
@@ -1869,7 +1869,7 @@ class WebSocket(_SpotWebSocket):
         ### Partial Book Depth Streams
         Top bids and asks, Valid are 5, 10, or 20.
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#partial-book-depth-streams
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#partial-book-depth-streams
 
         :param callback: the callback function
         :type callback: Callable[..., None]
@@ -1894,7 +1894,7 @@ class WebSocket(_SpotWebSocket):
         ### Individual Symbol Book Ticker Streams
         Pushes any update to the best bid or ask's price or quantity in real-time for a specified symbol.
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#partial-book-depth-streams
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#partial-book-depth-streams
 
         :param callback: the callback function
         :type callback: Callable[..., None]
@@ -1920,7 +1920,7 @@ class WebSocket(_SpotWebSocket):
         ### Spot Account Update
         The server will push an update of the account assets when the account balance changes.
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#websocket-user-data-streams
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#websocket-user-data-streams
 
         :param callback: the callback function
         :type callback: Callable[..., None]
@@ -1935,7 +1935,7 @@ class WebSocket(_SpotWebSocket):
         """
         ### Spot Account Deals
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#spot-account-deals
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#spot-account-deals
 
         :param callback: the callback function
         :type callback: Callable[..., None]
@@ -1950,7 +1950,7 @@ class WebSocket(_SpotWebSocket):
         """
         ### Spot Account Orders
 
-        https://mxcdevelop.github.io/apidocs/spot_v3_en/#spot-account-orders
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#spot-account-orders
 
         :param callback: the callback function
         :type callback: Callable[..., None]

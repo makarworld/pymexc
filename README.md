@@ -4,7 +4,7 @@
 [![Github last commit date](https://img.shields.io/github/last-commit/makarworld/pymexc.svg?label=Updated&logo=github&cacheSeconds=600)](https://github.com/makarworld/pymexc/commits)
 
 # pymexc
-`pymexc` is an unofficial Python library for interacting with the [MEXC crypto exchange](https://www.mexc.com/). It provides a simple and intuitive API for making requests to the [MEXC API endpoints](https://mxcdevelop.github.io/apidocs/spot_v3_en/#introduction).
+`pymexc` is an unofficial Python library for interacting with the [MEXC crypto exchange](https://www.mexc.com/). It provides a simple and intuitive API for making requests to the [MEXC API endpoints](https://mexcdevelop.github.io/apidocs/spot_v3_en/#introduction).
 
 Most of the code was generated with ChatGPT, if you see an error, write to issues.
 
@@ -68,7 +68,7 @@ while True:
 
 
 # Documentation
-You can find the official documentation for the MEXC API [here](https://mxcdevelop.github.io/apidocs/spot_v3_en/#introduction).
+You can find the official documentation for the MEXC API [here](https://mexcdevelop.github.io/apidocs/spot_v3_en/#introduction).
 
 # License
 This library is licensed under the MIT License.
