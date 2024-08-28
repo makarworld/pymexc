@@ -1793,7 +1793,7 @@ class WebSocket(_SpotWebSocket):
 
     def deals_stream(self, 
                      callback: Callable[..., None],
-                     symbol:   str):
+                     symbol: Union[str,List[str]]):
         """
         ### Trade Streams
         The Trade Streams push raw trade information; each trade has a unique buyer and seller.
@@ -1803,13 +1803,17 @@ class WebSocket(_SpotWebSocket):
         :param callback: the callback function
         :type callback: Callable[..., None]
         :param symbol: the name of the contract
-        :type symbol: str
+        :type symbol: Union[str,List[str]]
 
         :return: None
         """
+        if isinstance(symbol,str):
+            symbols=[symbol]  #str
+        else:
+            symbols=symbol #list
         params = [dict(
-            symbol = symbol
-        )]
+            symbol = s
+        ) for s in symbols]
         topic = "public.deals"
         self._ws_subscribe(topic, callback, params)
 
