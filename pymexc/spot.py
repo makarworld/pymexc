@@ -10,7 +10,7 @@ from pymexc import spot
 api_key = "YOUR API KEY"
 api_secret = "YOUR API SECRET KEY"
 
-def handle_message(message): 
+def handle_message(message):
     # handle websocket message
     print(message)
 
@@ -26,15 +26,16 @@ print(spot_client.exchange_info())
 # all messages will be handled by function `handle_message`
 ws_spot_client.deals_stream(handle_message, "BTCUSDT")
 
-# loop forever for save websocket connection 
-while True: 
+# loop forever for save websocket connection
+while True:
     ...
 
 """
-from typing import Callable, Literal, List, Optional, Union
+
+import logging
 import threading
 import time
-import logging
+from typing import Callable, List, Literal, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +45,7 @@ try:
 except ImportError:
     from .base import _SpotHTTP
     from .base_websocket import _SpotWebSocket
+
 
 class HTTP(_SpotHTTP):
     # <=================================================================>
@@ -60,18 +62,18 @@ class HTTP(_SpotHTTP):
 
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#test-connectivity
         """
-        return self.call("GET", "/api/v3/ping", auth = False)
-    
+        return self.call("GET", "/api/v3/ping", auth=False)
+
     def time(self) -> dict:
         """
         ### Check Server Time
 
         Weight(IP): 1
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#check-server-time    
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#check-server-time
         """
-        return self.call("GET", "/api/v3/time", auth = False)
-    
+        return self.call("GET", "/api/v3/time", auth=False)
+
     def default_symbols(self) -> dict:
         """
         ### API default symbol
@@ -80,11 +82,11 @@ class HTTP(_SpotHTTP):
 
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#api-default-symbol
         """
-        return self.call("GET", "/api/v3/defaultSymbols", auth = False)
+        return self.call("GET", "/api/v3/defaultSymbols", auth=False)
 
-    def exchange_info(self, 
-                      symbol:  Optional[str] = None, 
-                      symbols: Optional[List[str]] = None) -> dict:
+    def exchange_info(
+        self, symbol: Optional[str] = None, symbols: Optional[List[str]] = None
+    ) -> dict:
         """
         ### Exchange Information
 
@@ -102,16 +104,14 @@ class HTTP(_SpotHTTP):
         :rtype: dict
         """
 
-        return self.call("GET", "/api/v3/exchangeInfo", 
-                            params = dict(
-                                    symbol  = symbol, 
-                                    symbols = ','.join(symbols) if symbols else None
-                            ),
-                            auth = False)
+        return self.call(
+            "GET",
+            "/api/v3/exchangeInfo",
+            params=dict(symbol=symbol, symbols=",".join(symbols) if symbols else None),
+            auth=False,
+        )
 
-    def order_book(self, 
-                   symbol: str, 
-                   limit:  Optional[int] = 100) -> dict:
+    def order_book(self, symbol: str, limit: Optional[int] = 100) -> dict:
         """
         ### Order Book
 
@@ -123,53 +123,47 @@ class HTTP(_SpotHTTP):
         :type symbol: str
         :param limit: An integer representing the number of order book levels to retrieve. Defaults to 100. Max is 5000.
         :type limit: int
-        
+
         :return: The order book data in JSON format.
         :rtype: dict
         """
-        return self.call("GET", "/api/v3/depth", 
-                            params = dict(
-                                    symbol = symbol, 
-                                    limit  = limit
-                            ), 
-                            auth = False)
+        return self.call(
+            "GET", "/api/v3/depth", params=dict(symbol=symbol, limit=limit), auth=False
+        )
 
-    def trades(self, 
-               symbol: str, 
-               limit:  Optional[int] = 500) -> dict:
+    def trades(self, symbol: str, limit: Optional[int] = 500) -> dict:
         """
         ### Recent Trades List
 
         Weight(IP): 5
 
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#recent-trades-list
-        
+
         :param symbol: A string representing the trading pair symbol.
         :type symbol: str
         :param limit: An optional integer representing the maximum number of trades to retrieve. Defaults to 500. Max is 5000.
         :type limit: int
-        
+
         :return: A dictionary containing information about the trades.
         :rtype: dict
         """
 
-        return self.call("GET", "/api/v3/trades", 
-                            params = dict(
-                                    symbol  = symbol, 
-                                    limit   = limit
-                            ),
-                            auth = False)
-    
-    def agg_trades(self, 
-                   symbol:     str, 
-                   start_time: Optional[int] = None, 
-                   end_time:   Optional[int] = None, 
-                   limit:      Optional[int] = 500) -> dict:
+        return self.call(
+            "GET", "/api/v3/trades", params=dict(symbol=symbol, limit=limit), auth=False
+        )
+
+    def agg_trades(
+        self,
+        symbol: str,
+        start_time: Optional[int] = None,
+        end_time: Optional[int] = None,
+        limit: Optional[int] = 500,
+    ) -> dict:
         """
         ### Compressed/Aggregate Trades List
 
         Get compressed, aggregate trades. Trades that fill at the time, from the same order, with the same price will have the quantity aggregated.
-        
+
         startTime and endTime must be used at the same time.
 
         Weight(IP): 1
@@ -184,27 +178,27 @@ class HTTP(_SpotHTTP):
         :type end_time: int
         :param limit: (optional) The maximum number of trades to retrieve. Default is 500. Max is 5000.
         :type limit: int
-        
+
         :return: A dictionary containing the retrieved trades.
         :rtype: dict
         """
-        return self.call("GET", "/api/v3/aggTrades", 
-                            params = dict(
-                                    symbol    = symbol,
-                                    startTime = start_time,
-                                    endTime   = end_time,
-                                    limit     = limit
-                            ), 
-                            auth = False)
-    
-    def klines(self, 
-               symbol:     str, 
-               interval:   Literal["1m", "5m", "15m", 
-                                   "30m", "60m", "4h", 
-                                   "1d", "1M"]          = "1m", 
-               start_time: Optional[int]                = None, 
-               end_time:   Optional[int]                = None, 
-               limit:      Optional[int]                = 500) -> dict:
+        return self.call(
+            "GET",
+            "/api/v3/aggTrades",
+            params=dict(
+                symbol=symbol, startTime=start_time, endTime=end_time, limit=limit
+            ),
+            auth=False,
+        )
+
+    def klines(
+        self,
+        symbol: str,
+        interval: Literal["1m", "5m", "15m", "30m", "60m", "4h", "1d", "1M"] = "1m",
+        start_time: Optional[int] = None,
+        end_time: Optional[int] = None,
+        limit: Optional[int] = 500,
+    ) -> dict:
         """
         ### Kline/Candlestick Data
 
@@ -224,19 +218,22 @@ class HTTP(_SpotHTTP):
         :type end_time: int
         :param limit: (optional) The maximum number of trades to retrieve. Default is 500. Max is 5000.
         :type limit: int
-        
+
         :return: A dictionary containing the klines.
         :rtype: dict
         """
-        return self.call("GET", "/api/v3/klines",
-                            params = dict(
-                                    symbol    = symbol,
-                                    interval  = interval,
-                                    startTime = start_time,
-                                    endTime   = end_time,
-                                    limit     = limit
-                            ),
-                            auth = False)
+        return self.call(
+            "GET",
+            "/api/v3/klines",
+            params=dict(
+                symbol=symbol,
+                interval=interval,
+                startTime=start_time,
+                endTime=end_time,
+                limit=limit,
+            ),
+            auth=False,
+        )
 
     def avg_price(self, symbol: str):
         """
@@ -252,17 +249,16 @@ class HTTP(_SpotHTTP):
         :return: A dictionary containing average price.
         :rtype: dict
         """
-        return self.call("GET", "/api/v3/avgPrice",
-                            params = dict(
-                                    symbol = symbol
-                            ), auth = False)
+        return self.call(
+            "GET", "/api/v3/avgPrice", params=dict(symbol=symbol), auth=False
+        )
 
     def ticker_24h(self, symbol: Optional[str] = None):
         """
         ### 24hr Ticker Price Change Statistics
 
-        Weight(IP): 1 - 1 symbol; 
-        Weight(IP): 40 - all symbols; 
+        Weight(IP): 1 - 1 symbol;
+        Weight(IP): 40 - all symbols;
 
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#24hr-ticker-price-change-statistics
 
@@ -272,18 +268,16 @@ class HTTP(_SpotHTTP):
         :return: A dictionary.
         :rtype: dict
         """
-        return self.call("GET", "/api/v3/ticker/24hr",
-                            params = dict(
-                                    symbol = symbol
-                            ),
-                            auth = False)
+        return self.call(
+            "GET", "/api/v3/ticker/24hr", params=dict(symbol=symbol), auth=False
+        )
 
     def ticker_price(self, symbol: Optional[str] = None):
         """
         ### Symbol Price Ticker
 
-        Weight(IP): 1 - 1 symbol; 
-        Weight(IP): 2 - all symbols; 
+        Weight(IP): 1 - 1 symbol;
+        Weight(IP): 2 - all symbols;
 
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#symbol-price-ticker
 
@@ -293,11 +287,9 @@ class HTTP(_SpotHTTP):
         :return: A dictionary.
         :rtype: dict
         """
-        return self.call("GET", "/api/v3/ticker/price",
-                            params = dict(
-                                    symbol = symbol
-                            ),
-                            auth = False)
+        return self.call(
+            "GET", "/api/v3/ticker/price", params=dict(symbol=symbol), auth=False
+        )
 
     def ticker_book_price(self, symbol: Optional[str] = None):
         """
@@ -305,7 +297,7 @@ class HTTP(_SpotHTTP):
 
         Best price/qty on the order book for a symbol or symbols.
 
-        Weight(IP): 1 
+        Weight(IP): 1
 
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#symbol-order-book-ticker
 
@@ -315,12 +307,10 @@ class HTTP(_SpotHTTP):
         :return: A dictionary.
         :rtype: dict
         """
-        return self.call("GET", "/api/v3/ticker/bookTicker",
-                            params = dict(
-                                    symbol = symbol
-                            ),
-                            auth = False)
-    
+        return self.call(
+            "GET", "/api/v3/ticker/bookTicker", params=dict(symbol=symbol), auth=False
+        )
+
     # <=================================================================>
     #
     #                       Sub-Account Endpoints
@@ -331,7 +321,7 @@ class HTTP(_SpotHTTP):
         """
         ### Create a sub-account from the master account.
         #### Required permission: SPOT_ACCOUNT_READ
-        
+
         Weight(IP): 1
 
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#create-a-sub-account-for-master-account
@@ -344,18 +334,19 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("POST", "api/v3/sub-account/virtualSubAccount", 
-                            params = dict(
-                                subAccount = sub_account,
-                                note = note
-                            ))
+        return self.call(
+            "POST",
+            "api/v3/sub-account/virtualSubAccount",
+            params=dict(subAccount=sub_account, note=note),
+        )
 
-
-    def sub_account_list(self, 
-                               sub_account: Optional[str] = None, 
-                               is_freeze: Optional[bool]  = None, 
-                               page: Optional[int]        = 1, 
-                               limit: Optional[int]       = 10) -> dict:
+    def sub_account_list(
+        self,
+        sub_account: Optional[str] = None,
+        is_freeze: Optional[bool] = None,
+        page: Optional[int] = 1,
+        limit: Optional[int] = 10,
+    ) -> dict:
         """
         ### Get details of the sub-account list.
         #### Required permission: SPOT_ACCOUNT_READ
@@ -376,23 +367,37 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", "api/v3/sub-account/list", 
-                        params = dict(
-                            subAccount = sub_account,
-                            isFreeze = is_freeze,
-                            page = page,
-                            limit = limit
-                        ))
+        return self.call(
+            "GET",
+            "api/v3/sub-account/list",
+            params=dict(
+                subAccount=sub_account, isFreeze=is_freeze, page=page, limit=limit
+            ),
+        )
 
-    def create_sub_account_api_key(self, 
-                                   sub_account: str, 
-                                   note:        str, 
-                                   permissions: Union[str, List[Literal["SPOT_ACCOUNT_READ",     "SPOT_ACCOUNT_WRITE", 
-                                                                        "SPOT_DEAL_READ",        "SPOT_DEAL_WRITE",
-                                                                        "CONTRACT_ACCOUNT_READ", "CONTRACT_ACCOUNT_WRITE",
-                                                                        "CONTRACT_DEAL_READ",    "CONTRACT_DEAL_WRITE", 
-                                                                        "SPOT_TRANSFER_READ",    "SPOT_TRANSFER_WRITE"]]], 
-                                   ip:          Optional[str] = None) -> dict:
+    def create_sub_account_api_key(
+        self,
+        sub_account: str,
+        note: str,
+        permissions: Union[
+            str,
+            List[
+                Literal[
+                    "SPOT_ACCOUNT_READ",
+                    "SPOT_ACCOUNT_WRITE",
+                    "SPOT_DEAL_READ",
+                    "SPOT_DEAL_WRITE",
+                    "CONTRACT_ACCOUNT_READ",
+                    "CONTRACT_ACCOUNT_WRITE",
+                    "CONTRACT_DEAL_READ",
+                    "CONTRACT_DEAL_WRITE",
+                    "SPOT_TRANSFER_READ",
+                    "SPOT_TRANSFER_WRITE",
+                ]
+            ],
+        ],
+        ip: Optional[str] = None,
+    ) -> dict:
         """
         ### Create an APIKey for a sub-account.
         #### Required permission: SPOT_ACCOUNT_READ
@@ -413,13 +418,18 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("POST", "api/v3/sub-account/apiKey", 
-                        params = dict(
-                            subAccount = sub_account,
-                            note = note,
-                            permissions = ','.join(permissions) if isinstance(permissions, list) else permissions,
-                            ip = ip
-                        ))
+        return self.call(
+            "POST",
+            "api/v3/sub-account/apiKey",
+            params=dict(
+                subAccount=sub_account,
+                note=note,
+                permissions=",".join(permissions)
+                if isinstance(permissions, list)
+                else permissions,
+                ip=ip,
+            ),
+        )
 
     def query_sub_account_api_key(self, sub_account: str) -> dict:
         """
@@ -437,10 +447,9 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", "api/v3/sub-account/apiKey", 
-                        params = dict(
-                            subAccount = sub_account
-                        ))
+        return self.call(
+            "GET", "api/v3/sub-account/apiKey", params=dict(subAccount=sub_account)
+        )
 
     def delete_sub_account_api_key(self, sub_account: str, api_key: str) -> dict:
         """
@@ -459,19 +468,21 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("DELETE", "api/v3/sub-account/apiKey", 
-                        params = dict(
-                            subAccount = sub_account,
-                            apiKey = api_key
-                        ))
+        return self.call(
+            "DELETE",
+            "api/v3/sub-account/apiKey",
+            params=dict(subAccount=sub_account, apiKey=api_key),
+        )
 
-    def universal_transfer(self,
-                           from_account_type: Literal["SPOT", "FUTURES"],
-                           to_account_type:   Literal["SPOT", "FUTURES"],
-                           asset:             str,
-                           amount:            float,
-                           from_account:      Optional[str] = None,
-                           to_account:        Optional[str] = None) -> dict:
+    def universal_transfer(
+        self,
+        from_account_type: Literal["SPOT", "FUTURES"],
+        to_account_type: Literal["SPOT", "FUTURES"],
+        asset: str,
+        amount: float,
+        from_account: Optional[str] = None,
+        to_account: Optional[str] = None,
+    ) -> dict:
         """
         ### Universal Transfer (For Master Account)
         #### Required permission: SPOT_TRANSFER_WRITE
@@ -496,25 +507,30 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("POST", "api/v3/capital/sub-account/universalTransfer",
-                        params = dict(
-                            fromAccount = from_account,
-                            toAccount = to_account,
-                            fromAccountType = from_account_type,
-                            toAccountType = to_account_type,
-                            asset = asset,
-                            amount = amount
-                        ))
+        return self.call(
+            "POST",
+            "api/v3/capital/sub-account/universalTransfer",
+            params=dict(
+                fromAccount=from_account,
+                toAccount=to_account,
+                fromAccountType=from_account_type,
+                toAccountType=to_account_type,
+                asset=asset,
+                amount=amount,
+            ),
+        )
 
-    def query_universal_transfer_history(self,
-                                        from_account_type: Literal["SPOT", "FUTURES"],
-                                        to_account_type:   Literal["SPOT", "FUTURES"],
-                                        from_account:      Optional[str] = None,
-                                        to_account:        Optional[str] = None,
-                                        start_time:        Optional[str] = None,
-                                        end_time:          Optional[str] = None,
-                                        page:              Optional[int] = 1,
-                                        limit:             Optional[int] = 500) -> dict:
+    def query_universal_transfer_history(
+        self,
+        from_account_type: Literal["SPOT", "FUTURES"],
+        to_account_type: Literal["SPOT", "FUTURES"],
+        from_account: Optional[str] = None,
+        to_account: Optional[str] = None,
+        start_time: Optional[str] = None,
+        end_time: Optional[str] = None,
+        page: Optional[int] = 1,
+        limit: Optional[int] = 500,
+    ) -> dict:
         """
         ### Query Universal Transfer History.
         #### Required permission: SPOT_TRANSFER_READ
@@ -543,17 +559,20 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", "api/v3/capital/sub-account/universalTransfer",
-                        params = dict(
-                            fromAccount = from_account,
-                            toAccount = to_account,
-                            fromAccountType = from_account_type,
-                            toAccountType = to_account_type,
-                            startTime = start_time,
-                            endTime = end_time,
-                            page = page,
-                            limit = limit
-                        ))
+        return self.call(
+            "GET",
+            "api/v3/capital/sub-account/universalTransfer",
+            params=dict(
+                fromAccount=from_account,
+                toAccount=to_account,
+                fromAccountType=from_account_type,
+                toAccountType=to_account_type,
+                startTime=start_time,
+                endTime=end_time,
+                page=page,
+                limit=limit,
+            ),
+        )
 
     # <=================================================================>
     #
@@ -575,17 +594,19 @@ class HTTP(_SpotHTTP):
         """
         return self.call("GET", "api/v3/selfSymbols")
 
-    def test_new_order(self, 
-                       symbol:              str, 
-                       side:                str, 
-                       order_type:          str, 
-                       quantity:            Optional[int] = None, 
-                       quote_order_qty:     Optional[int] = None, 
-                       price:               Optional[int] = None, 
-                       new_client_order_id: Optional[str] = None, 
-                       stop_price:          Optional[int] = None, 
-                       iceberg_qty:         Optional[int] = None, 
-                       time_in_force:       Optional[str] = None) -> dict:
+    def test_new_order(
+        self,
+        symbol: str,
+        side: str,
+        order_type: str,
+        quantity: Optional[int] = None,
+        quote_order_qty: Optional[int] = None,
+        price: Optional[int] = None,
+        new_client_order_id: Optional[str] = None,
+        stop_price: Optional[int] = None,
+        iceberg_qty: Optional[int] = None,
+        time_in_force: Optional[str] = None,
+    ) -> dict:
         """
         ### New Order.
         #### Required permission: SPOT_DEAL_WRITE
@@ -594,7 +615,7 @@ class HTTP(_SpotHTTP):
 
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#new-order
 
-        :param symbol: 
+        :param symbol:
         :type symbol: str
         :param side: ENUM:Order Side
         :type side: str
@@ -618,31 +639,36 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("POST", "/api/v3/order/test", 
-                            params = dict(
-                                    symbol = symbol, 
-                                    side = side, 
-                                    type = order_type, 
-                                    quantity = quantity, 
-                                    quoteOrderQty = quote_order_qty, 
-                                    price = price, 
-                                    newClientOrderId = new_client_order_id, 
-                                    stopPrice = stop_price, 
-                                    icebergQty = iceberg_qty, 
-                                    timeInForce = time_in_force
-                            ))   
+        return self.call(
+            "POST",
+            "/api/v3/order/test",
+            params=dict(
+                symbol=symbol,
+                side=side,
+                type=order_type,
+                quantity=quantity,
+                quoteOrderQty=quote_order_qty,
+                price=price,
+                newClientOrderId=new_client_order_id,
+                stopPrice=stop_price,
+                icebergQty=iceberg_qty,
+                timeInForce=time_in_force,
+            ),
+        )
 
-    def new_order(self, 
-                  symbol:              str, 
-                  side:                str, 
-                  order_type:          str, 
-                  quantity:            Optional[int] = None, 
-                  quote_order_qty:     Optional[int] = None, 
-                  price:               Optional[int] = None, 
-                  new_client_order_id: Optional[str] = None, 
-                  stop_price:          Optional[int] = None, 
-                  iceberg_qty:         Optional[int] = None, 
-                  time_in_force:       Optional[str] = None) -> dict:
+    def new_order(
+        self,
+        symbol: str,
+        side: str,
+        order_type: str,
+        quantity: Optional[int] = None,
+        quote_order_qty: Optional[int] = None,
+        price: Optional[int] = None,
+        new_client_order_id: Optional[str] = None,
+        stop_price: Optional[int] = None,
+        iceberg_qty: Optional[int] = None,
+        time_in_force: Optional[str] = None,
+    ) -> dict:
         """
         ### New Order.
         #### Required permission: SPOT_DEAL_WRITE
@@ -651,7 +677,7 @@ class HTTP(_SpotHTTP):
 
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#new-order
 
-        :param symbol: 
+        :param symbol:
         :type symbol: str
         :param side: ENUM:Order Side
         :type side: str
@@ -675,30 +701,36 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("POST", "api/v3/order", 
-                            params = dict(
-                                    symbol = symbol, 
-                                    side = side, 
-                                    type = order_type, 
-                                    quantity = quantity, 
-                                    quoteOrderQty = quote_order_qty, 
-                                    price = price, 
-                                    newClientOrderId = new_client_order_id, 
-                                    stopPrice = stop_price, 
-                                    icebergQty = iceberg_qty, 
-                                    timeInForce = time_in_force
-                            ))    
-    
-    def batch_orders(self,
-                     batch_orders:        List[str],
-                     symbol:              str, 
-                     side:                Literal["BUY", "SELL"],
-                     order_type:          Literal["LIMIT", "MARKET", "LIMIT_MARKET", "IMMEDIATE_OR_CANCEL", "FILL_OR_KILL"],
-                     quantity:            Optional[int] = None,
-                     quote_order_qty:     Optional[int] = None,
-                     price:               Optional[int] = None,
-                     new_client_order_id: Optional[str] = None) -> dict:
+        return self.call(
+            "POST",
+            "api/v3/order",
+            params=dict(
+                symbol=symbol,
+                side=side,
+                type=order_type,
+                quantity=quantity,
+                quoteOrderQty=quote_order_qty,
+                price=price,
+                newClientOrderId=new_client_order_id,
+                stopPrice=stop_price,
+                icebergQty=iceberg_qty,
+                timeInForce=time_in_force,
+            ),
+        )
 
+    def batch_orders(
+        self,
+        batch_orders: List[str],
+        symbol: str,
+        side: Literal["BUY", "SELL"],
+        order_type: Literal[
+            "LIMIT", "MARKET", "LIMIT_MARKET", "IMMEDIATE_OR_CANCEL", "FILL_OR_KILL"
+        ],
+        quantity: Optional[int] = None,
+        quote_order_qty: Optional[int] = None,
+        price: Optional[int] = None,
+        new_client_order_id: Optional[str] = None,
+    ) -> dict:
         """
         ### Batch Orders
         #### Supports 20 orders with a same symbol in a batch,rate limit:2 times/s.
@@ -730,23 +762,28 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("POST", "api/v3/batchOrders",
-                        params = dict(
-                                batchOrders = batch_orders,
-                                symbol = symbol,
-                                side = side,
-                                type = order_type,
-                                quantity = quantity,
-                                quoteOrderQty = quote_order_qty,
-                                price = price,
-                                newClientOrderId = new_client_order_id
-                        ))
+        return self.call(
+            "POST",
+            "api/v3/batchOrders",
+            params=dict(
+                batchOrders=batch_orders,
+                symbol=symbol,
+                side=side,
+                type=order_type,
+                quantity=quantity,
+                quoteOrderQty=quote_order_qty,
+                price=price,
+                newClientOrderId=new_client_order_id,
+            ),
+        )
 
-    def cancel_order(self,
-                     symbol:               str,
-                     order_id:             Optional[str] = None,
-                     orig_client_order_id: Optional[str] = None,
-                     new_client_order_id:  Optional[str] = None) -> dict:
+    def cancel_order(
+        self,
+        symbol: str,
+        order_id: Optional[str] = None,
+        orig_client_order_id: Optional[str] = None,
+        new_client_order_id: Optional[str] = None,
+    ) -> dict:
         """
         ### Cancel Order.
         #### Required permission: SPOT_DEAL_WRITE
@@ -755,11 +792,11 @@ class HTTP(_SpotHTTP):
 
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#cancel-order
 
-        :param symbol: 
+        :param symbol:
         :type symbol: str
         :param order_id: (optional) Order id
         :type order_id: str
-        :param orig_client_order_id: (optional) 
+        :param orig_client_order_id: (optional)
         :type orig_client_order_id: str
         :param new_client_order_id: (optional) Unique order id
         :type new_client_order_id: str
@@ -767,16 +804,18 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("DELETE", "api/v3/order",
-                        params = dict(
-                                symbol = symbol,
-                                orderId = order_id,
-                                origClientOrderId = orig_client_order_id,
-                                newClientOrderId = new_client_order_id
-                        ))    
+        return self.call(
+            "DELETE",
+            "api/v3/order",
+            params=dict(
+                symbol=symbol,
+                orderId=order_id,
+                origClientOrderId=orig_client_order_id,
+                newClientOrderId=new_client_order_id,
+            ),
+        )
 
     def cancel_all_open_orders(self, symbol: str) -> dict:
-
         """
         ### Cancel all Open Orders on a Symbol.
         #### Required permission: SPOT_DEAL_WRITE
@@ -791,16 +830,14 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("DELETE", "api/v3/openOrders",
-                        params = dict(
-                                symbol = symbol
-                        ))
+        return self.call("DELETE", "api/v3/openOrders", params=dict(symbol=symbol))
 
-    def query_order(self,
-                    symbol:               str, 
-                    orig_client_order_id: Optional[str] = None,
-                    order_id:             Optional[str] = None) -> dict:
-
+    def query_order(
+        self,
+        symbol: str,
+        orig_client_order_id: Optional[str] = None,
+        order_id: Optional[str] = None,
+    ) -> dict:
         """
         ### Query Order.
         #### Required permission: SPOT_DEAL_READ
@@ -810,7 +847,7 @@ class HTTP(_SpotHTTP):
 
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-order
 
-        :param symbol: 
+        :param symbol:
         :type symbol: str
         :param orig_client_order_id: (optional) Unique order id
         :type orig_client_order_id: str
@@ -822,15 +859,15 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", "api/v3/order",
-                        params = dict(
-                                symbol = symbol,
-                                origClientOrderId = orig_client_order_id,
-                                orderId = order_id
-                        ))
+        return self.call(
+            "GET",
+            "api/v3/order",
+            params=dict(
+                symbol=symbol, origClientOrderId=orig_client_order_id, orderId=order_id
+            ),
+        )
 
     def current_open_orders(self, symbol: str) -> dict:
-
         """
         ### Current Open Orders.
         #### Required permission: SPOT_DEAL_READ
@@ -839,20 +876,21 @@ class HTTP(_SpotHTTP):
 
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#current-open-orders
 
-        :param symbol: 
+        :param symbol:
         :type symbol: str
 
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", "api/v3/openOrders", params = dict(symbol = symbol))
+        return self.call("GET", "api/v3/openOrders", params=dict(symbol=symbol))
 
-    def all_orders(self, 
-                   symbol:     str, 
-                   start_time: Optional[int] = None, 
-                   end_time:   Optional[int] = None, 
-                   limit:      Optional[int] = None) -> dict:
-
+    def all_orders(
+        self,
+        symbol: str,
+        start_time: Optional[int] = None,
+        end_time: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> dict:
         """
         ### All Orders.
         #### Required permission: SPOT_DEAL_READ
@@ -865,9 +903,9 @@ class HTTP(_SpotHTTP):
 
         :param symbol: Symbol
         :type symbol: str
-        :param start_time: (optional) 
+        :param start_time: (optional)
         :type start_time: int
-        :param end_time: (optional) 
+        :param end_time: (optional)
         :type end_time: int
         :param limit: (optional) Default 500; max 1000;
         :type limit: int
@@ -875,16 +913,15 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", "api/v3/allOrders",
-                        params=dict(
-                                symbol=symbol,
-                                startTime=start_time,
-                                endTime=end_time,
-                                limit=limit
-                        ))
+        return self.call(
+            "GET",
+            "api/v3/allOrders",
+            params=dict(
+                symbol=symbol, startTime=start_time, endTime=end_time, limit=limit
+            ),
+        )
 
     def account_information(self) -> dict:
-
         """
         ### Account Information.
         #### Required permission: SPOT_ACCOUNT_READ
@@ -900,13 +937,14 @@ class HTTP(_SpotHTTP):
         """
         return self.call("GET", "api/v3/account")
 
-    def account_trade_list(self, 
-                           symbol:     str, 
-                           order_id:   Optional[str] = None, 
-                           start_time: Optional[int] = None, 
-                           end_time:   Optional[int] = None, 
-                           limit:      Optional[int] = None) -> dict:
-
+    def account_trade_list(
+        self,
+        symbol: str,
+        order_id: Optional[str] = None,
+        start_time: Optional[int] = None,
+        end_time: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> dict:
         """
         ### Account Trade List.
         #### Required permission: SPOT_ACCOUNT_READ
@@ -915,18 +953,18 @@ class HTTP(_SpotHTTP):
 
         Get trades for a specific account and symbol,
         Only the transaction records in the past 1 month can be queried.
-        If you want to view more transaction records, please use the export function on the web side, 
+        If you want to view more transaction records, please use the export function on the web side,
         which supports exporting transaction records of the past 3 years at most.
 
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#account-trade-list
 
-        :param symbol: 
+        :param symbol:
         :type symbol: str
         :param order_id: (optional) order Id
         :type order_id: str
-        :param start_time: (optional) 
+        :param start_time: (optional)
         :type start_time: int
-        :param end_time: (optional) 
+        :param end_time: (optional)
         :type end_time: int
         :param limit: (optional) Default 500; max 1000;
         :type limit: int
@@ -934,14 +972,17 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", "api/v3/myTrades",
-                        params = dict(
-                                symbol = symbol,
-                                orderId = order_id,
-                                startTime = start_time,
-                                endTime = end_time,
-                                limit = limit
-                        ))
+        return self.call(
+            "GET",
+            "api/v3/myTrades",
+            params=dict(
+                symbol=symbol,
+                orderId=order_id,
+                startTime=start_time,
+                endTime=end_time,
+                limit=limit,
+            ),
+        )
 
     def enable_mx_deduct(self, mx_deduct_enable: bool) -> dict:
         """
@@ -959,10 +1000,11 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("POST", "api/v3/mxDeduct/enable",
-                        params = dict(
-                                mxDeductEnable = mx_deduct_enable
-                        ))
+        return self.call(
+            "POST",
+            "api/v3/mxDeduct/enable",
+            params=dict(mxDeductEnable=mx_deduct_enable),
+        )
 
     def query_mx_deduct_status(self) -> dict:
         """
@@ -977,7 +1019,6 @@ class HTTP(_SpotHTTP):
         :rtype: dict
         """
         return self.call("GET", "api/v3/mxDeduct/enable")
-
 
     # <=================================================================>
     #
@@ -999,14 +1040,16 @@ class HTTP(_SpotHTTP):
         """
         return self.call("GET", "api/v3/capital/config/getall")
 
-    def withdraw(self,
-                 coin:              str,
-                 address:           str,
-                 amount:            int,
-                 withdraw_order_id: Optional[str] = None,
-                 network:           Optional[str] = None,
-                 memo:              Optional[str] = None,
-                 remark:            Optional[str] = None) -> dict:
+    def withdraw(
+        self,
+        coin: str,
+        address: str,
+        amount: int,
+        withdraw_order_id: Optional[str] = None,
+        network: Optional[str] = None,
+        memo: Optional[str] = None,
+        remark: Optional[str] = None,
+    ) -> dict:
         """
         ### Withdraw.
         #### Required permission: SPOT_WITHDRAW_WRITE
@@ -1033,16 +1076,19 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("POST", "api/v3/capital/withdraw/apply",
-                        params = dict(
-                                coin = coin,
-                                withdrawOrderId = withdraw_order_id,
-                                network = network,
-                                address = address,
-                                memo = memo,
-                                amount = amount,
-                                remark = remark
-                        ))
+        return self.call(
+            "POST",
+            "api/v3/capital/withdraw/apply",
+            params=dict(
+                coin=coin,
+                withdrawOrderId=withdraw_order_id,
+                network=network,
+                address=address,
+                memo=memo,
+                amount=amount,
+                remark=remark,
+            ),
+        )
 
     def cancel_withdraw(self, id: str) -> dict:
         """
@@ -1061,13 +1107,14 @@ class HTTP(_SpotHTTP):
         """
         return self.call("DELETE", "api/v3/capital/withdraw", params=dict(id=id))
 
-    def deposit_history(self,
-                        coin:       Optional[str] = None,
-                        status:     Optional[str] = None,
-                        start_time: Optional[int] = None,
-                        end_time:   Optional[int] = None,
-                        limit:      Optional[int] = None) -> dict:
-
+    def deposit_history(
+        self,
+        coin: Optional[str] = None,
+        status: Optional[str] = None,
+        start_time: Optional[int] = None,
+        end_time: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> dict:
         """
         ### Deposit History(supporting network).
         #### Required permission: SPOT_WITHDRAW_READ
@@ -1092,21 +1139,26 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", "api/v3/capital/deposit/hisrec",
-                        params = dict(
-                                coin = coin,
-                                status = status,
-                                startTime = start_time,
-                                endTime = end_time,
-                                limit = limit
-                        ))
+        return self.call(
+            "GET",
+            "api/v3/capital/deposit/hisrec",
+            params=dict(
+                coin=coin,
+                status=status,
+                startTime=start_time,
+                endTime=end_time,
+                limit=limit,
+            ),
+        )
 
-    def withdraw_history(self, 
-                         coin:       Optional[str] = None, 
-                         status:     Optional[str] = None, 
-                         limit:      Optional[int] = None, 
-                         start_time: Optional[str] = None, 
-                         end_time:   Optional[str] = None) -> dict:
+    def withdraw_history(
+        self,
+        coin: Optional[str] = None,
+        status: Optional[str] = None,
+        limit: Optional[int] = None,
+        start_time: Optional[str] = None,
+        end_time: Optional[str] = None,
+    ) -> dict:
         """
         ### Withdraw History (supporting network).
         #### Required permission: SPOT_WITHDRAW_READ
@@ -1129,18 +1181,19 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", "api/v3/capital/withdraw/history",
-                        params = dict(
-                                coin = coin,
-                                status = status,
-                                limit = limit,
-                                startTime = start_time,
-                                endTime = end_time
-                        ))
+        return self.call(
+            "GET",
+            "api/v3/capital/withdraw/history",
+            params=dict(
+                coin=coin,
+                status=status,
+                limit=limit,
+                startTime=start_time,
+                endTime=end_time,
+            ),
+        )
 
-    def generate_deposit_address(self, 
-                                 coin:    str, 
-                                 network: str) -> dict:
+    def generate_deposit_address(self, coin: str, network: str) -> dict:
         """
         ### Generate deposit address (supporting network).
         #### Required permission: SPOT_WITHDRAW_WRITE
@@ -1157,15 +1210,13 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("POST", "api/v3/capital/deposit/address",
-                        params = dict(
-                                coin = coin,
-                                network = network
-                        ))
+        return self.call(
+            "POST",
+            "api/v3/capital/deposit/address",
+            params=dict(coin=coin, network=network),
+        )
 
-    def deposit_address(self, 
-                        coin: str, 
-                        network: Optional[str] = None) -> dict:
+    def deposit_address(self, coin: str, network: Optional[str] = None) -> dict:
         """
         ### Deposit Address (supporting network).
         #### Required permission: SPOT_WITHDRAW_READ
@@ -1182,16 +1233,21 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", "api/v3/capital/deposit/address",
-                        params = dict(
-                                coin = coin,
-                                network = network,
-                        ))
+        return self.call(
+            "GET",
+            "api/v3/capital/deposit/address",
+            params=dict(
+                coin=coin,
+                network=network,
+            ),
+        )
 
-    def withdraw_address(self, 
-                         coin:  Optional[str] = None, 
-                         page:  Optional[int] = None, 
-                         limit: Optional[int] = None) -> dict:
+    def withdraw_address(
+        self,
+        coin: Optional[str] = None,
+        page: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> dict:
         """
         ### Withdraw Address (supporting network).
         #### Required permission: SPOT_WITHDRAW_R
@@ -1212,18 +1268,15 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", "api/v3/capital/withdraw/address",
-                        params = dict(
-                                coin = coin,
-                                page = page,
-                                limit = limit
-                        ))
+        return self.call(
+            "GET",
+            "api/v3/capital/withdraw/address",
+            params=dict(coin=coin, page=page, limit=limit),
+        )
 
-    def user_universal_transfer(self, 
-                                from_account_type: str,
-                                to_account_type:   str,
-                                asset:             str,
-                                amount:            int) -> dict:
+    def user_universal_transfer(
+        self, from_account_type: str, to_account_type: str, asset: str, amount: int
+    ) -> dict:
         """
         ### User Universal Transfer.
         #### Required permission: SPOT_TRANSFER_WRITE
@@ -1244,21 +1297,26 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("POST", "api/v3/capital/transfer",
-                        params = dict(
-                                fromAccountType = from_account_type,
-                                toAccountType = to_account_type,
-                                asset = asset,
-                                amount = amount
-                        ))
+        return self.call(
+            "POST",
+            "api/v3/capital/transfer",
+            params=dict(
+                fromAccountType=from_account_type,
+                toAccountType=to_account_type,
+                asset=asset,
+                amount=amount,
+            ),
+        )
 
-    def user_universal_transfer_history(self,
-                                        from_account_type: Literal["SPOT", "FUTURES"],
-                                        to_account_type:   Literal["SPOT", "FUTURES"],
-                                        start_time:        Optional[str] = None,
-                                        end_time:          Optional[str] = None,
-                                        page:              Optional[int] = 1,
-                                        size:              Optional[int] = 10) -> dict:
+    def user_universal_transfer_history(
+        self,
+        from_account_type: Literal["SPOT", "FUTURES"],
+        to_account_type: Literal["SPOT", "FUTURES"],
+        start_time: Optional[str] = None,
+        end_time: Optional[str] = None,
+        page: Optional[int] = 1,
+        size: Optional[int] = 10,
+    ) -> dict:
         """
         ### Query User Universal Transfer History.
         #### Required permission: SPOT_TRANSFER_READ
@@ -1285,15 +1343,18 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", "api/v3/capital/transfer",
-                        params = dict(
-                                fromAccountType = from_account_type,
-                                toAccountType = to_account_type,
-                                startTime = start_time,
-                                endTime = end_time,
-                                page = page,
-                                size = size
-                        ))
+        return self.call(
+            "GET",
+            "api/v3/capital/transfer",
+            params=dict(
+                fromAccountType=from_account_type,
+                toAccountType=to_account_type,
+                startTime=start_time,
+                endTime=end_time,
+                page=page,
+                size=size,
+            ),
+        )
 
     def user_universal_transfer_history_by_tranid(self, tran_id: str) -> dict:
         """
@@ -1311,7 +1372,9 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", "api/v3/capital/transfer/tranId", params=dict(tranId=tran_id))
+        return self.call(
+            "GET", "api/v3/capital/transfer/tranId", params=dict(tranId=tran_id)
+        )
 
     def get_assets_convert_into_mx(self) -> dict:
         """
@@ -1342,16 +1405,19 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("POST", "api/v3/capital/convert",
-                        params = dict(
-                                asset = ','.join(asset) if isinstance(asset, list) else asset
-                        ))
+        return self.call(
+            "POST",
+            "api/v3/capital/convert",
+            params=dict(asset=",".join(asset) if isinstance(asset, list) else asset),
+        )
 
-    def dustlog(self, 
-                start_time: Optional[int] = None, 
-                end_time:   Optional[int] = None, 
-                page:       Optional[int] = None, 
-                limit:      Optional[int] = None) -> dict:
+    def dustlog(
+        self,
+        start_time: Optional[int] = None,
+        end_time: Optional[int] = None,
+        page: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> dict:
         """
         ### DustLog.
         #### Required permission: SPOT_DEAL_READ
@@ -1360,7 +1426,7 @@ class HTTP(_SpotHTTP):
 
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#dustlog
 
-        
+
         :param start_time: (optional) startTime
         :type start_time: int
         :param end_time: (optional) endTime
@@ -1374,13 +1440,11 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", "api/v3/capital/convert",
-                        params = dict(
-                                startTime = start_time,
-                                endTime = end_time,
-                                page = page,
-                                limit = limit
-                        ))
+        return self.call(
+            "GET",
+            "api/v3/capital/convert",
+            params=dict(startTime=start_time, endTime=end_time, page=page, limit=limit),
+        )
 
     # <=================================================================>
     #
@@ -1401,17 +1465,14 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", "api/v3/etf/info",
-                        params = dict(
-                                symbol = symbol
-                        ))
+        return self.call("GET", "api/v3/etf/info", params=dict(symbol=symbol))
 
     # <=================================================================>
     #
     #                     Websocket Market Streams
     #
     # <=================================================================>
-    
+
     # realized in spot.WebSocket class
 
     # <=================================================================>
@@ -1432,7 +1493,9 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("POST", "api/v3/userDataStream", params = {"please_sign_it": None})
+        return self.call(
+            "POST", "api/v3/userDataStream", params={"please_sign_it": None}
+        )
 
     def keep_alive_listen_key(self, listen_key: str) -> dict:
         """
@@ -1447,7 +1510,9 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("PUT", "api/v3/userDataStream", params=dict(listenKey=listen_key))
+        return self.call(
+            "PUT", "api/v3/userDataStream", params=dict(listenKey=listen_key)
+        )
 
     def close_listen_key(self) -> dict:
         """
@@ -1461,17 +1526,21 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("DELETE", "api/v3/userDataStream", params = {"please_sign_it": None})
+        return self.call(
+            "DELETE", "api/v3/userDataStream", params={"please_sign_it": None}
+        )
 
     # <=================================================================>
     #
     #                          Rabate Endpoints
     #
     # <=================================================================>
-    def get_rebate_history_records(self, 
-                                   start_time: Optional[int] = None, 
-                                   end_time:   Optional[int] = None, 
-                                   page:       Optional[int] = None) -> dict:
+    def get_rebate_history_records(
+        self,
+        start_time: Optional[int] = None,
+        end_time: Optional[int] = None,
+        page: Optional[int] = None,
+    ) -> dict:
         """
         ### Get Rebate History Records.
         #### Required permission: SPOT_ACCOUNT_READ
@@ -1480,10 +1549,10 @@ class HTTP(_SpotHTTP):
 
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#rebate-endpoints
 
-        
-        :param start_time: (optional) 
+
+        :param start_time: (optional)
         :type start_time: int
-        :param end_time: (optional) 
+        :param end_time: (optional)
         :type end_time: int
         :param page: (optional) default 1
         :type page: int
@@ -1491,18 +1560,18 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", "api/v3/rebate/taxQuery",
-                        params = dict(
-                                startTime = start_time,
-                                endTime = end_time,
-                                page = page
-                        ))
+        return self.call(
+            "GET",
+            "api/v3/rebate/taxQuery",
+            params=dict(startTime=start_time, endTime=end_time, page=page),
+        )
 
-    def get_rebate_records_detail(self, 
-                                  start_time: Optional[int] = None,
-                                  end_time:   Optional[int] = None, 
-                                  page:       Optional[int] = None) -> dict:
-
+    def get_rebate_records_detail(
+        self,
+        start_time: Optional[int] = None,
+        end_time: Optional[int] = None,
+        page: Optional[int] = None,
+    ) -> dict:
         """
         ### Get Rebate Records Detail.
         #### Required permission: SPOT_ACCOUNT_READ
@@ -1512,9 +1581,9 @@ class HTTP(_SpotHTTP):
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-rebate-records-detail
 
 
-        :param start_time: (optional) 
+        :param start_time: (optional)
         :type start_time: int
-        :param end_time: (optional) 
+        :param end_time: (optional)
         :type end_time: int
         :param page: (optional) default 1
         :type page: int
@@ -1523,17 +1592,18 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", "api/v3/rebate/detail", 
-                            params = dict(
-                                    startTime = start_time, 
-                                    endTime = end_time, 
-                                    page = page
-                            ))
+        return self.call(
+            "GET",
+            "api/v3/rebate/detail",
+            params=dict(startTime=start_time, endTime=end_time, page=page),
+        )
 
-    def get_self_rebate_records_detail(self, 
-                                       start_time: Optional[int] = None, 
-                                       end_time:   Optional[int] = None, 
-                                       page:       Optional[int] = None) -> dict:
+    def get_self_rebate_records_detail(
+        self,
+        start_time: Optional[int] = None,
+        end_time: Optional[int] = None,
+        page: Optional[int] = None,
+    ) -> dict:
         """
         ### Get Self Rebate Records Detail.
         #### Required permission: SPOT_ACCOUNT_READ
@@ -1542,9 +1612,9 @@ class HTTP(_SpotHTTP):
 
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-self-rebate-records-detail
 
-        :param start_time: (optional) 
+        :param start_time: (optional)
         :type start_time: int
-        :param end_time: (optional) 
+        :param end_time: (optional)
         :type end_time: int
         :param page: (optional) default 1
         :type page: int
@@ -1552,12 +1622,11 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", "api/v3/rebate/detail/kickback",
-                        params = dict(
-                                startTime = start_time,
-                                endTime = end_time,
-                                page = page
-                        ))
+        return self.call(
+            "GET",
+            "api/v3/rebate/detail/kickback",
+            params=dict(startTime=start_time, endTime=end_time, page=page),
+        )
 
     def query_refercode(self) -> dict:
         """
@@ -1571,14 +1640,18 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", "api/v3/rebate/referCode", params=dict(please_sign_me = None))
+        return self.call(
+            "GET", "api/v3/rebate/referCode", params=dict(please_sign_me=None)
+        )
 
-    def affiliate_commission_record(self,
-                                    start_time:  Optional[int] = None, 
-                                    end_time:    Optional[int] = None, 
-                                    invite_code: Optional[int] = None,
-                                    page:        Optional[int] = None,
-                                    page_size:   Optional[int] = None) -> dict:
+    def affiliate_commission_record(
+        self,
+        start_time: Optional[int] = None,
+        end_time: Optional[int] = None,
+        invite_code: Optional[int] = None,
+        page: Optional[int] = None,
+        page_size: Optional[int] = None,
+    ) -> dict:
         """
         ### Get Affiliate Commission Record (affiliate only)
         #### Required permission: SPOT_ACCOUNT_READ
@@ -1587,11 +1660,11 @@ class HTTP(_SpotHTTP):
 
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-affiliate-commission-record-affiliate-only
 
-        :param start_time: (optional) 
+        :param start_time: (optional)
         :type start_time: int
-        :param end_time: (optional) 
+        :param end_time: (optional)
         :type end_time: int
-        :param invite_code: (optional) 
+        :param invite_code: (optional)
         :type invite_code: int
         :param page: (optional) default 1
         :type page: int
@@ -1601,21 +1674,26 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", "/api/v3/rebate/affiliate/commission",
-                        params = dict(
-                                startTime = start_time,
-                                endTime = end_time,
-                                inviteCode = invite_code,
-                                page = page,
-                                pageSize = page_size
-                        ))
+        return self.call(
+            "GET",
+            "/api/v3/rebate/affiliate/commission",
+            params=dict(
+                startTime=start_time,
+                endTime=end_time,
+                inviteCode=invite_code,
+                page=page,
+                pageSize=page_size,
+            ),
+        )
 
-    def affiliate_withdraw_record(self,
-                             start_time:  Optional[int] = None, 
-                             end_time:    Optional[int] = None, 
-                             invite_code: Optional[int] = None,
-                             page:        Optional[int] = None,
-                             page_size:   Optional[int] = None) -> dict:
+    def affiliate_withdraw_record(
+        self,
+        start_time: Optional[int] = None,
+        end_time: Optional[int] = None,
+        invite_code: Optional[int] = None,
+        page: Optional[int] = None,
+        page_size: Optional[int] = None,
+    ) -> dict:
         """
         ### Get Affiliate Withdraw Record (affiliate only)
         #### Required permission: SPOT_ACCOUNT_READ
@@ -1624,11 +1702,11 @@ class HTTP(_SpotHTTP):
 
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-affiliate-withdraw-record-affiliate-only
 
-        :param start_time: (optional) 
+        :param start_time: (optional)
         :type start_time: int
-        :param end_time: (optional) 
+        :param end_time: (optional)
         :type end_time: int
-        :param invite_code: (optional) 
+        :param invite_code: (optional)
         :type invite_code: int
         :param page: (optional) default 1
         :type page: int
@@ -1638,22 +1716,27 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", "/api/v3/rebate/affiliate/withdraw",
-                        params = dict(
-                                startTime = start_time,
-                                endTime = end_time,
-                                inviteCode = invite_code,
-                                page = page,
-                                pageSize = page_size
-                        ))
+        return self.call(
+            "GET",
+            "/api/v3/rebate/affiliate/withdraw",
+            params=dict(
+                startTime=start_time,
+                endTime=end_time,
+                inviteCode=invite_code,
+                page=page,
+                pageSize=page_size,
+            ),
+        )
 
-    def affiliate_commission_detail_record(self,
-                                           start_time:  Optional[int] = None, 
-                                           end_time:    Optional[int] = None, 
-                                           invite_code: Optional[int] = None,
-                                           page:        Optional[int] = None,
-                                           page_size:   Optional[int] = None,
-                                           type:        Optional[Literal[1, 2, 3]] = None) -> dict:
+    def affiliate_commission_detail_record(
+        self,
+        start_time: Optional[int] = None,
+        end_time: Optional[int] = None,
+        invite_code: Optional[int] = None,
+        page: Optional[int] = None,
+        page_size: Optional[int] = None,
+        type: Optional[Literal[1, 2, 3]] = None,
+    ) -> dict:
         """
         ### Get Affiliate Withdraw Record (affiliate only)
         #### Required permission: SPOT_ACCOUNT_READ
@@ -1662,11 +1745,11 @@ class HTTP(_SpotHTTP):
 
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-affiliate-withdraw-record-affiliate-only
 
-        :param start_time: (optional) 
+        :param start_time: (optional)
         :type start_time: int
-        :param end_time: (optional) 
+        :param end_time: (optional)
         :type end_time: int
-        :param invite_code: (optional) 
+        :param invite_code: (optional)
         :type invite_code: int
         :param page: (optional) default 1
         :type page: int
@@ -1678,31 +1761,37 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", "/api/v3/rebate/affiliate/commission/detail",
-                        params = dict(
-                                startTime = start_time,
-                                endTime = end_time,
-                                inviteCode = invite_code,
-                                page = page,
-                                pageSize = page_size,
-                                type = type
-                        ))
+        return self.call(
+            "GET",
+            "/api/v3/rebate/affiliate/commission/detail",
+            params=dict(
+                startTime=start_time,
+                endTime=end_time,
+                inviteCode=invite_code,
+                page=page,
+                pageSize=page_size,
+                type=type,
+            ),
+        )
+
 
 class WebSocket(_SpotWebSocket):
-    def __init__(self, 
-                 api_key:            Optional[str]  = None, 
-                 api_secret:         Optional[str]  = None,
-                 listenKey:          Optional[str]  = None,
-                 ping_interval:      Optional[int]  = 20, 
-                 ping_timeout:       Optional[int]  = 10, 
-                 retries:            Optional[int]  = 10,
-                 restart_on_error:   Optional[bool] = True, 
-                 trace_logging:      Optional[bool] = False,
-                 http_proxy_host:    Optional[str]   = None,
-                 http_proxy_port:    Optional[int]   = None,
-                 http_no_proxy:      Optional[list]  = None,
-                 http_proxy_auth:    Optional[tuple] = None,
-                 http_proxy_timeout: Optional[int]   = None):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        api_secret: Optional[str] = None,
+        listenKey: Optional[str] = None,
+        ping_interval: Optional[int] = 20,
+        ping_timeout: Optional[int] = 10,
+        retries: Optional[int] = 10,
+        restart_on_error: Optional[bool] = True,
+        trace_logging: Optional[bool] = False,
+        http_proxy_host: Optional[str] = None,
+        http_proxy_port: Optional[int] = None,
+        http_no_proxy: Optional[list] = None,
+        http_proxy_auth: Optional[tuple] = None,
+        http_proxy_timeout: Optional[int] = None,
+    ):
         """
         Initializes the class instance with the provided arguments.
 
@@ -1712,7 +1801,7 @@ class WebSocket(_SpotWebSocket):
         :param api_secret: API secret for authentication. (Optional)
         :type api_secret: str
 
-        :param listenKey: The listen key for the connection to private channels. 
+        :param listenKey: The listen key for the connection to private channels.
                           If not provided, a listen key will be generated from HTTP api [Permission: SPOT_ACCOUNT_R] (Optional)
         :type listenKey: str
 
@@ -1732,18 +1821,18 @@ class WebSocket(_SpotWebSocket):
         :type trace_logging: bool
         """
         kwargs = dict(
-            api_key = api_key,
-            api_secret = api_secret,
-            ping_interval = ping_interval,
-            ping_timeout = ping_timeout,
-            retries = retries,
-            restart_on_error = restart_on_error,
-            trace_logging = trace_logging,
-            http_proxy_host = http_proxy_host,
-            http_proxy_port = http_proxy_port,
-            http_no_proxy = http_no_proxy,
-            http_proxy_auth = http_proxy_auth,
-            http_proxy_timeout = http_proxy_timeout
+            api_key=api_key,
+            api_secret=api_secret,
+            ping_interval=ping_interval,
+            ping_timeout=ping_timeout,
+            retries=retries,
+            restart_on_error=restart_on_error,
+            trace_logging=trace_logging,
+            http_proxy_host=http_proxy_host,
+            http_proxy_port=http_proxy_port,
+            http_no_proxy=http_no_proxy,
+            http_proxy_auth=http_proxy_auth,
+            http_proxy_timeout=http_proxy_timeout,
         )
 
         self.listenKey = listenKey
@@ -1766,22 +1855,25 @@ class WebSocket(_SpotWebSocket):
             self.kal.daemon = True
             self.kal.start()
 
-
         super().__init__(**kwargs)
 
     def _keep_alive_loop(self):
         """
         Runs a loop that sends a keep-alive message every 59 minutes to maintain the connection
-        with the MEXC API. 
+        with the MEXC API.
 
         :return: None
         """
 
         while True:
-            time.sleep(59 * 60) # 59 min
+            time.sleep(59 * 60)  # 59 min
             if self.listenKey:
-                resp = HTTP(api_key=self.api_key, api_secret=self.api_secret).keep_alive_listen_key(self.listenKey)
-                logger.debug(f"keep-alive listenKey - {self.listenKey}. Response: {resp}")
+                resp = HTTP(
+                    api_key=self.api_key, api_secret=self.api_secret
+                ).keep_alive_listen_key(self.listenKey)
+                logger.debug(
+                    f"keep-alive listenKey - {self.listenKey}. Response: {resp}"
+                )
             else:
                 break
 
@@ -1791,9 +1883,9 @@ class WebSocket(_SpotWebSocket):
     #
     # <=================================================================>
 
-    def deals_stream(self, 
-                     callback: Callable[..., None],
-                     symbol: Union[str,List[str]]):
+    def deals_stream(
+        self, callback: Callable[..., None], symbol: Union[str, List[str]]
+    ):
         """
         ### Trade Streams
         The Trade Streams push raw trade information; each trade has a unique buyer and seller.
@@ -1807,20 +1899,15 @@ class WebSocket(_SpotWebSocket):
 
         :return: None
         """
-        if isinstance(symbol,str):
-            symbols=[symbol]  #str
+        if isinstance(symbol, str):
+            symbols = [symbol]  # str
         else:
-            symbols=symbol #list
-        params = [dict(
-            symbol = s
-        ) for s in symbols]
+            symbols = symbol  # list
+        params = [dict(symbol=s) for s in symbols]
         topic = "public.deals"
         self._ws_subscribe(topic, callback, params)
 
-    def kline_stream(self, 
-                     callback: Callable[..., None],
-                     symbol:   str,
-                     interval: int):
+    def kline_stream(self, callback: Callable[..., None], symbol: str, interval: int):
         """
         ### Kline Streams
         The Kline/Candlestick Stream push updates to the current klines/candlestick every second.
@@ -1836,16 +1923,11 @@ class WebSocket(_SpotWebSocket):
 
         :return: None
         """
-        params = [dict(
-            symbol   = symbol,
-            interval = interval
-        )]
+        params = [dict(symbol=symbol, interval=interval)]
         topic = "public.kline"
         self._ws_subscribe(topic, callback, params)
 
-    def increase_depth_stream(self, 
-                     callback: Callable[..., None],
-                     symbol:   str):
+    def increase_depth_stream(self, callback: Callable[..., None], symbol: str):
         """
         ### Diff.Depth Stream
         If the quantity is 0, it means that the order of the price has been cancel or traded,remove the price level.
@@ -1859,16 +1941,13 @@ class WebSocket(_SpotWebSocket):
 
         :return: None
         """
-        params = [dict(
-            symbol = symbol
-        )]
+        params = [dict(symbol=symbol)]
         topic = "public.increase.depth"
         self._ws_subscribe(topic, callback, params)
 
-    def limit_depth_stream(self, 
-                     callback: Callable[..., None],
-                     symbol:   str,
-                     level:    int):
+    def limit_depth_stream(
+        self, callback: Callable[..., None], symbol: str, level: int
+    ):
         """
         ### Partial Book Depth Streams
         Top bids and asks, Valid are 5, 10, or 20.
@@ -1884,16 +1963,11 @@ class WebSocket(_SpotWebSocket):
 
         :return: None
         """
-        params = [dict(
-            symbol = symbol,
-            level  = level
-        )]
+        params = [dict(symbol=symbol, level=level)]
         topic = "public.limit.depth"
         self._ws_subscribe(topic, callback, params)
 
-    def book_ticker(self, 
-                     callback: Callable[..., None],
-                     symbol:   str):
+    def book_ticker(self, callback: Callable[..., None], symbol: str):
         """
         ### Individual Symbol Book Ticker Streams
         Pushes any update to the best bid or ask's price or quantity in real-time for a specified symbol.
@@ -1907,9 +1981,7 @@ class WebSocket(_SpotWebSocket):
 
         :return: None
         """
-        params = [dict(
-            symbol = symbol
-        )]
+        params = [dict(symbol=symbol)]
         topic = "public.bookTicker"
         self._ws_subscribe(topic, callback, params)
 
@@ -1949,7 +2021,7 @@ class WebSocket(_SpotWebSocket):
         params = [{}]
         topic = "private.deals"
         self._ws_subscribe(topic, callback, params)
-    
+
     def account_orders(self, callback: Callable[..., None]):
         """
         ### Spot Account Orders
@@ -1964,4 +2036,3 @@ class WebSocket(_SpotWebSocket):
         params = [{}]
         topic = "private.orders"
         self._ws_subscribe(topic, callback, params)
-

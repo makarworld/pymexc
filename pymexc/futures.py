@@ -10,7 +10,7 @@ from pymexc import futures
 api_key = "YOUR API KEY"
 api_secret = "YOUR API SECRET KEY"
 
-def handle_message(message): 
+def handle_message(message):
     # handle websocket message
     print(message)
 
@@ -26,13 +26,14 @@ print(futures_client.index_price("MX_USDT"))
 # all messages will be handled by function `handle_message`
 ws_futures_client.tickers_stream(handle_message)
 
-# loop forever for save websocket connection 
-while True: 
+# loop forever for save websocket connection
+while True:
     ...
 
 """
-from typing import Callable, Literal, List, Optional, Union
+
 import logging
+from typing import Callable, List, Literal, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -43,8 +44,8 @@ except ImportError:
     from .base import _FuturesHTTP
     from .base_websocket import _FuturesWebSocket
 
+
 class HTTP(_FuturesHTTP):
-    
     # <=================================================================>
     #
     #                          Market Endpoints
@@ -75,11 +76,8 @@ class HTTP(_FuturesHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", "api/v1/contract/detail", 
-                            params = dict(
-                                    symbol = symbol
-                            ))
-    
+        return self.call("GET", "api/v1/contract/detail", params=dict(symbol=symbol))
+
     def support_currencies(self) -> dict:
         """
         ### Get the transferable currencies
@@ -92,10 +90,8 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
         return self.call("GET", "api/v1/contract/support_currencies")
-    
-    def get_depth(self, 
-                  symbol: str, 
-                  limit:  Optional[int] = None) -> dict:
+
+    def get_depth(self, symbol: str, limit: Optional[int] = None) -> dict:
         """
         ### Get the contract's depth information
 
@@ -112,14 +108,11 @@ class HTTP(_FuturesHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", f"api/v1/contract/depth/{symbol}",
-                            params = dict(
-                                    limit  = limit
-                            ))
+        return self.call(
+            "GET", f"api/v1/contract/depth/{symbol}", params=dict(limit=limit)
+        )
 
-    def depth_commits(self,
-                      symbol: str, 
-                      limit:  int) -> dict:
+    def depth_commits(self, symbol: str, limit: int) -> dict:
         """
         ### Get a snapshot of the latest N depth information of the contract
 
@@ -137,7 +130,7 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
         return self.call("GET", f"api/v1/contract/depth_commits/{symbol}/{limit}")
-    
+
     def index_price(self, symbol: str) -> dict:
         """
         ### Get contract index price
@@ -153,7 +146,7 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
         return self.call("GET", f"api/v1/contract/index_price/{symbol}")
-    
+
     def fair_price(self, symbol: str) -> dict:
         """
         ### Get contract fair price
@@ -169,7 +162,7 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
         return self.call("GET", f"api/v1/contract/fair_price/{symbol}")
-    
+
     def funding_rate(self, symbol: str) -> dict:
         """
         ### Get contract funding rate
@@ -186,14 +179,29 @@ class HTTP(_FuturesHTTP):
         """
         return self.call("GET", f"api/v1/contract/funding_rate/{symbol}")
 
-    def kline(self, 
-              symbol:   str, 
-              interval: Optional[Literal["Min1", "Min5", "Min15", "Min30", "Min60", "Hour4", "Hour8", "Day1", "Week1", "Month1"]] = None,
-              start:    Optional[int] = None,
-              end:      Optional[int] = None) -> dict:
+    def kline(
+        self,
+        symbol: str,
+        interval: Optional[
+            Literal[
+                "Min1",
+                "Min5",
+                "Min15",
+                "Min30",
+                "Min60",
+                "Hour4",
+                "Hour8",
+                "Day1",
+                "Week1",
+                "Month1",
+            ]
+        ] = None,
+        start: Optional[int] = None,
+        end: Optional[int] = None,
+    ) -> dict:
         """
         ### K-line data
-        
+
         Rate limit: 20 times / 2 seconds
 
         https://mexcdevelop.github.io/apidocs/contract_v1_en/#k-line-data
@@ -202,31 +210,43 @@ class HTTP(_FuturesHTTP):
         :type symbol: str
         :param interval: The time interval for the Kline data. Must be one of "Min1", "Min5", "Min15", "Min30", "Min60", "Hour4", "Hour8", "Day1", "Week1", "Month1". Defaults to "Min1".
         :type interval: Optional[Literal["Min1", "Min5", "Min15", "Min30", "Min60", "Hour4", "Hour8", "Day1", "Week1", "Month1"]]
-        :param start: (optional) The start time of the Kline data in Unix timestamp format. 
+        :param start: (optional) The start time of the Kline data in Unix timestamp format.
         :type start: Optional[int]
-        :param end: (optional) The end time of the Kline data in Unix timestamp format. 
+        :param end: (optional) The end time of the Kline data in Unix timestamp format.
         :type end: Optional[int]
-        
+
         :return: A dictionary containing the Kline data for the specified symbol and interval within the specified time range.
         :rtype: dict
         """
-        return self.call("GET", f"api/v1/contract/kline/{symbol}",
-                            params = dict(
-                                    symbol    = symbol,
-                                    interval  = interval,
-                                    start     = start,
-                                    end       = end
-                            ))
+        return self.call(
+            "GET",
+            f"api/v1/contract/kline/{symbol}",
+            params=dict(symbol=symbol, interval=interval, start=start, end=end),
+        )
 
-
-    def kline_index_price(self, 
-              symbol:   str, 
-              interval: Optional[Literal["Min1", "Min5", "Min15", "Min30", "Min60", "Hour4", "Hour8", "Day1", "Week1", "Month1"]] = "Min1",
-              start:    Optional[int] = None,
-              end:      Optional[int] = None) -> dict:
+    def kline_index_price(
+        self,
+        symbol: str,
+        interval: Optional[
+            Literal[
+                "Min1",
+                "Min5",
+                "Min15",
+                "Min30",
+                "Min60",
+                "Hour4",
+                "Hour8",
+                "Day1",
+                "Week1",
+                "Month1",
+            ]
+        ] = "Min1",
+        start: Optional[int] = None,
+        end: Optional[int] = None,
+    ) -> dict:
         """
         ### Get K-line data of the index price
-        
+
         Rate limit: 20 times / 2 seconds
 
         https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-k-line-data-of-the-index-price
@@ -235,30 +255,43 @@ class HTTP(_FuturesHTTP):
         :type symbol: str
         :param interval: The time interval for the Kline data. Must be one of "Min1", "Min5", "Min15", "Min30", "Min60", "Hour4", "Hour8", "Day1", "Week1", "Month1". Defaults to "Min1".
         :type interval: Optional[Literal["Min1", "Min5", "Min15", "Min30", "Min60", "Hour4", "Hour8", "Day1", "Week1", "Month1"]]
-        :param start: (optional) The start time of the Kline data in Unix timestamp format. 
+        :param start: (optional) The start time of the Kline data in Unix timestamp format.
         :type start: Optional[int]
-        :param end: (optional) The end time of the Kline data in Unix timestamp format. 
+        :param end: (optional) The end time of the Kline data in Unix timestamp format.
         :type end: Optional[int]
-        
+
         :return: A dictionary containing the Kline data for the specified symbol and interval within the specified time range.
         :rtype: dict
         """
-        return self.call("GET", f"api/v1/contract/kline/index_price/{symbol}",
-                            params = dict(
-                                    symbol    = symbol,
-                                    interval  = interval,
-                                    start     = start,
-                                    end       = end
-                            ))
-    
-    def kline_fair_price(self,
-              symbol:   str, 
-              interval: Optional[Literal["Min1", "Min5", "Min15", "Min30", "Min60", "Hour4", "Hour8", "Day1", "Week1", "Month1"]] = "Min1",
-              start:    Optional[int] = None,
-              end:      Optional[int] = None) -> dict:
+        return self.call(
+            "GET",
+            f"api/v1/contract/kline/index_price/{symbol}",
+            params=dict(symbol=symbol, interval=interval, start=start, end=end),
+        )
+
+    def kline_fair_price(
+        self,
+        symbol: str,
+        interval: Optional[
+            Literal[
+                "Min1",
+                "Min5",
+                "Min15",
+                "Min30",
+                "Min60",
+                "Hour4",
+                "Hour8",
+                "Day1",
+                "Week1",
+                "Month1",
+            ]
+        ] = "Min1",
+        start: Optional[int] = None,
+        end: Optional[int] = None,
+    ) -> dict:
         """
         ### Get K-line data of the index price
-        
+
         Rate limit: 20 times / 2 seconds
 
         https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-k-line-data-of-the-index-price
@@ -267,25 +300,21 @@ class HTTP(_FuturesHTTP):
         :type symbol: str
         :param interval: The time interval for the Kline data. Must be one of "Min1", "Min5", "Min15", "Min30", "Min60", "Hour4", "Hour8", "Day1", "Week1", "Month1". Defaults to "Min1".
         :type interval: Optional[Literal["Min1", "Min5", "Min15", "Min30", "Min60", "Hour4", "Hour8", "Day1", "Week1", "Month1"]]
-        :param start: (optional) The start time of the Kline data in Unix timestamp format. 
+        :param start: (optional) The start time of the Kline data in Unix timestamp format.
         :type start: Optional[int]
-        :param end: (optional) The end time of the Kline data in Unix timestamp format. 
+        :param end: (optional) The end time of the Kline data in Unix timestamp format.
         :type end: Optional[int]
-        
+
         :return: A dictionary containing the Kline data for the specified symbol and interval within the specified time range.
         :rtype: dict
         """
-        return self.call("GET", f"api/v1/contract/kline/fair_price/{symbol}",
-                            params = dict(
-                                    symbol    = symbol,
-                                    interval  = interval,
-                                    start     = start,
-                                    end       = end
-                            ))
+        return self.call(
+            "GET",
+            f"api/v1/contract/kline/fair_price/{symbol}",
+            params=dict(symbol=symbol, interval=interval, start=start, end=end),
+        )
 
-    def deals(self,
-              symbol: str, 
-              limit:  Optional[int] = 100) -> dict:
+    def deals(self, symbol: str, limit: Optional[int] = 100) -> dict:
         """
         ### Get contract transaction data
 
@@ -301,13 +330,13 @@ class HTTP(_FuturesHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", f"api/v1/contract/deals/{symbol}",
-                            params = dict(
-                                    symbol = symbol,
-                                    limit  = limit
-                            ))
-    
-    def ticker(self, symbol: Optional[str] = None) -> dict: 
+        return self.call(
+            "GET",
+            f"api/v1/contract/deals/{symbol}",
+            params=dict(symbol=symbol, limit=limit),
+        )
+
+    def ticker(self, symbol: Optional[str] = None) -> dict:
         """
         ### Get contract trend data
 
@@ -321,12 +350,9 @@ class HTTP(_FuturesHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", "api/v1/contract/ticker",
-                            params = dict(
-                                    symbol = symbol
-                            ))
-    
-    def risk_reverse(self) -> dict: 
+        return self.call("GET", "api/v1/contract/ticker", params=dict(symbol=symbol))
+
+    def risk_reverse(self) -> dict:
         """
         ### Get all contract risk fund balance
 
@@ -338,11 +364,10 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
         return self.call("GET", "api/v1/contract/risk_reverse")
-    
-    def risk_reverse_history(self, 
-                             symbol:    str, 
-                             page_num:  Optional[int] = 1, 
-                             page_size: Optional[int] = 20) -> dict: 
+
+    def risk_reverse_history(
+        self, symbol: str, page_num: Optional[int] = 1, page_size: Optional[int] = 20
+    ) -> dict:
         """
         ### Get contract risk fund balance history
 
@@ -359,17 +384,15 @@ class HTTP(_FuturesHTTP):
 
         :return: A dictionary containing the risk reverse history.
         """
-        return self.call("GET", "api/v1/contract/risk_reverse/history",
-                            params = dict(
-                                    symbol    = symbol,
-                                    page_num  = page_num,
-                                    page_size = page_size
-                            ))
+        return self.call(
+            "GET",
+            "api/v1/contract/risk_reverse/history",
+            params=dict(symbol=symbol, page_num=page_num, page_size=page_size),
+        )
 
-    def funding_rate_history(self,
-                             symbol: str, 
-                             page_num: Optional[int] = 1, 
-                             page_size: Optional[int] = 20) -> dict: 
+    def funding_rate_history(
+        self, symbol: str, page_num: Optional[int] = 1, page_size: Optional[int] = 20
+    ) -> dict:
         """
         ### Get contract funding rate history
 
@@ -386,13 +409,12 @@ class HTTP(_FuturesHTTP):
 
         :return: A dictionary containing the risk reverse history.
         """
-        return self.call("GET", "api/v1/contract/funding_rate/history",
-                            params = dict(
-                                    symbol    = symbol,
-                                    page_num  = page_num,
-                                    page_size = page_size
-                            ))
-                             
+        return self.call(
+            "GET",
+            "api/v1/contract/funding_rate/history",
+            params=dict(symbol=symbol, page_num=page_num, page_size=page_size),
+        )
+
     # <=================================================================>
     #
     #                   Account and trading endpoints
@@ -401,7 +423,7 @@ class HTTP(_FuturesHTTP):
 
     def assets(self) -> dict:
         """
-        ### Get all informations of user's asset 
+        ### Get all informations of user's asset
         #### Required permissions: Trade reading permission
 
         Rate limit: 20 times / 2 seconds
@@ -421,18 +443,20 @@ class HTTP(_FuturesHTTP):
         Rate limit: 20 times / 2 seconds
 
         https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-the-user-39-s-single-currency-asset-information
-        
+
         :return: response dictionary
         :rtype: dict
         """
         return self.call("GET", f"api/v1/private/account/asset/{currency}")
-    
-    def transfer_record(self, 
-                        currency:  Optional[str] = None, 
-                        state:     Literal["WAIT", "SUCCESS", "FAILED"] = None, 
-                        type:      Literal["IN", "OUT"] = None, 
-                        page_num:  Optional[int] = 1, 
-                        page_size: Optional[int] = 20) -> dict:
+
+    def transfer_record(
+        self,
+        currency: Optional[str] = None,
+        state: Literal["WAIT", "SUCCESS", "FAILED"] = None,
+        type: Literal["IN", "OUT"] = None,
+        page_num: Optional[int] = 1,
+        page_size: Optional[int] = 20,
+    ) -> dict:
         """
         ### Get the user's asset transfer records
         #### Required permissions: Account reading permission
@@ -440,7 +464,7 @@ class HTTP(_FuturesHTTP):
         Rate limit: 20 times / 2 seconds
 
         https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-the-user-39-s-asset-transfer-records
-        
+
         :param currency: (optional) The currency.
         :type currency: str
         :param state: (optional) state:WAIT 、SUCCESS 、FAILED
@@ -455,20 +479,25 @@ class HTTP(_FuturesHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", "api/v1/private/account/transfer_record", 
-                            params = dict(
-                                    currency = currency, 
-                                    state = state, 
-                                    type = type, 
-                                    page_num = page_num, 
-                                    page_size = page_size
-                            ))
-    
-    def history_positions(self, 
-                          symbol:    Optional[str] = None, 
-                          type:      Optional[int] = None, 
-                          page_num:  Optional[int] = 1, 
-                          page_size: Optional[int] = 20) -> dict:
+        return self.call(
+            "GET",
+            "api/v1/private/account/transfer_record",
+            params=dict(
+                currency=currency,
+                state=state,
+                type=type,
+                page_num=page_num,
+                page_size=page_size,
+            ),
+        )
+
+    def history_positions(
+        self,
+        symbol: Optional[str] = None,
+        type: Optional[int] = None,
+        page_num: Optional[int] = 1,
+        page_size: Optional[int] = 20,
+    ) -> dict:
         """
         ### Get the user's history position information
         #### Required permissions: Trade reading permissions
@@ -476,7 +505,7 @@ class HTTP(_FuturesHTTP):
         Rate limit: 20 times / 2 seconds
 
         https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-the-user-s-history-position-information
-        
+
         :param symbol: (optional) the name of the contract
         :type symbol: str
         :param type: (optional) position type: 1 - long, 2 -short
@@ -489,14 +518,14 @@ class HTTP(_FuturesHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", "api/v1/private/position/list/history_positions", 
-                            params = dict(
-                                    symbol = symbol,
-                                    type = type,
-                                    page_num = page_num,
-                                    page_size = page_size
-                            ))
-    
+        return self.call(
+            "GET",
+            "api/v1/private/position/list/history_positions",
+            params=dict(
+                symbol=symbol, type=type, page_num=page_num, page_size=page_size
+            ),
+        )
+
     def open_positions(self, symbol: Optional[str] = None) -> dict:
         """
         ### Get the user's current holding position
@@ -512,16 +541,17 @@ class HTTP(_FuturesHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", "api/v1/private/position/open_positions", 
-                            params = dict(
-                                    symbol = symbol
-                            ))
-    
-    def funding_records(self, 
-                        symbol:      Optional[str] = None, 
-                        position_id: Optional[int] = None, 
-                        page_num:    Optional[int] = 1, 
-                        page_size:   Optional[int] = 20) -> dict:
+        return self.call(
+            "GET", "api/v1/private/position/open_positions", params=dict(symbol=symbol)
+        )
+
+    def funding_records(
+        self,
+        symbol: Optional[str] = None,
+        position_id: Optional[int] = None,
+        page_num: Optional[int] = 1,
+        page_size: Optional[int] = 20,
+    ) -> dict:
         """
         ### Get details of user's funding rate
         #### Required permissions: Trade reading permission
@@ -543,18 +573,23 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
 
-        return self.call("GET", "api/v1/private/position/funding_records", 
-                            params = dict(
-                                    symbol = symbol,
-                                    position_id = position_id,
-                                    page_num = page_num,
-                                    page_size = page_size
-                            ))
-    
-    def open_orders(self, 
-                    symbol:    Optional[str] = None, 
-                    page_num:  Optional[int] = 1, 
-                    page_size: Optional[int] = 20) -> dict:
+        return self.call(
+            "GET",
+            "api/v1/private/position/funding_records",
+            params=dict(
+                symbol=symbol,
+                position_id=position_id,
+                page_num=page_num,
+                page_size=page_size,
+            ),
+        )
+
+    def open_orders(
+        self,
+        symbol: Optional[str] = None,
+        page_num: Optional[int] = 1,
+        page_size: Optional[int] = 20,
+    ) -> dict:
         """
         ### Get the user's current pending order
         #### Required permissions: Trade reading permission
@@ -573,22 +608,23 @@ class HTTP(_FuturesHTTP):
         :return: A dictionary containing the user's current pending order.
         :rtype: dict
         """
-        return self.call("GET", f"api/v1/private/order/list/open_orders/{symbol}", 
-                            params = dict(
-                                    symbol = symbol,
-                                    page_num = page_num,
-                                    page_size = page_size
-                            ))
-    
-    def history_orders(self, 
-                       symbol:     Optional[str] = None, 
-                       states:     Optional[str] = None, 
-                       category:   Optional[str] = None, 
-                       start_time: Optional[int] = None, 
-                       end_time:   Optional[int] = None, 
-                       side:       Optional[int] = None, 
-                       page_num:   Optional[int] = 1, 
-                       page_size:  Optional[int] = 20) -> dict:
+        return self.call(
+            "GET",
+            f"api/v1/private/order/list/open_orders/{symbol}",
+            params=dict(symbol=symbol, page_num=page_num, page_size=page_size),
+        )
+
+    def history_orders(
+        self,
+        symbol: Optional[str] = None,
+        states: Optional[str] = None,
+        category: Optional[str] = None,
+        start_time: Optional[int] = None,
+        end_time: Optional[int] = None,
+        side: Optional[int] = None,
+        page_num: Optional[int] = 1,
+        page_size: Optional[int] = 20,
+    ) -> dict:
         """
         ### Get all of the user's historical orders
         #### Required permissions: Trade reading permission
@@ -617,18 +653,21 @@ class HTTP(_FuturesHTTP):
         :return: A dictionary containing all of the user's historical orders.
         :rtype: dict
         """
-        return self.call("GET", "api/v1/private/order/history_orders", 
-                            params = dict(
-                                    symbol = symbol,
-                                    states = states,
-                                    category = category,
-                                    start_time = start_time,
-                                    end_time = end_time,
-                                    side = side,
-                                    page_num = page_num,
-                                    page_size = page_size
-                            ))
-    
+        return self.call(
+            "GET",
+            "api/v1/private/order/history_orders",
+            params=dict(
+                symbol=symbol,
+                states=states,
+                category=category,
+                start_time=start_time,
+                end_time=end_time,
+                side=side,
+                page_num=page_num,
+                page_size=page_size,
+            ),
+        )
+
     def get_order_external(self, symbol: str, external_oid: int) -> dict:
         """
         ### Query the order based on the external number
@@ -647,8 +686,10 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
 
-        return self.call("GET", f"api/v1/private/order/external/{symbol}/{external_oid}")
-    
+        return self.call(
+            "GET", f"api/v1/private/order/external/{symbol}/{external_oid}"
+        )
+
     def get_order(self, order_id: int) -> dict:
         """
         ### Query the order based on the order number
@@ -665,7 +706,7 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
         return self.call("GET", f"api/v1/private/order/{order_id}")
-    
+
     def batch_query(self, order_ids: List[int]) -> dict:
         """
         ### Query the order in bulk based on the order number
@@ -681,11 +722,16 @@ class HTTP(_FuturesHTTP):
         :return: A dictionary containing the queried orders in bulk based on the order number.
         :rtype: dict
         """
-        return self.call("GET", "api/v1/private/order/batch_query",
-                            params = dict(
-                                    order_ids = ','.join(order_ids) if isinstance(order_ids, list) else order_ids
-                            ))
-    
+        return self.call(
+            "GET",
+            "api/v1/private/order/batch_query",
+            params=dict(
+                order_ids=",".join(order_ids)
+                if isinstance(order_ids, list)
+                else order_ids
+            ),
+        )
+
     def deal_details(self, order_id: int) -> dict:
         """
         ### Get order transaction details based on the order ID
@@ -702,13 +748,15 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
         return self.call("GET", f"api/v1/private/order/deal_details/{order_id}")
-    
-    def order_deals(self, 
-                    symbol:     str, 
-                    start_time: Optional[int] = None, 
-                    end_time:   Optional[int] = None, 
-                    page_num:   Optional[int] = 1, 
-                    page_size:  Optional[int] = 20) -> dict:
+
+    def order_deals(
+        self,
+        symbol: str,
+        start_time: Optional[int] = None,
+        end_time: Optional[int] = None,
+        page_num: Optional[int] = 1,
+        page_size: Optional[int] = 20,
+    ) -> dict:
         """
         ### Get all transaction details of the user's order
         #### Required permissions: Trade reading permission
@@ -731,22 +779,27 @@ class HTTP(_FuturesHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", "api/v1/private/order/list/order_deals",
-                            params = dict(
-                                    symbol = symbol,
-                                    start_time = start_time,
-                                    end_time = end_time,
-                                    page_num = page_num,
-                                    page_size = page_size
-                            ))
-    
-    def get_trigger_orders(self, 
-                         symbol:     Optional[str] = None, 
-                         states:     Optional[str] = None, 
-                         start_time: Optional[int] = None, 
-                         end_time:   Optional[int] = None, 
-                         page_num:   int           = 1, 
-                         page_size:  int           = 20) -> dict:
+        return self.call(
+            "GET",
+            "api/v1/private/order/list/order_deals",
+            params=dict(
+                symbol=symbol,
+                start_time=start_time,
+                end_time=end_time,
+                page_num=page_num,
+                page_size=page_size,
+            ),
+        )
+
+    def get_trigger_orders(
+        self,
+        symbol: Optional[str] = None,
+        states: Optional[str] = None,
+        start_time: Optional[int] = None,
+        end_time: Optional[int] = None,
+        page_num: int = 1,
+        page_size: int = 20,
+    ) -> dict:
         """
         ### Gets the trigger order list
         #### Required permissions: Trade reading permission
@@ -771,23 +824,28 @@ class HTTP(_FuturesHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", "api/v1/private/planorder/list/orders",
-                            params = dict(
-                                    symbol = symbol,
-                                    states = states,
-                                    start_time = start_time,
-                                    end_time = end_time,
-                                    page_num = page_num,
-                                    page_size = page_size
-                            ))
+        return self.call(
+            "GET",
+            "api/v1/private/planorder/list/orders",
+            params=dict(
+                symbol=symbol,
+                states=states,
+                start_time=start_time,
+                end_time=end_time,
+                page_num=page_num,
+                page_size=page_size,
+            ),
+        )
 
-    def get_stop_limit_orders(self, 
-                         symbol:      Optional[str] = None, 
-                         is_finished: Optional[int] = None, 
-                         start_time:  Optional[int] = None, 
-                         end_time:    Optional[int] = None, 
-                         page_num:    int           = 1, 
-                         page_size:   int           = 20) -> dict:
+    def get_stop_limit_orders(
+        self,
+        symbol: Optional[str] = None,
+        is_finished: Optional[int] = None,
+        start_time: Optional[int] = None,
+        end_time: Optional[int] = None,
+        page_num: int = 1,
+        page_size: int = 20,
+    ) -> dict:
         """
         ### Get the Stop-Limit order list
         Rate limit: 20 times / 2 seconds
@@ -811,16 +869,19 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
 
-        return self.call("GET", "api/v1/private/stoporder/list/orders",
-                            params = dict(
-                                    symbol = symbol,
-                                    is_finished = is_finished,
-                                    start_time = start_time,
-                                    end_time = end_time,
-                                    page_num = page_num,
-                                    page_size = page_size
-                            ))
-    
+        return self.call(
+            "GET",
+            "api/v1/private/stoporder/list/orders",
+            params=dict(
+                symbol=symbol,
+                is_finished=is_finished,
+                start_time=start_time,
+                end_time=end_time,
+                page_num=page_num,
+                page_size=page_size,
+            ),
+        )
+
     def risk_limit(self, symbol: Optional[str] = None) -> dict:
         """
         ### Get risk limits
@@ -836,10 +897,9 @@ class HTTP(_FuturesHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", "api/v1/private/account/risk_limit",
-                            params = dict(
-                                    symbol = symbol
-                            ))
+        return self.call(
+            "GET", "api/v1/private/account/risk_limit", params=dict(symbol=symbol)
+        )
 
     def tiered_fee_rate(self, symbol: Optional[str] = None) -> dict:
         """
@@ -857,15 +917,11 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
 
-        return self.call("GET", "api/v1/private/account/tiered_fee_rate",
-                            params = dict(
-                                    symbol = symbol
-                            ))
-    
-    def change_margin(self, 
-                      position_id: int, 
-                      amount:      int, 
-                      type:        str) -> dict:
+        return self.call(
+            "GET", "api/v1/private/account/tiered_fee_rate", params=dict(symbol=symbol)
+        )
+
+    def change_margin(self, position_id: int, amount: int, type: str) -> dict:
         """
         ### Increase or decrease margin
         #### Required permissions: Trading permission
@@ -884,13 +940,12 @@ class HTTP(_FuturesHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("POST", "api/v1/private/position/change_margin",
-                            params = dict(
-                                    positionId = position_id,
-                                    amount = amount,
-                                    type = type
-                            ))
-    
+        return self.call(
+            "POST",
+            "api/v1/private/position/change_margin",
+            params=dict(positionId=position_id, amount=amount, type=type),
+        )
+
     def get_leverage(self, symbol: str) -> dict:
         """
         ### Get leverage
@@ -907,17 +962,18 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
 
-        return self.call("GET", "api/v1/private/position/leverage",
-                            params = dict(
-                                    symbol = symbol
-                            ))
-    
-    def change_leverage(self, 
-                        position_id:   int, 
-                        leverage:      int, 
-                        open_type:     Optional[int] = None, 
-                        symbol:        Optional[str] = None, 
-                        position_type: Optional[int] = None) -> dict:
+        return self.call(
+            "GET", "api/v1/private/position/leverage", params=dict(symbol=symbol)
+        )
+
+    def change_leverage(
+        self,
+        position_id: int,
+        leverage: int,
+        open_type: Optional[int] = None,
+        symbol: Optional[str] = None,
+        position_type: Optional[int] = None,
+    ) -> dict:
         """
         ### Switch leverage
         #### Required permissions: Trading permission
@@ -941,15 +997,18 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
 
-        return self.call("POST", "api/v1/private/position/change_leverage",
-                            params = dict(
-                                    positionId = position_id,
-                                    leverage = leverage,
-                                    openType = open_type,
-                                    symbol = symbol,
-                                    positionType = position_type
-                            ))
-    
+        return self.call(
+            "POST",
+            "api/v1/private/position/change_leverage",
+            params=dict(
+                positionId=position_id,
+                leverage=leverage,
+                openType=open_type,
+                symbol=symbol,
+                positionType=position_type,
+            ),
+        )
+
     def get_position_mode(self) -> dict:
         """
         ### Get position mode
@@ -979,25 +1038,28 @@ class HTTP(_FuturesHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("POST", "api/v1/private/position/change_position_mode",
-                            params = dict(
-                                    positionMode = position_mode
-                            ))
-    
-    def order(self, 
-              symbol:            str, 
-              price:             float, 
-              vol:               float, 
-              side:              int, 
-              type:              int, 
-              open_type:         int, 
-              position_id:       Optional[int]   = None, 
-              leverage:          Optional[int]   = None, 
-              external_oid:      Optional[str]   = None, 
-              stop_loss_price:   Optional[float] = None, 
-              take_profit_price: Optional[float] = None, 
-              position_mode:     Optional[int]   = None, 
-              reduce_only:       Optional[bool]  = False) -> dict:
+        return self.call(
+            "POST",
+            "api/v1/private/position/change_position_mode",
+            params=dict(positionMode=position_mode),
+        )
+
+    def order(
+        self,
+        symbol: str,
+        price: float,
+        vol: float,
+        side: int,
+        type: int,
+        open_type: int,
+        position_id: Optional[int] = None,
+        leverage: Optional[int] = None,
+        external_oid: Optional[str] = None,
+        stop_loss_price: Optional[float] = None,
+        take_profit_price: Optional[float] = None,
+        position_mode: Optional[int] = None,
+        reduce_only: Optional[bool] = False,
+    ) -> dict:
         """
         ### Order (Under maintenance)
         #### Required permissions: Trading permission
@@ -1036,34 +1098,39 @@ class HTTP(_FuturesHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("POST", "api/v1/private/order/submit",
-                            params = dict(
-                                    symbol = symbol,
-                                    price = price,
-                                    vol = vol,
-                                    side = side,
-                                    type = type,
-                                    openType = open_type,
-                                    positionId = position_id,
-                                    leverage = leverage,
-                                    externalOid = external_oid,
-                                    stopLossPrice = stop_loss_price,
-                                    takeProfitPrice = take_profit_price,
-                                    positionMode = position_mode,
-                                    reduceOnly = reduce_only
-                            ))
+        return self.call(
+            "POST",
+            "api/v1/private/order/submit",
+            params=dict(
+                symbol=symbol,
+                price=price,
+                vol=vol,
+                side=side,
+                type=type,
+                openType=open_type,
+                positionId=position_id,
+                leverage=leverage,
+                externalOid=external_oid,
+                stopLossPrice=stop_loss_price,
+                takeProfitPrice=take_profit_price,
+                positionMode=position_mode,
+                reduceOnly=reduce_only,
+            ),
+        )
 
-    def bulk_order(self, 
-                   symbol:            str, 
-                   price:             float, 
-                   vol:               float, 
-                   side:              int, 
-                   type:              int, 
-                   open_type:         int, 
-                   position_id:       Optional[int]   = None, 
-                   external_oid:      Optional[str]   = None, 
-                   stop_loss_price:   Optional[float] = None, 
-                   take_profit_price: Optional[float] = None) -> dict:
+    def bulk_order(
+        self,
+        symbol: str,
+        price: float,
+        vol: float,
+        side: int,
+        type: int,
+        open_type: int,
+        position_id: Optional[int] = None,
+        external_oid: Optional[str] = None,
+        stop_loss_price: Optional[float] = None,
+        take_profit_price: Optional[float] = None,
+    ) -> dict:
         """
         ### Bulk order (Under maintenance)
         #### Required permissions: Trading permission
@@ -1098,20 +1165,23 @@ class HTTP(_FuturesHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("POST", "api/v1/private/order/submit_batch",
-                            params = dict(
-                                    symbol = symbol,
-                                    price = price,
-                                    vol = vol,
-                                    side = side,
-                                    type = type,
-                                    openType = open_type,
-                                    positionId = position_id,
-                                    externalOid = external_oid,
-                                    stopLossPrice = stop_loss_price,
-                                    takeProfitPrice = take_profit_price
-                            ))
-    
+        return self.call(
+            "POST",
+            "api/v1/private/order/submit_batch",
+            params=dict(
+                symbol=symbol,
+                price=price,
+                vol=vol,
+                side=side,
+                type=type,
+                openType=open_type,
+                positionId=position_id,
+                externalOid=external_oid,
+                stopLossPrice=stop_loss_price,
+                takeProfitPrice=take_profit_price,
+            ),
+        )
+
     def cancel_order(self, order_id: Union[List[int], int]) -> dict:
         """
         ### Cancel the order (Under maintenance)
@@ -1128,11 +1198,14 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
 
-        return self.call("POST", "api/v1/private/order/cancel",
-                            params = dict(
-                                    order_ids = ','.join(order_id) if isinstance(order_id, list) else order_id
-                            ))
-    
+        return self.call(
+            "POST",
+            "api/v1/private/order/cancel",
+            params=dict(
+                order_ids=",".join(order_id) if isinstance(order_id, list) else order_id
+            ),
+        )
+
     def cancel_order_with_external(self, symbol: str, external_oid: str) -> dict:
         """
         ### Cancel the order according to the external order ID (Under maintenance)
@@ -1150,12 +1223,12 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
 
-        return self.call("POST", "api/v1/private/order/cancel_with_external",
-                            params = dict(
-                                    symbol = symbol,
-                                    externalOid = external_oid
-                            ))
-    
+        return self.call(
+            "POST",
+            "api/v1/private/order/cancel_with_external",
+            params=dict(symbol=symbol, externalOid=external_oid),
+        )
+
     def cancel_all(self, symbol: Optional[str] = None) -> dict:
         """
         ### Cancel all orders under a contract (Under maintenance)
@@ -1173,11 +1246,10 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
 
-        return self.call("POST", "api/v1/private/order/cancel_all",
-                            params = dict(
-                                    symbol = symbol
-                            ))
-    
+        return self.call(
+            "POST", "api/v1/private/order/cancel_all", params=dict(symbol=symbol)
+        )
+
     def change_risk_level(self) -> dict:
         """
         ### Switch the risk level
@@ -1189,19 +1261,21 @@ class HTTP(_FuturesHTTP):
         """
 
         return self.call("POST", "api/v1/private/account/change_risk_level")
-    
-    def trigger_order(self,
-                      symbol:        str,
-                      vol:           float,
-                      side:          int,
-                      open_type:     int,
-                      trigger_price: float,
-                      trigger_type:  int,
-                      execute_cycle: int,
-                      order_type:    int,
-                      trend:         int,
-                      price:         Optional[float] = None,
-                      leverage:      Optional[int]   = None) -> dict:
+
+    def trigger_order(
+        self,
+        symbol: str,
+        vol: float,
+        side: int,
+        open_type: int,
+        trigger_price: float,
+        trigger_type: int,
+        execute_cycle: int,
+        order_type: int,
+        trend: int,
+        price: Optional[float] = None,
+        leverage: Optional[int] = None,
+    ) -> dict:
         """
         ### Trigger order (Under maintenance)
 
@@ -1234,20 +1308,23 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
 
-        return self.call("POST", "api/v1/private/planorder/place",
-                            params = dict(
-                                    symbol = symbol,
-                                    price = price,
-                                    vol = vol,
-                                    leverage = leverage,
-                                    side = side,
-                                    openType = open_type,
-                                    triggerPrice = trigger_price,
-                                    triggerType = trigger_type,
-                                    executeCycle = execute_cycle,
-                                    orderType = order_type,
-                                    trend = trend
-                            ))
+        return self.call(
+            "POST",
+            "api/v1/private/planorder/place",
+            params=dict(
+                symbol=symbol,
+                price=price,
+                vol=vol,
+                leverage=leverage,
+                side=side,
+                openType=open_type,
+                triggerPrice=trigger_price,
+                triggerType=trigger_type,
+                executeCycle=execute_cycle,
+                orderType=order_type,
+                trend=trend,
+            ),
+        )
 
     def cancel_trigger_order(self, order_id: int) -> dict:
         """
@@ -1266,10 +1343,9 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
 
-        return self.call("POST", "api/v1/private/planorder/cancel",
-                            params = dict(
-                                    order_id = order_id
-                            ))
+        return self.call(
+            "POST", "api/v1/private/planorder/cancel", params=dict(order_id=order_id)
+        )
 
     def cancel_all_trigger_orders(self, symbol: Optional[str] = None) -> dict:
         """
@@ -1284,11 +1360,10 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
 
-        return self.call("POST", "api/v1/private/planorder/cancel_all",
-                            params = dict(
-                                    symbol = symbol
-                            ))
-    
+        return self.call(
+            "POST", "api/v1/private/planorder/cancel_all", params=dict(symbol=symbol)
+        )
+
     def cancel_stop_order(self, order_id: int) -> dict:
         """
         ### Cancel the Stop-Limit trigger order (Under maintenance)
@@ -1302,14 +1377,13 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
 
-        return self.call("POST", "api/v1/private/stoporder/cancel",
-                            params = dict(
-                                    order_id = order_id
-                            ))
+        return self.call(
+            "POST", "api/v1/private/stoporder/cancel", params=dict(order_id=order_id)
+        )
 
-    def cancel_all_stop_order(self, 
-                              position_id: Optional[int] = None, 
-                              symbol:      Optional[str] = None) -> dict:
+    def cancel_all_stop_order(
+        self, position_id: Optional[int] = None, symbol: Optional[str] = None
+    ) -> dict:
         """
         ### Cancel all Stop-Limit price trigger orders (Under maintenance)
 
@@ -1324,16 +1398,18 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
 
-        return self.call("POST", "api/v1/private/stoporder/cancel_all",
-                            params = dict(
-                                    positionId = position_id,
-                                    symbol = symbol
-                            ))
+        return self.call(
+            "POST",
+            "api/v1/private/stoporder/cancel_all",
+            params=dict(positionId=position_id, symbol=symbol),
+        )
 
-    def stop_limit_change_price(self,
-                                order_id:          int,
-                                stop_loss_price:   Optional[float] = None,
-                                take_profit_price: Optional[float] = None) -> dict:
+    def stop_limit_change_price(
+        self,
+        order_id: int,
+        stop_loss_price: Optional[float] = None,
+        take_profit_price: Optional[float] = None,
+    ) -> dict:
         """
         ### Switch Stop-Limit limited order price
 
@@ -1350,17 +1426,22 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
 
-        return self.call("POST", "api/v1/private/stoporder/change_price",
-                            params = dict(
-                                    orderId = order_id,
-                                    stopLossPrice = stop_loss_price,
-                                    takeProfitPrice = take_profit_price
-                            ))
-    
-    def stop_limit_change_plan_price(self,
-                                     stop_plan_order_id: int,
-                                     stop_loss_price:    Optional[float] = None,
-                                     take_profit_price:  Optional[float] = None) -> dict:
+        return self.call(
+            "POST",
+            "api/v1/private/stoporder/change_price",
+            params=dict(
+                orderId=order_id,
+                stopLossPrice=stop_loss_price,
+                takeProfitPrice=take_profit_price,
+            ),
+        )
+
+    def stop_limit_change_plan_price(
+        self,
+        stop_plan_order_id: int,
+        stop_loss_price: Optional[float] = None,
+        take_profit_price: Optional[float] = None,
+    ) -> dict:
         """
         ### Switch the Stop-Limit price of trigger orders
 
@@ -1377,50 +1458,54 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
 
-        return self.call("POST", "api/v1/private/stoporder/change_plan_price",
-                            params = dict(
-                                    stopPlanOrderId = stop_plan_order_id,
-                                    stopLossPrice = stop_loss_price,
-                                    takeProfitPrice = take_profit_price
-                            ))
+        return self.call(
+            "POST",
+            "api/v1/private/stoporder/change_plan_price",
+            params=dict(
+                stopPlanOrderId=stop_plan_order_id,
+                stopLossPrice=stop_loss_price,
+                takeProfitPrice=take_profit_price,
+            ),
+        )
+
 
 class WebSocket(_FuturesWebSocket):
-    def __init__(self, 
-                 api_key:            Optional[str]   = None, 
-                 api_secret:         Optional[str]   = None,
-                 ping_interval:      Optional[int]   = 20, 
-                 ping_timeout:       Optional[int]   = 10, 
-                 retries:            Optional[int]   = 10,
-                 restart_on_error:   Optional[bool]  = True, 
-                 trace_logging:      Optional[bool]  = False,
-                 http_proxy_host:    Optional[str]   = None,
-                 http_proxy_port:    Optional[int]   = None,
-                 http_no_proxy:      Optional[list]  = None,
-                 http_proxy_auth:    Optional[tuple] = None,
-                 http_proxy_timeout: Optional[int]   = None):
-
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        api_secret: Optional[str] = None,
+        ping_interval: Optional[int] = 20,
+        ping_timeout: Optional[int] = 10,
+        retries: Optional[int] = 10,
+        restart_on_error: Optional[bool] = True,
+        trace_logging: Optional[bool] = False,
+        http_proxy_host: Optional[str] = None,
+        http_proxy_port: Optional[int] = None,
+        http_no_proxy: Optional[list] = None,
+        http_proxy_auth: Optional[tuple] = None,
+        http_proxy_timeout: Optional[int] = None,
+    ):
         kwargs = dict(
-            api_key = api_key,
-            api_secret = api_secret,
-            ping_interval = ping_interval,
-            ping_timeout = ping_timeout,
-            retries = retries,
-            restart_on_error = restart_on_error,
-            trace_logging = trace_logging,
-            http_proxy_host = http_proxy_host,
-            http_proxy_port = http_proxy_port,
-            http_no_proxy = http_no_proxy,
-            http_proxy_auth = http_proxy_auth,
-            http_proxy_timeout = http_proxy_timeout
+            api_key=api_key,
+            api_secret=api_secret,
+            ping_interval=ping_interval,
+            ping_timeout=ping_timeout,
+            retries=retries,
+            restart_on_error=restart_on_error,
+            trace_logging=trace_logging,
+            http_proxy_host=http_proxy_host,
+            http_proxy_port=http_proxy_port,
+            http_no_proxy=http_no_proxy,
+            http_proxy_auth=http_proxy_auth,
+            http_proxy_timeout=http_proxy_timeout,
         )
-        
+
         super().__init__(**kwargs)
-        
 
     def tickers_stream(self, callback: Callable[..., None]):
         """
         ### Tickers
-        Get the latest transaction price, buy-price, sell-price and 24 transaction volume of all the perpetual contracts on the platform without login. 
+        Get the latest transaction price, buy-price, sell-price and 24 transaction volume of all the perpetual contracts on the platform without login.
         Send once a second after subscribing.
 
         https://mexcdevelop.github.io/apidocs/contract_v1_en/#public-channels
@@ -1437,7 +1522,7 @@ class WebSocket(_FuturesWebSocket):
     def ticker_stream(self, callback: Callable[..., None], symbol: str):
         """
         ### Ticker
-        Get the latest transaction price, buy price, sell price and 24 transaction volume of a contract, 
+        Get the latest transaction price, buy price, sell price and 24 transaction volume of a contract,
         send the transaction data without users' login, and send once a second after subscription.
 
         https://mexcdevelop.github.io/apidocs/contract_v1_en/#public-channels
@@ -1449,9 +1534,7 @@ class WebSocket(_FuturesWebSocket):
 
         :return: None
         """
-        params = dict(
-            symbol = symbol
-        )
+        params = dict(symbol=symbol)
 
         # clear none values
         params = {k: v for k, v in params.items() if v is not None}
@@ -1473,9 +1556,7 @@ class WebSocket(_FuturesWebSocket):
 
         :return: None
         """
-        params = dict(
-            symbol = symbol
-        )
+        params = dict(symbol=symbol)
 
         # clear none values
         params = {k: v for k, v in params.items() if v is not None}
@@ -1498,17 +1579,17 @@ class WebSocket(_FuturesWebSocket):
 
         :return: None
         """
-        params = dict(
-            symbol = symbol
-        )
+        params = dict(symbol=symbol)
 
         # clear none values
         params = {k: v for k, v in params.items() if v is not None}
 
         topic = "sub.depth"
         self._ws_subscribe(topic, callback, params)
-        
-    def depth_full_stream(self, callback: Callable[..., None], symbol: str, limit: int = 20):
+
+    def depth_full_stream(
+        self, callback: Callable[..., None], symbol: str, limit: int = 20
+    ):
         """
         ### Depth full
 
@@ -1523,10 +1604,7 @@ class WebSocket(_FuturesWebSocket):
 
         :return: None
         """
-        params = dict(
-            symbol = symbol,
-            limit  = limit
-        )
+        params = dict(symbol=symbol, limit=limit)
 
         # clear none values
         params = {k: v for k, v in params.items() if v is not None}
@@ -1534,12 +1612,14 @@ class WebSocket(_FuturesWebSocket):
         topic = "sub.depth.full"
         self._ws_subscribe(topic, callback, params)
 
-    def kline_stream(self, 
-                     callback: Callable[..., None], 
-                     symbol: str, 
-                     interval: Literal["Min1", "Min5", "Min15", 
-                                       "Min60", "Hour1", "Hour4",
-                                       "Day1", "Week1"] = "Min1"):
+    def kline_stream(
+        self,
+        callback: Callable[..., None],
+        symbol: str,
+        interval: Literal[
+            "Min1", "Min5", "Min15", "Min60", "Hour1", "Hour4", "Day1", "Week1"
+        ] = "Min1",
+    ):
         """
         ### K-line
         Get the k-line data of the contract and keep updating.
@@ -1555,10 +1635,7 @@ class WebSocket(_FuturesWebSocket):
 
         :return: None
         """
-        params = dict(
-            symbol   = symbol,
-            interval = interval
-        )
+        params = dict(symbol=symbol, interval=interval)
 
         # clear none values
         params = {k: v for k, v in params.items() if v is not None}
@@ -1566,9 +1643,7 @@ class WebSocket(_FuturesWebSocket):
         topic = "sub.kline"
         self._ws_subscribe(topic, callback, params)
 
-    def funding_rate_stream(self, 
-                            callback: Callable[..., None], 
-                            symbol:   str):
+    def funding_rate_stream(self, callback: Callable[..., None], symbol: str):
         """
         ### Funding rate
         Get the contract funding rate, and keep updating.
@@ -1582,9 +1657,7 @@ class WebSocket(_FuturesWebSocket):
 
         :return: None
         """
-        params = dict(
-            symbol = symbol
-        )
+        params = dict(symbol=symbol)
 
         # clear none values
         params = {k: v for k, v in params.items() if v is not None}
@@ -1592,9 +1665,7 @@ class WebSocket(_FuturesWebSocket):
         topic = "sub.funding.rate"
         self._ws_subscribe(topic, callback, params)
 
-    def index_price_stream(self, 
-                            callback: Callable[..., None], 
-                            symbol:   str):
+    def index_price_stream(self, callback: Callable[..., None], symbol: str):
         """
         ### Index price
         Get the index price, and will keep updating if there is any changes.
@@ -1608,9 +1679,7 @@ class WebSocket(_FuturesWebSocket):
 
         :return: None
         """
-        params = dict(
-            symbol = symbol
-        )
+        params = dict(symbol=symbol)
 
         # clear none values
         params = {k: v for k, v in params.items() if v is not None}
@@ -1618,9 +1687,7 @@ class WebSocket(_FuturesWebSocket):
         topic = "sub.index.price"
         self._ws_subscribe(topic, callback, params)
 
-    def fair_price_stream(self, 
-                            callback: Callable[..., None], 
-                            symbol:   str):
+    def fair_price_stream(self, callback: Callable[..., None], symbol: str):
         """
         ### Fair price
 
@@ -1633,16 +1700,14 @@ class WebSocket(_FuturesWebSocket):
 
         :return: None
         """
-        params = dict(
-            symbol = symbol
-        )
+        params = dict(symbol=symbol)
 
         # clear none values
         params = {k: v for k, v in params.items() if v is not None}
 
         topic = "sub.fair.price"
         self._ws_subscribe(topic, callback, params)
-    
+
     # <=================================================================>
     #
     #                                PRIVATE
@@ -1690,5 +1755,3 @@ class WebSocket(_FuturesWebSocket):
         """
         topic = "sub.personal.position.mode"
         self._ws_subscribe(topic, callback, params)
-
-

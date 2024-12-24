@@ -1,4 +1,4 @@
-from abc import ABC, abstractclassmethod
+from abc import ABC
 from typing import Union, Literal
 import hmac
 import hashlib
@@ -37,11 +37,11 @@ class MexcSDK(ABC):
             self.session.proxies.update(proxies)
 
 
-    @abstractclassmethod
+    @classmethod
     def sign(self, **kwargs) -> str:
         ...
     
-    @abstractclassmethod
+    @classmethod
     def call(self, method: Union[Literal["GET"], Literal["POST"], Literal["PUT"], Literal["DELETE"]], router: str, *args, **kwargs) -> dict:
         ...
 

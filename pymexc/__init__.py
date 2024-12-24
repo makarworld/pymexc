@@ -7,7 +7,7 @@ from pymexc import spot, futures
 api_key = "YOUR API KEY"
 api_secret = "YOUR API SECRET KEY"
 
-def handle_message(message): 
+def handle_message(message):
     # handle websocket message
     print(message)
 
@@ -40,21 +40,17 @@ print(futures_client.index_price("MX_USDT"))
 # all messages will be handled by function `handle_message`
 ws_futures_client.tickers_stream(handle_message)
 
-# loop forever for save websocket connection 
-while True: 
+# loop forever for save websocket connection
+while True:
     ...
 
 """
+
 try:
-    from . import futures 
-    from . import spot 
+    from . import futures, spot
 except ImportError:
-    import futures 
+    import futures
     import spot
 
 
-
-__all__ = [
-    "futures",
-    "spot"
-]
+__all__ = ["futures", "spot"]
