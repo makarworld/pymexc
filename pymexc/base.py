@@ -98,8 +98,10 @@ class _SpotHTTP(MexcSDK):
         return response.json()
     
 class _FuturesHTTP(MexcSDK):
-    def __init__(self, api_key: str = None, api_secret: str = None, proxies: dict = None):
+    def __init__(self, api_key: str = None, api_secret: str = None, proxies: dict = None, ignore_ad: bool = False):
         super().__init__(api_key, api_secret, "https://contract.mexc.com", proxies = proxies)
+        if not ignore_ad:
+            print("[pymexc] You can buy bypass for Futures API maintance. See https://github.com/makarworld/pymexc/issues/15 for more information.")
 
         self.session.headers.update({
             "Content-Type": "application/json",
