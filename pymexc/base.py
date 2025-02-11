@@ -144,22 +144,28 @@ class _FuturesHTTP(MexcSDK):
         
         if not router.startswith("/"):
             router = f"/{router}"
-        
-        # clear None values
+
+        # Clear None values
         kwargs = {k: v for k, v in kwargs.items() if v is not None}
 
-        for variant in ('params', 'json'):
+        # Ensure only one of 'json' or 'params' is set
+        if "json" in kwargs and "params" in kwargs:
+            raise ValueError("Only one of 'json' or 'params' can be specified.")
+
+        # Clean None values inside 'json' or 'params'
+        for variant in ("params", "json"):
             if kwargs.get(variant):
                 kwargs[variant] = {k: v for k, v in kwargs[variant].items() if v is not None}
-            
-                if self.api_key and self.api_secret:
-                    # add signature
-                    timestamp = str(int(time.time() * 1000))
 
-                    kwargs['headers'] = {
-                        "Request-Time": timestamp,
-                        "Signature": self.sign(timestamp, **kwargs[variant])
-                    }
+        if self.api_key and self.api_secret:
+            # Add signature
+            timestamp = str(int(time.time() * 1000))
+            payload = kwargs.get("json") or kwargs.get("params") or {}
+
+            kwargs["headers"] = {
+                "Request-Time": timestamp,
+                "Signature": self.sign(timestamp, **payload),
+            }
 
         response = self.session.request(method, f"{self.base_url}{router}", *args, **kwargs)
 
