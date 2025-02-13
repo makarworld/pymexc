@@ -390,12 +390,17 @@ class _FuturesWebSocketManager(_WebSocketManager):
             else:
                 return False
 
+        def is_error_message():
+            return message.get("channel", "") == "rs.error"
+
         if is_auth_message():
             self._process_auth_message(message)
         elif is_subscription_message():
             self._process_subscription_message(message)
         elif is_pong_message():
             pass
+        elif is_error_message():
+            print(f"WebSocket return error: {message}")
         else:
             self._process_normal_message(message)
 
