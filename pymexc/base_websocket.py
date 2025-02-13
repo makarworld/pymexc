@@ -64,7 +64,7 @@ class _WebSocketManager:
         # Set ping settings.
         self.ping_interval = ping_interval
         self.ping_timeout = ping_timeout
-        self.custom_ping_message = json.dumps({"op": "ping"})
+        self.custom_ping_message = json.dumps({"method": "ping"})
         self.retries = retries
 
         # Other optional data handling settings.
