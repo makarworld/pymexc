@@ -6,7 +6,7 @@
 # pymexc
 `pymexc` is an unofficial Python library for interacting with the [MEXC crypto exchange](https://www.mexc.com/). It provides a simple and intuitive API for making requests to the [MEXC API endpoints](https://mexcdevelop.github.io/apidocs/spot_v3_en/#introduction).
 
-Most of the code was generated with ChatGPT, if you see an error, write to issues.
+Base of code was taken from [pybit](https://github.com/bybit-exchange/pybit) library.
 
 # Futures orders API
 MEXC Futures API for create orders is on maintance now. **_But you can bypass it_**. See [this issue](https://github.com/makarworld/pymexc/issues/15) for more information.
