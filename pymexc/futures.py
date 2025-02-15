@@ -33,16 +33,16 @@ while True:
 """
 
 import logging
-from typing import Callable, List, Literal, Optional, Union
+from typing import Callable, Dict, List, Literal, Optional, Union
 
 logger = logging.getLogger(__name__)
 
 try:
     from base import _FuturesHTTP
-    from base_websocket import _FuturesWebSocket
+    from base_websocket import FUTURES_PERSONAL_TOPICS, _FuturesWebSocket
 except ImportError:
     from .base import _FuturesHTTP
-    from .base_websocket import _FuturesWebSocket
+    from .base_websocket import FUTURES_PERSONAL_TOPICS, _FuturesWebSocket
 
 
 class HTTP(_FuturesHTTP):
@@ -1474,6 +1474,7 @@ class WebSocket(_FuturesWebSocket):
         self,
         api_key: Optional[str] = None,
         api_secret: Optional[str] = None,
+        personal_callback: Optional[Callable[..., None]] = None,
         ping_interval: Optional[int] = 20,
         ping_timeout: Optional[int] = 10,
         retries: Optional[int] = 10,
@@ -1485,9 +1486,10 @@ class WebSocket(_FuturesWebSocket):
         http_proxy_auth: Optional[tuple] = None,
         http_proxy_timeout: Optional[int] = None,
     ):
-        kwargs = dict(
+        super().__init__(
             api_key=api_key,
             api_secret=api_secret,
+            subscribe_callback=personal_callback,
             ping_interval=ping_interval,
             ping_timeout=ping_timeout,
             retries=retries,
@@ -1499,8 +1501,19 @@ class WebSocket(_FuturesWebSocket):
             http_proxy_auth=http_proxy_auth,
             http_proxy_timeout=http_proxy_timeout,
         )
+        if personal_callback:
+            self.connect()
 
-        super().__init__(**kwargs)
+    def unsubscribe(self, method: str | Callable):
+        personal_filters = ["personal.filter", "filter", "personal"]
+        if (
+            method in personal_filters
+            or getattr(method, "__name__", "").replace("_stream", "").replace("_", ".")
+            in personal_filters
+        ):
+            return self.personal_stream(lambda: ...)
+
+        return super().unsubscribe(method)
 
     def tickers_stream(self, callback: Callable[..., None]):
         """
@@ -1714,44 +1727,28 @@ class WebSocket(_FuturesWebSocket):
     #
     # <=================================================================>
 
-    def order_stream(self, callback, params: dict = {}):
+    def filter_stream(
+        self, callback: Callable, params: Dict[str, List[dict]] = {"filters": []}
+    ):
         """
-        https://mexcdevelop.github.io/apidocs/contract_v1_en/#public-channels
+        ## Filter personal data about account
+        Provide `{"filters":[]}` as params for subscribe to all info
         """
-        topic = "sub.personal.order"
-        self._ws_subscribe(topic, callback, params)
+        if params.get("filters") is None:
+            raise ValueError("Please provide filters")
 
-    def asset_stream(self, callback, params: dict = {}):
-        """
-        https://mexcdevelop.github.io/apidocs/contract_v1_en/#public-channels
-        """
-        topic = "sub.personal.asset"
-        self._ws_subscribe(topic, callback, params)
+        topics = [x.get("filter") for x in params.get("filters", [])]
+        for topic in topics:
+            if topic not in FUTURES_PERSONAL_TOPICS:
+                raise ValueError(
+                    f"Invalid filter: `{topic}`. Valid filters: {FUTURES_PERSONAL_TOPICS}"
+                )
 
-    def position_stream(self, callback, params: dict = {}):
-        """
-        https://mexcdevelop.github.io/apidocs/contract_v1_en/#public-channels
-        """
-        topic = "sub.personal.position"
-        self._ws_subscribe(topic, callback, params)
+        self._ws_subscribe("personal.filter", callback, params)
+        # set callback for provided filters
+        self._set_personal_callback(callback, topics)
 
-    def risk_limit_stream(self, callback, params: dict = {}):
-        """
-        https://mexcdevelop.github.io/apidocs/contract_v1_en/#public-channels
-        """
-        topic = "sub.personal.risk.limit"
-        self._ws_subscribe(topic, callback, params)
-
-    def adl_level_stream(self, callback, params: dict = {}):
-        """
-        https://mexcdevelop.github.io/apidocs/contract_v1_en/#public-channels
-        """
-        topic = "sub.personal.adl.level"
-        self._ws_subscribe(topic, callback, params)
-
-    def position_mode_stream(self, callback, params: dict = {}):
-        """
-        https://mexcdevelop.github.io/apidocs/contract_v1_en/#public-channels
-        """
-        topic = "sub.personal.position.mode"
-        self._ws_subscribe(topic, callback, params)
+    def personal_stream(self, callback: Callable):
+        self.filter_stream(callback, params={"filters": []})
+        # set callback for all filters
+        self._set_personal_callback(callback, FUTURES_PERSONAL_TOPICS)

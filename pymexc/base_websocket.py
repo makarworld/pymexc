@@ -3,6 +3,7 @@ import json
 import logging
 import threading
 import time
+from typing import Callable, Dict, List, Union
 
 import websocket
 
@@ -10,6 +11,18 @@ logger = logging.getLogger(__name__)
 
 SPOT = "wss://wbs.mexc.com/ws"
 FUTURES = "wss://contract.mexc.com/edge"
+FUTURES_PERSONAL_TOPICS = [
+    "order",
+    "order.deal",
+    "position",
+    "plan.order",
+    "stop.order",
+    "stop.planorder",
+    "risk.limit",
+    "adl.level",
+    "asset",
+    "liquidate.risk",
+]
 
 
 class _WebSocketManager:
@@ -19,6 +32,7 @@ class _WebSocketManager:
         ws_name,
         api_key=None,
         api_secret=None,
+        subscribe_callback=None,
         ping_interval=20,
         ping_timeout=10,
         retries=10,
@@ -32,11 +46,14 @@ class _WebSocketManager:
         http_proxy_timeout=None,
     ):
         # Set API keys.
-        self.api_key = api_key
-        self.api_secret = api_secret
+        self.api_key: Union[str, None] = api_key
+        self.api_secret: Union[str, None] = api_secret
 
-        self.callback = callback_function
-        self.ws_name = ws_name
+        # Subscribe to private futures topics if proided
+        self.subscribe_callback: Union[Callable, None] = subscribe_callback
+
+        self.callback: Callable = callback_function
+        self.ws_name: str = ws_name
         if api_key:
             self.ws_name += " (Auth)"
 
@@ -55,20 +72,20 @@ class _WebSocketManager:
         #   {
         #       "topic_name": function
         #   }
-        self.callback_directory = {}
+        self.callback_directory: Dict[str, Callable] = {}
 
         # Record the subscriptions made so that we can resubscribe if the WSS
         # connection is broken.
-        self.subscriptions = []
+        self.subscriptions: List[dict] = []
 
         # Set ping settings.
-        self.ping_interval = ping_interval
-        self.ping_timeout = ping_timeout
-        self.custom_ping_message = json.dumps({"method": "ping"})
-        self.retries = retries
+        self.ping_interval: int = ping_interval
+        self.ping_timeout: int = ping_timeout
+        self.custom_ping_message: str = json.dumps({"method": "ping"})
+        self.retries: int = retries
 
         # Other optional data handling settings.
-        self.handle_error = restart_on_error
+        self.restart_on_error: bool = restart_on_error
 
         # Enable websocket-client's trace logging for extra debug information
         # on the websocket connection, including the raw sent & recv messages
@@ -77,6 +94,26 @@ class _WebSocketManager:
         # Set initial state, initialize dictionary and connect.
         self._reset()
         self.attempting_connection = False
+
+        self.last_subsctiption: Union[str, None] = None
+        self.ping_timer = None
+
+    @property
+    def is_spot(self):
+        return self.endpoint.startswith(SPOT)
+
+    @property
+    def is_futures(self):
+        return self.endpoint.startswith(FUTURES)
+
+    def _topic(self, topic):
+        return (
+            topic.replace("sub.", "")
+            .replace("push.", "")
+            .replace("rs.sub.", "")
+            .replace("spot@", "")
+            .split(".v3.api")[0]
+        )
 
     def _on_open(self):
         """
@@ -116,7 +153,7 @@ class _WebSocketManager:
                 return
 
             for req_id, subscription_message in self.subscriptions.items():
-                self.ws.send(subscription_message)
+                self.ws.send(json.dumps(subscription_message))
 
         self.attempting_connection = True
 
@@ -178,13 +215,19 @@ class _WebSocketManager:
 
         self.attempting_connection = False
 
+    def _set_personal_callback(
+        self, callback: Callable = None, topics: List[str] = FUTURES_PERSONAL_TOPICS
+    ):
+        if callback:
+            for topic in topics:
+                self._set_callback(f"personal.{topic}", callback)
+
     def _auth(self):
         # Generate signature
 
         # make auth if futures. spot has a different auth system.
 
-        isspot = self.endpoint.startswith(SPOT)
-        if isspot:
+        if self.is_spot:
             return
 
         timestamp = str(int(time.time() * 1000))
@@ -201,7 +244,7 @@ class _WebSocketManager:
         self.ws.send(
             json.dumps(
                 {
-                    "subscribe": False,
+                    "subscribe": bool(self.subscribe_callback),
                     "method": "login",
                     "param": {
                         "apiKey": self.api_key,
@@ -211,6 +254,7 @@ class _WebSocketManager:
                 }
             )
         )
+        self._set_personal_callback(self.subscribe_callback, FUTURES_PERSONAL_TOPICS)
 
     def _on_error(self, error):
         """
@@ -233,7 +277,7 @@ class _WebSocketManager:
             self.exit()
 
         # Reconnect.
-        if self.handle_error and not self.attempting_connection:
+        if self.restart_on_error and not self.attempting_connection:
             self._reset()
             self._connect(self.endpoint)
 
@@ -256,12 +300,19 @@ class _WebSocketManager:
         self._send_custom_ping()
 
     def _send_custom_ping(self):
-        self.ws.send(self.custom_ping_message)
+        try:
+            self.ws.send(self.custom_ping_message)
+        except websocket._exceptions.WebSocketConnectionClosedException as e:
+            self.ping_timer.cancel()
+            self._on_error(e)
 
     def _send_initial_ping(self):
         """https://github.com/bybit-exchange/pybit/issues/164"""
-        timer = threading.Timer(self.ping_interval, self._send_custom_ping)
-        timer.start()
+        if self.ping_timer:
+            self.ping_timer.cancel()
+
+        self.ping_timer = threading.Timer(self.ping_interval, self._send_custom_ping)
+        self.ping_timer.start()
 
     @staticmethod
     def _is_custom_pong(message):
@@ -289,6 +340,66 @@ class _WebSocketManager:
             continue
         self.exited = True
 
+    def _check_callback_directory(self, topics):
+        for topic in topics:
+            if topic in self.callback_directory:
+                raise Exception(f"You have already subscribed to this topic: {topic}")
+
+    def _set_callback(self, topic: str, callback_function: Callable):
+        self.callback_directory[topic] = callback_function
+
+    def _get_callback(self, topic: str) -> Union[Callable[..., None], None]:
+        return self.callback_directory.get(topic)
+
+    def _pop_callback(self, topic: str) -> Union[Callable[..., None], None]:
+        return (
+            self.callback_directory.pop(topic)
+            if self.callback_directory.get(topic)
+            else None
+        )
+
+    def _process_normal_message(self, message: dict):
+        """
+        Redirect message to callback function
+        """
+        topic = self._topic(message.get("channel") or message.get("c"))
+        callback_data = message
+        callback_function = self._get_callback(topic)
+        if callback_function:
+            callback_function(callback_data)
+        else:
+            logger.warning(
+                f"Callback for topic {topic} not found. | Message: {message}"
+            )
+
+    def _process_subscription_message(self, message: dict):
+        if message.get("id") == 0 and message.get("code") == 0:
+            # If we get successful SPOT subscription, notify user
+            logger.debug(f"Subscription to {message['msg']} successful.")
+
+        elif (
+            message.get("channel", "").startswith("rs.sub")
+            or message.get("channel", "") == "rs.personal.filter"
+            and message.get("data") == "success"
+        ):
+            # If we get successful FUTURES subscription, notify user
+            logger.debug(f"Subscription to {message['channel']} successful.")
+
+        else:
+            # SPOT or FUTURES subscription fail
+            response = message.get("msg") or message.get("data")
+
+            logger.error(f"Couldn't subscribe to topic. Error: {response}.")
+            if self.last_subsctiption:
+                self._pop_callback(self.last_subsctiption)
+
+
+# # # # # # # # # #
+#                 #
+#     FUTURES     #
+#                 #
+# # # # # # # # # #
+
 
 class _FuturesWebSocketManager(_WebSocketManager):
     def __init__(self, ws_name, **kwargs):
@@ -300,19 +411,6 @@ class _FuturesWebSocketManager(_WebSocketManager):
 
         super().__init__(callback_function, ws_name, **kwargs)
 
-        self.private_topics = [
-            "personal.order",
-            "personal.asset",
-            "personal.position",
-            "personal.risk.limit",
-            "personal.adl.level",
-            "personal.position.mode",
-        ]
-
-        self.symbol_wildcard = "*"
-        self.symbol_separator = "|"
-        self.last_subsctiption = None
-
     def subscribe(self, topic, callback, params: dict = {}):
         subscription_args = {"method": topic, "param": params}
         self._check_callback_directory(subscription_args)
@@ -323,22 +421,38 @@ class _FuturesWebSocketManager(_WebSocketManager):
 
         subscription_message = json.dumps(subscription_args)
         self.ws.send(subscription_message)
-        self.subscriptions.append(subscription_message)
-        self._set_callback(topic.replace("sub.", ""), callback)
-        self.last_subsctiption = topic.replace("sub.", "")
+        self.subscriptions.append(subscription_args)
+        self._set_callback(self._topic(topic), callback)
+        self.last_subsctiption = self._topic(topic)
 
-    def _initialise_local_data(self, topic):
-        # Create self.data
-        try:
-            self.data[topic]
-        except KeyError:
-            self.data[topic] = []
+    def unsubscribe(self, method: str | Callable) -> None:
+        if not method:
+            return
+
+        if isinstance(method, str):
+            # remove callback
+            self._pop_callback(method)
+            # send unsub message
+            self.ws.send(json.dumps({"method": f"unsub.{method}", "param": {}}))
+            # remove subscription from list
+            for sub in self.subscriptions:
+                if sub["method"] == f"sub.{method}":
+                    self.subscriptions.remove(sub)
+                    break
+
+            logger.debug(f"Unsubscribed from {method}")
+        else:
+            # this is a func, get name
+            topic_name = method.__name__.replace("_stream", "").replace("_", ".")
+
+            return self.unsubscribe(topic_name)
 
     def _process_auth_message(self, message):
         # If we get successful futures auth, notify user
         if message.get("data") == "success":
             logger.debug(f"Authorization for {self.ws_name} successful.")
             self.auth = True
+
         # If we get unsuccessful auth, notify user.
         elif message.get("data") != "success":  # !!!!
             logger.debug(
@@ -346,49 +460,18 @@ class _FuturesWebSocketManager(_WebSocketManager):
                 f"check your API keys and restart."
             )
 
-    def _process_subscription_message(self, message):
-        # try:
-        sub = message["channel"]
-        # except KeyError:
-        # sub = message["c"]  # SPOT PUBLIC & PRIVATE format
-
-        # If we get successful futures subscription, notify user
-        if (
-            message.get("channel", "").startswith("rs.")
-            or message.get("channel", "").startswith("push.")
-        ) and message.get("channel", "") != "rs.error":
-            logger.debug(f"Subscription to {sub} successful.")
-        # Futures subscription fail
-        else:
-            response = message["data"]
-            logger.error("Couldn't subscribe to topic. " f"Error: {response}.")
-            if self.last_subsctiption:
-                self._pop_callback(self.last_subsctiption)
-
-    def _process_normal_message(self, message):
-        topic = message["channel"].replace("push.", "").replace("rs.sub.", "")
-        callback_data = message
-        callback_function = self._get_callback(topic)
-        callback_function(callback_data)
-
     def _handle_incoming_message(self, message):
         def is_auth_message():
-            if message.get("channel", "") == "rs.login":
-                return True
-            else:
-                return False
+            return message.get("channel", "") == "rs.login"
 
         def is_subscription_message():
-            if str(message).startswith("{'channel': 'push."):
-                return True
-            else:
-                return False
+            return (
+                message.get("channel", "").startswith("rs.sub")
+                or message.get("channel", "") == "rs.personal.filter"
+            )
 
         def is_pong_message():
-            if message.get("channel", "") in ("pong", "clientId"):
-                return True
-            else:
-                return False
+            return message.get("channel", "") in ("pong", "clientId")
 
         def is_error_message():
             return message.get("channel", "") == "rs.error"
@@ -407,22 +490,6 @@ class _FuturesWebSocketManager(_WebSocketManager):
     def custom_topic_stream(self, topic, callback):
         return self.subscribe(topic=topic, callback=callback)
 
-    def _check_callback_directory(self, topics):
-        for topic in topics:
-            if topic in self.callback_directory:
-                raise Exception(
-                    f"You have already subscribed to this topic: " f"{topic}"
-                )
-
-    def _set_callback(self, topic, callback_function):
-        self.callback_directory[topic] = callback_function
-
-    def _get_callback(self, topic):
-        return self.callback_directory[topic]
-
-    def _pop_callback(self, topic):
-        self.callback_directory.pop(topic)
-
 
 class _FuturesWebSocket(_FuturesWebSocketManager):
     def __init__(self, **kwargs):
@@ -430,20 +497,21 @@ class _FuturesWebSocket(_FuturesWebSocketManager):
         self.endpoint = FUTURES
 
         super().__init__(self.ws_name, **kwargs)
-        self.ws = None
 
-        self.active_connections = []
-        self.kwargs = kwargs
-
-    def is_connected(self):
-        return self._are_connections_connected(self.active_connections)
+    def connect(self):
+        if not self.is_connected():
+            self._connect(self.endpoint)
 
     def _ws_subscribe(self, topic, callback, params: list = []):
-        if not self.ws:
-            self.ws = _FuturesWebSocketManager(self.ws_name, **self.kwargs)
-            self.ws._connect(self.endpoint)
-            self.active_connections.append(self.ws)
-        self.ws.subscribe(topic, callback, params)
+        self.connect()
+        self.subscribe(topic, callback, params)
+
+
+# # # # # # # # # #
+#                 #
+#       SPOT      #
+#                 #
+# # # # # # # # # #
 
 
 class _SpotWebSocketManager(_WebSocketManager):
@@ -455,11 +523,13 @@ class _SpotWebSocketManager(_WebSocketManager):
         )
         super().__init__(callback_function, ws_name, **kwargs)
 
-        self.private_topics = ["account", "deals", "orders"]
+        self.private_topics = [
+            "account",
+            "deals",
+            "orders"
+        ]
 
-        self.last_subsctiption = None
-
-    def subscribe(self, topic: str, callback, params_list: list):
+    def subscribe(self, topic: str, callback: Callable, params_list: list):
         subscription_args = {
             "method": "SUBSCRIPTION",
             "params": [
@@ -475,35 +545,55 @@ class _SpotWebSocketManager(_WebSocketManager):
 
         subscription_message = json.dumps(subscription_args)
         self.ws.send(subscription_message)
-        self.subscriptions.append(subscription_message)
+        self.subscriptions.append(subscription_args)
         self._set_callback(topic, callback)
         self.last_subsctiption = topic
 
-    def _initialise_local_data(self, topic):
-        # Create self.data
-        try:
-            self.data[topic]
-        except KeyError:
-            self.data[topic] = []
+    def unsubscribe(self, *topics: str | Callable):
+        if all([isinstance(topic, str) for topic in topics]):
+            topics = [
+                f"private.{topic}" 
+                if topic in self.private_topics 
+                else f"public.{topic}"\
+                # if user provide function .book_ticker_stream()
+                .replace("book.ticker", "bookTicker")
+            ]
+            # remove callbacks
+            for topic in topics:
+                self._pop_callback(topic)
 
-    def _process_subscription_message(self, message):
-        sub = message["msg"].replace("spot@", "").split(".v3.api")[0]
+            # send unsub message
+            self.ws.send(
+                json.dumps(
+                    {
+                        "method": "UNSUBSCRIPTION",
+                        "params": ["@".join([f"spot@{t}.v3.api"]) for t in topics],
+                    }
+                )
+            )
 
-        # If we get successful futures subscription, notify user
-        if message.get("id") == 0 and message.get("code") == 0:
-            logger.debug(f"Subscription to {sub} successful.")
-        # Futures subscription fail
+            # remove subscriptions from list
+            for i, sub in enumerate(self.subscriptions):
+                new_params = [
+                    x for x in sub["params"] if _topic not in x for _topic in topics
+                ]
+                if new_params:
+                    self.subscriptions[i]["params"] = new_params
+                else:
+                    self.subscriptions.remove(sub)
+                break
+
+            logger.debug(f"Unsubscribed from {topics}")
         else:
-            response = message["msg"]
-            logger.error("Couldn't subscribe to topic. " f"Error: {response}.")
-            if self.last_subsctiption:
-                self._pop_callback(self.last_subsctiption)
-
-    def _process_normal_message(self, message):
-        topic = message["c"].replace("spot@", "").split(".v3.api")[0]
-        callback_data = message
-        callback_function = self._get_callback(topic)
-        callback_function(callback_data)
+            # some funcs in list
+            topics = [
+                x.__name__.replace("_stream", "").replace("_", ".")
+                if getattr(x, "__name__", None)
+                else x
+                #
+                for x in topics
+            ]
+            return self.unsubscribe(*topics)
 
     def _handle_incoming_message(self, message):
         def is_subscription_message():
@@ -524,22 +614,6 @@ class _SpotWebSocketManager(_WebSocketManager):
     def custom_topic_stream(self, topic, callback):
         return self.subscribe(topic=topic, callback=callback)
 
-    def _check_callback_directory(self, topics):
-        for topic in topics:
-            if topic in self.callback_directory:
-                raise Exception(
-                    f"You have already subscribed to this topic: " f"{topic}"
-                )
-
-    def _set_callback(self, topic, callback_function):
-        self.callback_directory[topic] = callback_function
-
-    def _get_callback(self, topic):
-        return self.callback_directory[topic]
-
-    def _pop_callback(self, topic):
-        self.callback_directory.pop(topic)
-
 
 class _SpotWebSocket(_SpotWebSocketManager):
     def __init__(self, endpoint: str = "wss://wbs.mexc.com/ws", **kwargs):
@@ -547,17 +621,8 @@ class _SpotWebSocket(_SpotWebSocketManager):
         self.endpoint = endpoint
 
         super().__init__(self.ws_name, **kwargs)
-        self.ws = None
-
-        self.active_connections = []
-        self.kwargs = kwargs
-
-    def is_connected(self):
-        return self._are_connections_connected(self.active_connections)
 
     def _ws_subscribe(self, topic, callback, params: list = []):
-        if not self.ws:
-            self.ws = _SpotWebSocketManager(self.ws_name, **self.kwargs)
-            self.ws._connect(self.endpoint)
-            self.active_connections.append(self.ws)
-        self.ws.subscribe(topic, callback, params)
+        if not self.is_connected():
+            self._connect(self.endpoint)
+        self.subscribe(topic, callback, params)

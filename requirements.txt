@@ -1,0 +1,2 @@
+curl-cffi
+websocket-client

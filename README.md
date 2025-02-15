@@ -8,6 +8,9 @@
 
 Most of the code was generated with ChatGPT, if you see an error, write to issues.
 
+# Futures orders API
+MEXC Futures API for create orders is on maintance now. **_But you can bypass it_**. See [this issue](https://github.com/makarworld/pymexc/issues/15) for more information.
+
 # Installation
 You can install pymexc using pip:
 
@@ -52,7 +55,12 @@ ws_spot_client.deals_stream(handle_message, "BTCUSDT")
 # initialize HTTP client
 futures_client = futures.HTTP(api_key = api_key, api_secret = api_secret)
 # initialize WebSocket client
-ws_futures_client = futures.WebSocket(api_key = api_key, api_secret = api_secret)
+ws_futures_client = futures.WebSocket(api_key = api_key, api_secret = api_secret, 
+                                      # subscribe on personal information about about account
+                                      # if not provided, will not be subscribed
+                                      # you can subsctibe later by calling ws_futures_client.personal_stream(callback) for all info
+                                      # or ws_futures_client.filter_stream(callback, params={"filters":[{"filter":"..."}]}) for specific info (https://mexcdevelop.github.io/apidocs/contract_v1_en/#filter-subscription)
+                                      personal_callback = handle_message)
 
 # make http request to api
 print(futures_client.index_price("MX_USDT"))

@@ -1967,7 +1967,7 @@ class WebSocket(_SpotWebSocket):
         topic = "public.limit.depth"
         self._ws_subscribe(topic, callback, params)
 
-    def book_ticker(self, callback: Callable[..., None], symbol: str):
+    def book_ticker_stream(self, callback: Callable[..., None], symbol: str):
         """
         ### Individual Symbol Book Ticker Streams
         Pushes any update to the best bid or ask's price or quantity in real-time for a specified symbol.

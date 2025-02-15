@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 """
 
 
-version = '1.0.14'
+version = '1.1.0'
 
 with open("README.md", "r") as f:
     long_description = f.read()
@@ -25,7 +25,7 @@ setup(
     description="Unofficial python library for interacting with the MEXC crypto exchange",
 
     packages=['pymexc'],
-    install_requires=['requests', 'websocket-client'],
+    install_requires=['websocket-client', 'curl-cffi'],
 
     license='MIT License',
     long_description=long_description,
