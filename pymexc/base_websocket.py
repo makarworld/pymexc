@@ -557,6 +557,7 @@ class _SpotWebSocketManager(_WebSocketManager):
                 else f"public.{topic}"\
                 # if user provide function .book_ticker_stream()
                 .replace("book.ticker", "bookTicker")
+                for topic in topics
             ]
             # remove callbacks
             for topic in topics:
@@ -575,7 +576,7 @@ class _SpotWebSocketManager(_WebSocketManager):
             # remove subscriptions from list
             for i, sub in enumerate(self.subscriptions):
                 new_params = [
-                    x for x in sub["params"] if _topic not in x for _topic in topics
+                    x for x in sub["params"] for _topic in topics if _topic not in x
                 ]
                 if new_params:
                     self.subscriptions[i]["params"] = new_params
