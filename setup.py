@@ -25,7 +25,7 @@ setup(
     description="Unofficial python library for interacting with the MEXC crypto exchange",
 
     packages=['pymexc'],
-    install_requires=['websocket-client', 'curl-cffi'],
+    install_requires=['websocket-client', 'curl-cffi', 'wsaccel'],
 
     license='MIT License',
     long_description=long_description,
