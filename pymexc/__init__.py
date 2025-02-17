@@ -48,14 +48,13 @@ while True:
 
 from .web import futures
 
-
 try:
-    from . import futures, spot, _async
+    from . import _async, futures, spot
 except ImportError:
+    import _async
     import futures
     import spot
     import web
-    import _async
 
 
 __all__ = ["futures", "spot", "web", "_async"]

@@ -829,7 +829,9 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return await self.call("DELETE", "api/v3/openOrders", params=dict(symbol=symbol))
+        return await self.call(
+            "DELETE", "api/v3/openOrders", params=dict(symbol=symbol)
+        )
 
     async def query_order(
         self,
@@ -1871,7 +1873,9 @@ class WebSocket(_SpotWebSocket):
         topic = "public.deals"
         await self._ws_subscribe(topic, callback, params)
 
-    async def kline_stream(self, callback: Callable[..., None], symbol: str, interval: int):
+    async def kline_stream(
+        self, callback: Callable[..., None], symbol: str, interval: int
+    ):
         """
         ### Kline Streams
         The Kline/Candlestick Stream push updates to the current klines/candlestick every second.

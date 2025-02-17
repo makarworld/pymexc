@@ -120,7 +120,7 @@ class _SpotHTTP(MexcSDK):
         encoded_params = urlencode(params, doseq=True).replace("+", "%20")
 
         if self.api_key and self.api_secret and auth:
-            params['signature'] = self.sign(encoded_params)
+            params["signature"] = self.sign(encoded_params)
 
         response = await self.session.request(
             method, f"{self.base_url}{router}", params=params, *args, **kwargs
@@ -142,9 +142,7 @@ class _FuturesHTTP(MexcSDK):
         proxies: dict = None,
         ignore_ad: bool = False,
     ):
-        super().__init__(
-            api_key, api_secret, FUTURES, proxies=proxies
-        )
+        super().__init__(api_key, api_secret, FUTURES, proxies=proxies)
         if not ignore_ad:
             print(
                 "[pymexc] You can bypass Futures API maintance. See https://github.com/makarworld/pymexc/issues/15 for more information."

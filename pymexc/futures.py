@@ -38,15 +38,15 @@ from typing import Callable, Dict, List, Literal, Optional, Union
 logger = logging.getLogger(__name__)
 
 try:
-    from base import _FuturesHTTP
-    from base_websocket import FUTURES_PERSONAL_TOPICS, _FuturesWebSocket
     from _async.futures import HTTP as AsyncHTTP
     from _async.futures import WebSocket as AsyncWebSocket
+    from base import _FuturesHTTP
+    from base_websocket import FUTURES_PERSONAL_TOPICS, _FuturesWebSocket
 except ImportError:
-    from .base import _FuturesHTTP
-    from .base_websocket import FUTURES_PERSONAL_TOPICS, _FuturesWebSocket
     from ._async.futures import HTTP as AsyncHTTP
     from ._async.futures import WebSocket as AsyncWebSocket
+    from .base import _FuturesHTTP
+    from .base_websocket import FUTURES_PERSONAL_TOPICS, _FuturesWebSocket
 
 __all__ = ["HTTP", "WebSocket", "AsyncHTTP", "AsyncWebSocket"]
 

@@ -523,11 +523,7 @@ class _SpotWebSocketManager(_WebSocketManager):
         )
         super().__init__(callback_function, ws_name, **kwargs)
 
-        self.private_topics = [
-            "account",
-            "deals",
-            "orders"
-        ]
+        self.private_topics = ["account", "deals", "orders"]
 
     def subscribe(self, topic: str, callback: Callable, params_list: list):
         subscription_args = {
@@ -552,9 +548,9 @@ class _SpotWebSocketManager(_WebSocketManager):
     def unsubscribe(self, *topics: str | Callable):
         if all([isinstance(topic, str) for topic in topics]):
             topics = [
-                f"private.{topic}" 
-                if topic in self.private_topics 
-                else f"public.{topic}"\
+                f"private.{topic}"
+                if topic in self.private_topics
+                else f"public.{topic}"
                 # if user provide function .book_ticker_stream()
                 .replace("book.ticker", "bookTicker")
                 for topic in topics

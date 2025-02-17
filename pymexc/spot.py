@@ -40,17 +40,18 @@ from typing import Callable, List, Literal, Optional, Union
 logger = logging.getLogger(__name__)
 
 try:
-    from base import _SpotHTTP
-    from base_websocket import _SpotWebSocket
     from _async.spot import HTTP as AsyncHTTP
     from _async.spot import WebSocket as AsyncWebSocket
+    from base import _SpotHTTP
+    from base_websocket import _SpotWebSocket
 except ImportError:
-    from .base import _SpotHTTP
-    from .base_websocket import _SpotWebSocket
     from ._async.spot import HTTP as AsyncHTTP
     from ._async.spot import WebSocket as AsyncWebSocket
+    from .base import _SpotHTTP
+    from .base_websocket import _SpotWebSocket
 
 __all__ = ["HTTP", "WebSocket", "AsyncHTTP", "AsyncWebSocket"]
+
 
 class HTTP(_SpotHTTP):
     # <=================================================================>

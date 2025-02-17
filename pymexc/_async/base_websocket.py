@@ -4,8 +4,9 @@ import hmac
 import json
 import logging
 import time
-from typing import Awaitable, Callable, Dict, List, Union, TYPE_CHECKING
 import warnings
+from typing import TYPE_CHECKING, Awaitable, Callable, Dict, List, Union
+
 import websockets.client
 
 if TYPE_CHECKING:
@@ -28,18 +29,19 @@ FUTURES_PERSONAL_TOPICS = [
     "liquidate.risk",
 ]
 
+
 class CustomWebsockerClientProtocol(websockets.client.WebSocketClientProtocol):
-    def __init__(self, ws_manager: '_WebSocketManager', *args, **kwargs):
-        self.ws_manager: '_WebSocketManager' = ws_manager
+    def __init__(self, ws_manager: "_WebSocketManager", *args, **kwargs):
+        self.ws_manager: "_WebSocketManager" = ws_manager
         kwargs.pop("ping_timeout")
 
-        super().__init__(*args, **kwargs, ping_timeout = None)
-    
+        super().__init__(*args, **kwargs, ping_timeout=None)
+
     async def ping(self) -> Awaitable[None]:
         await self.send(self.ws_manager.custom_ping_message)
         # pong_waiter is no released here. ping_timeout must be None.
         return
-    
+
     def connection_open(self) -> None:
         super().connection_open()
         #
@@ -49,10 +51,11 @@ class CustomWebsockerClientProtocol(websockets.client.WebSocketClientProtocol):
         self.loop.create_task(self.ws_manager._on_close())
         #
         return super().connection_closed_exc()
-    
+
+
 class _WebSocketManager:
     endpoint: str
-    
+
     def __init__(
         self,
         callback_function,
@@ -71,7 +74,7 @@ class _WebSocketManager:
         http_no_proxy=None,
         http_proxy_auth=None,
         http_proxy_timeout=None,
-        loop = None
+        loop=None,
     ):
         # Set API keys.
         self.api_key: Union[str, None] = api_key
@@ -167,7 +170,7 @@ class _WebSocketManager:
         """
         message = json.loads(message)
         if self._is_custom_pong(message):
-            print('pong', message)
+            print("pong", message)
             return
         else:
             await self.callback(message)
@@ -210,16 +213,16 @@ class _WebSocketManager:
         while (infinitely_reconnect or retries > 0) and not self.is_connected():
             logger.info(f"WebSocket {self.ws_name} attempting connection...")
             self.ws: CustomWebsockerClientProtocol = await websockets.client.connect(
-                uri = url,
-                loop = self.loop,
-                create_protocol = functools.partial(CustomWebsockerClientProtocol, self),
-                ping_interval = 20,
-                ping_timeout = None,
-                #on_message=lambda ws, msg: self._on_message(msg),
-                #on_close=lambda ws, *args: self._on_close(),
-                #on_open=lambda ws, *args: self._on_open(),
-                #on_error=lambda ws, err: self._on_error(err),
-                #on_pong=lambda ws, *args: self._on_pong(),
+                uri=url,
+                loop=self.loop,
+                create_protocol=functools.partial(CustomWebsockerClientProtocol, self),
+                ping_interval=20,
+                ping_timeout=None,
+                # on_message=lambda ws, msg: self._on_message(msg),
+                # on_close=lambda ws, *args: self._on_close(),
+                # on_open=lambda ws, *args: self._on_open(),
+                # on_error=lambda ws, err: self._on_error(err),
+                # on_pong=lambda ws, *args: self._on_pong(),
             )
 
             # parse incoming messages
@@ -242,7 +245,6 @@ class _WebSocketManager:
             # while self.wst.is_alive():
             #     if self.ws.sock and self.is_connected():
             #         break
-
 
             if not self.is_connected():
                 # If connection was not successful, raise error.
@@ -511,7 +513,14 @@ class _FuturesWebSocketManager(_WebSocketManager):
 
 
 class _FuturesWebSocket(_FuturesWebSocketManager):
-    def __init__(self, api_key: str = None, api_secret: str = None, loop: asyncio.AbstractEventLoop = None, subscribe_callback: Callable = None, **kwargs):
+    def __init__(
+        self,
+        api_key: str = None,
+        api_secret: str = None,
+        loop: asyncio.AbstractEventLoop = None,
+        subscribe_callback: Callable = None,
+        **kwargs,
+    ):
         self.ws_name = "FuturesV1"
         self.endpoint = FUTURES
         loop = loop or asyncio.get_event_loop()
@@ -519,7 +528,14 @@ class _FuturesWebSocket(_FuturesWebSocketManager):
         if subscribe_callback:
             loop.create_task(self.connect())
 
-        super().__init__(self.ws_name, api_key = api_key, api_secret = api_secret, loop = loop, subscribe_callback = subscribe_callback, **kwargs)
+        super().__init__(
+            self.ws_name,
+            api_key=api_key,
+            api_secret=api_secret,
+            loop=loop,
+            subscribe_callback=subscribe_callback,
+            **kwargs,
+        )
 
     async def connect(self):
         if not self.is_connected():
@@ -546,11 +562,7 @@ class _SpotWebSocketManager(_WebSocketManager):
         )
         super().__init__(callback_function, ws_name, **kwargs)
 
-        self.private_topics = [
-            "account",
-            "deals",
-            "orders"
-        ]
+        self.private_topics = ["account", "deals", "orders"]
 
     async def subscribe(self, topic: str, callback: Callable, params_list: list):
         subscription_args = {
@@ -575,9 +587,9 @@ class _SpotWebSocketManager(_WebSocketManager):
     async def unsubscribe(self, *topics: str | Callable):
         if all([isinstance(topic, str) for topic in topics]):
             topics = [
-                f"private.{topic}" 
-                if topic in self.private_topics 
-                else f"public.{topic}"\
+                f"private.{topic}"
+                if topic in self.private_topics
+                else f"public.{topic}"
                 # if user provide function .book_ticker_stream()
                 .replace("book.ticker", "bookTicker")
                 for topic in topics
@@ -640,10 +652,17 @@ class _SpotWebSocketManager(_WebSocketManager):
 
 
 class _SpotWebSocket(_SpotWebSocketManager):
-    listenKey: str 
-    http: 'HTTP'
+    listenKey: str
+    http: "HTTP"
 
-    def __init__(self, endpoint: str = SPOT, api_key: str = None, api_secret: str = None, loop: asyncio.AbstractEventLoop = None, **kwargs):
+    def __init__(
+        self,
+        endpoint: str = SPOT,
+        api_key: str = None,
+        api_secret: str = None,
+        loop: asyncio.AbstractEventLoop = None,
+        **kwargs,
+    ):
         self.ws_name = "SpotV3"
         self.endpoint = endpoint
         loop = loop or asyncio.get_event_loop()
@@ -654,13 +673,14 @@ class _SpotWebSocket(_SpotWebSocketManager):
             # setup keep-alive connection loop
             loop.create_task(self._keep_alive_loop())
 
-        super().__init__(self.ws_name, api_key = api_key, api_secret = api_secret, loop = loop, **kwargs)
+        super().__init__(
+            self.ws_name, api_key=api_key, api_secret=api_secret, loop=loop, **kwargs
+        )
 
     async def get_listen_key(self):
         auth = await self.http.create_listen_key()
         self.listenKey = auth.get("listenKey")
         logger.debug(f"create listenKey: {self.listenKey}")
-
 
     async def _keep_alive_loop(self):
         """
@@ -680,12 +700,11 @@ class _SpotWebSocket(_SpotWebSocketManager):
 
             await asyncio.sleep(59 * 60)  # 59 min
 
-
     async def connect(self):
         if not self.is_connected():
             if self.listenKey is None:
                 await self.get_listen_key()
-            
+
             await self._connect(self.endpoint + f"?listenKey={self.listenKey}")
 
     async def _ws_subscribe(self, topic, callback, params: list = []):

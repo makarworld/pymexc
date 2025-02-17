@@ -1502,7 +1502,7 @@ class WebSocket(_FuturesWebSocket):
             http_no_proxy=http_no_proxy,
             http_proxy_auth=http_proxy_auth,
             http_proxy_timeout=http_proxy_timeout,
-            loop=loop
+            loop=loop,
         )
 
     async def unsubscribe(self, method: str | Callable):
@@ -1533,7 +1533,9 @@ class WebSocket(_FuturesWebSocket):
         topic = "sub.tickers"
         await self._ws_subscribe(topic, callback, params)
 
-    async def ticker_stream(self, callback: Awaitable[Callable[..., None]], symbol: str):
+    async def ticker_stream(
+        self, callback: Awaitable[Callable[..., None]], symbol: str
+    ):
         """
         ### Ticker
         Get the latest transaction price, buy price, sell price and 24 transaction volume of a contract,
@@ -1657,7 +1659,9 @@ class WebSocket(_FuturesWebSocket):
         topic = "sub.kline"
         await self._ws_subscribe(topic, callback, params)
 
-    async def funding_rate_stream(self, callback: Awaitable[Callable[..., None]], symbol: str):
+    async def funding_rate_stream(
+        self, callback: Awaitable[Callable[..., None]], symbol: str
+    ):
         """
         ### Funding rate
         Get the contract funding rate, and keep updating.
@@ -1679,7 +1683,9 @@ class WebSocket(_FuturesWebSocket):
         topic = "sub.funding.rate"
         await self._ws_subscribe(topic, callback, params)
 
-    async def index_price_stream(self, callback: Awaitable[Callable[..., None]], symbol: str):
+    async def index_price_stream(
+        self, callback: Awaitable[Callable[..., None]], symbol: str
+    ):
         """
         ### Index price
         Get the index price, and will keep updating if there is any changes.
@@ -1701,7 +1707,9 @@ class WebSocket(_FuturesWebSocket):
         topic = "sub.index.price"
         await self._ws_subscribe(topic, callback, params)
 
-    async def fair_price_stream(self, callback: Awaitable[Callable[..., None]], symbol: str):
+    async def fair_price_stream(
+        self, callback: Awaitable[Callable[..., None]], symbol: str
+    ):
         """
         ### Fair price
 

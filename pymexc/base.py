@@ -14,6 +14,7 @@ SPOT = "https://api.mexc.com"
 FUTURES = "https://contract.mexc.com"
 WEB = "https://futures.mexc.com"
 
+
 class MexcAPIError(Exception):
     pass
 
@@ -28,7 +29,12 @@ class MexcSDK(ABC):
     """
 
     def __init__(
-        self, base_url: str, api_key: str = None, api_secret: str = None, u_id: str = None, proxies: dict = None
+        self,
+        base_url: str,
+        api_key: str = None,
+        api_secret: str = None,
+        u_id: str = None,
+        proxies: dict = None,
     ):
         self.api_key = api_key
         self.api_secret = api_secret
@@ -240,13 +246,13 @@ class _WebHTTP(MexcSDK):
         u_id: str = None,
         proxies: dict = None,
     ):
-        super().__init__(
-            WEB, u_id=u_id, proxies=proxies
+        super().__init__(WEB, u_id=u_id, proxies=proxies)
+        self.session.headers.update(
+            {
+                "content-Type": "application/json",
+                "authorization": self.u_id,
+            }
         )
-        self.session.headers.update({
-            "content-Type": "application/json", 
-            "authorization": self.u_id,
-        })
 
     def call(
         self,
