@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 SPOT = "https://api.mexc.com"
 FUTURES = "https://contract.mexc.com"
+WEB = "https://futures.mexc.com"
 
 class MexcAPIError(Exception):
     pass
@@ -27,10 +28,11 @@ class MexcSDK(ABC):
     """
 
     def __init__(
-        self, api_key: str, api_secret: str, base_url: str, proxies: dict = None
+        self, base_url: str, api_key: str = None, api_secret: str = None, u_id: str = None, proxies: dict = None
     ):
         self.api_key = api_key
         self.api_secret = api_secret
+        self.u_id = u_id
 
         self.recvWindow = 5000
 
@@ -141,7 +143,7 @@ class _FuturesHTTP(MexcSDK):
         ignore_ad: bool = False,
     ):
         super().__init__(
-            api_key, api_secret, FUTURES, proxies=proxies
+            FUTURES, api_key=api_key, api_secret=api_secret, proxies=proxies
         )
         if not ignore_ad:
             print(
@@ -224,6 +226,68 @@ class _FuturesHTTP(MexcSDK):
                 "Request-Time": timestamp,
                 "Signature": self.sign(timestamp, **payload),
             }
+
+        response = self.session.request(
+            method, f"{self.base_url}{router}", *args, **kwargs
+        )
+
+        return response.json()
+
+
+class _WebHTTP(MexcSDK):
+    def __init__(
+        self,
+        u_id: str = None,
+        proxies: dict = None,
+    ):
+        super().__init__(
+            WEB, u_id=u_id, proxies=proxies
+        )
+        self.session.headers.update({
+            "content-Type": "application/json", 
+            "authorization": self.u_id,
+        })
+
+    def call(
+        self,
+        method: Union[
+            Literal["GET"], Literal["POST"], Literal["PUT"], Literal["DELETE"]
+        ],
+        router: str,
+        *args,
+        **kwargs,
+    ) -> dict:
+        """
+        Makes a request to the specified HTTP method and router using the provided arguments.
+
+        :param method: A string that represents the HTTP method(GET, POST, PUT, or DELETE) to be used.
+        :type method: str
+        :param router: A string that represents the API endpoint to be called.
+        :type router: str
+        :param *args: Variable length argument list.
+        :type *args: list
+        :param **kwargs: Arbitrary keyword arguments.
+        :type **kwargs: dict
+
+        :return: A dictionary containing the JSON response of the request.
+        """
+
+        if not router.startswith("/"):
+            router = f"/{router}"
+
+        # Clear None values
+        kwargs = {k: v for k, v in kwargs.items() if v is not None}
+
+        # Ensure only one of 'json' or 'params' is set
+        if "json" in kwargs and "params" in kwargs:
+            raise ValueError("Only one of 'json' or 'params' can be specified.")
+
+        # Clean None values inside 'json' or 'params'
+        for variant in ("params", "json"):
+            if kwargs.get(variant):
+                kwargs[variant] = {
+                    k: v for k, v in kwargs[variant].items() if v is not None
+                }
 
         response = self.session.request(
             method, f"{self.base_url}{router}", *args, **kwargs
