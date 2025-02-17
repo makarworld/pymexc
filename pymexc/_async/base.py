@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 SPOT = "https://api.mexc.com"
 FUTURES = "https://contract.mexc.com"
 
+
 class MexcAPIError(Exception):
     pass
 
@@ -36,7 +37,7 @@ class MexcSDK(ABC):
 
         self.base_url = base_url
 
-        self.session = requests.Session()
+        self.session = requests.AsyncSession()
         self.session.headers.update(
             {
                 "Content-Type": "application/json",
@@ -50,7 +51,7 @@ class MexcSDK(ABC):
     def sign(self, **kwargs) -> str: ...
 
     @classmethod
-    def call(
+    async def call(
         self,
         method: Union[
             Literal["GET"], Literal["POST"], Literal["PUT"], Literal["DELETE"]
@@ -87,7 +88,7 @@ class _SpotHTTP(MexcSDK):
         ).hexdigest()
         return signature
 
-    def call(
+    async def call(
         self,
         method: Union[
             Literal["GET"], Literal["POST"], Literal["PUT"], Literal["DELETE"]
@@ -115,12 +116,13 @@ class _SpotHTTP(MexcSDK):
         kwargs["params"]["recvWindow"] = self.recvWindow
 
         kwargs["params"] = {k: v for k, v in sorted(kwargs["params"].items())}
-        params = urlencode(kwargs.pop("params"), doseq=True).replace("+", "%20")
+        params = kwargs.pop("params")
+        encoded_params = urlencode(params, doseq=True).replace("+", "%20")
 
         if self.api_key and self.api_secret and auth:
-            params += "&signature=" + self.sign(params)
+            params['signature'] = self.sign(encoded_params)
 
-        response = self.session.request(
+        response = await self.session.request(
             method, f"{self.base_url}{router}", params=params, *args, **kwargs
         )
 
@@ -174,7 +176,7 @@ class _FuturesHTTP(MexcSDK):
         ).hexdigest()
         return signature
 
-    def call(
+    async def call(
         self,
         method: Union[
             Literal["GET"], Literal["POST"], Literal["PUT"], Literal["DELETE"]
@@ -225,7 +227,7 @@ class _FuturesHTTP(MexcSDK):
                 "Signature": self.sign(timestamp, **payload),
             }
 
-        response = self.session.request(
+        response = await self.session.request(
             method, f"{self.base_url}{router}", *args, **kwargs
         )
 

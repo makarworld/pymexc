@@ -1,3 +1,4 @@
 curl-cffi
 websocket-client
 wsaccel
+websockets

@@ -33,22 +33,17 @@ while True:
 """
 
 import logging
-from typing import Callable, Dict, List, Literal, Optional, Union
+from asyncio import AbstractEventLoop
+from typing import Awaitable, Callable, Dict, List, Literal, Optional, Union
 
 logger = logging.getLogger(__name__)
 
 try:
     from base import _FuturesHTTP
     from base_websocket import FUTURES_PERSONAL_TOPICS, _FuturesWebSocket
-    from _async.futures import HTTP as AsyncHTTP
-    from _async.futures import WebSocket as AsyncWebSocket
 except ImportError:
     from .base import _FuturesHTTP
     from .base_websocket import FUTURES_PERSONAL_TOPICS, _FuturesWebSocket
-    from ._async.futures import HTTP as AsyncHTTP
-    from ._async.futures import WebSocket as AsyncWebSocket
-
-__all__ = ["HTTP", "WebSocket", "AsyncHTTP", "AsyncWebSocket"]
 
 
 class HTTP(_FuturesHTTP):
@@ -1480,9 +1475,10 @@ class WebSocket(_FuturesWebSocket):
         self,
         api_key: Optional[str] = None,
         api_secret: Optional[str] = None,
-        personal_callback: Optional[Callable[..., None]] = None,
+        loop: Optional[AbstractEventLoop] = None,
+        personal_callback: Optional[Awaitable[Callable[..., None]]] = None,
         ping_interval: Optional[int] = 20,
-        ping_timeout: Optional[int] = 10,
+        ping_timeout: Optional[int] = None,
         retries: Optional[int] = 10,
         restart_on_error: Optional[bool] = True,
         trace_logging: Optional[bool] = False,
@@ -1506,22 +1502,21 @@ class WebSocket(_FuturesWebSocket):
             http_no_proxy=http_no_proxy,
             http_proxy_auth=http_proxy_auth,
             http_proxy_timeout=http_proxy_timeout,
+            loop=loop
         )
-        if personal_callback:
-            self.connect()
 
-    def unsubscribe(self, method: str | Callable):
+    async def unsubscribe(self, method: str | Callable):
         personal_filters = ["personal.filter", "filter", "personal"]
         if (
             method in personal_filters
             or getattr(method, "__name__", "").replace("_stream", "").replace("_", ".")
             in personal_filters
         ):
-            return self.personal_stream(lambda: ...)
+            return await self.personal_stream(lambda: ...)
 
-        return super().unsubscribe(method)
+        return await super().unsubscribe(method)
 
-    def tickers_stream(self, callback: Callable[..., None]):
+    async def tickers_stream(self, callback: Awaitable[Callable[..., None]]):
         """
         ### Tickers
         Get the latest transaction price, buy-price, sell-price and 24 transaction volume of all the perpetual contracts on the platform without login.
@@ -1530,15 +1525,15 @@ class WebSocket(_FuturesWebSocket):
         https://mexcdevelop.github.io/apidocs/contract_v1_en/#public-channels
 
         :param callback: the callback function
-        :type callback: Callable[..., None]
+        :type callback: Awaitable[Callable[..., None]]
 
         :return: None
         """
         params = {}
         topic = "sub.tickers"
-        self._ws_subscribe(topic, callback, params)
+        await self._ws_subscribe(topic, callback, params)
 
-    def ticker_stream(self, callback: Callable[..., None], symbol: str):
+    async def ticker_stream(self, callback: Awaitable[Callable[..., None]], symbol: str):
         """
         ### Ticker
         Get the latest transaction price, buy price, sell price and 24 transaction volume of a contract,
@@ -1547,7 +1542,7 @@ class WebSocket(_FuturesWebSocket):
         https://mexcdevelop.github.io/apidocs/contract_v1_en/#public-channels
 
         :param callback: the callback function
-        :type callback: Callable[..., None]
+        :type callback: Awaitable[Callable[..., None]]
         :param symbol: the name of the contract
         :type symbol: str
 
@@ -1559,9 +1554,9 @@ class WebSocket(_FuturesWebSocket):
         params = {k: v for k, v in params.items() if v is not None}
 
         topic = "sub.ticker"
-        self._ws_subscribe(topic, callback, params)
+        await self._ws_subscribe(topic, callback, params)
 
-    def deal_stream(self, callback: Callable[..., None], symbol: str):
+    async def deal_stream(self, callback: Awaitable[Callable[..., None]], symbol: str):
         """
         ### Transaction
         Access to the latest data without login, and keep updating.
@@ -1569,7 +1564,7 @@ class WebSocket(_FuturesWebSocket):
         https://mexcdevelop.github.io/apidocs/contract_v1_en/#public-channels
 
         :param callback: the callback function
-        :type callback: Callable[..., None]
+        :type callback: Awaitable[Callable[..., None]]
         :param symbol: the name of the contract
         :type symbol: str
 
@@ -1581,9 +1576,9 @@ class WebSocket(_FuturesWebSocket):
         params = {k: v for k, v in params.items() if v is not None}
 
         topic = "sub.deal"
-        self._ws_subscribe(topic, callback, params)
+        await self._ws_subscribe(topic, callback, params)
 
-    def depth_stream(self, callback: Callable[..., None], symbol: str):
+    async def depth_stream(self, callback: Awaitable[Callable[..., None]], symbol: str):
         """
         ### Depth
 
@@ -1592,7 +1587,7 @@ class WebSocket(_FuturesWebSocket):
         https://mexcdevelop.github.io/apidocs/contract_v1_en/#public-channels
 
         :param callback: the callback function
-        :type callback: Callable[..., None]
+        :type callback: Awaitable[Callable[..., None]]
         :param symbol: the name of the contract
         :type symbol: str
 
@@ -1604,10 +1599,10 @@ class WebSocket(_FuturesWebSocket):
         params = {k: v for k, v in params.items() if v is not None}
 
         topic = "sub.depth"
-        self._ws_subscribe(topic, callback, params)
+        await self._ws_subscribe(topic, callback, params)
 
-    def depth_full_stream(
-        self, callback: Callable[..., None], symbol: str, limit: int = 20
+    async def depth_full_stream(
+        self, callback: Awaitable[Callable[..., None]], symbol: str, limit: int = 20
     ):
         """
         ### Depth full
@@ -1615,7 +1610,7 @@ class WebSocket(_FuturesWebSocket):
         https://mexcdevelop.github.io/apidocs/contract_v1_en/#public-channels
 
         :param callback: the callback function
-        :type callback: Callable[..., None]
+        :type callback: Awaitable[Callable[..., None]]
         :param symbol: the name of the contract
         :type symbol: str
         :param limit: Limit could be 5, 10 or 20, default 20 without define., only subscribe to the full amount of one gear
@@ -1629,11 +1624,11 @@ class WebSocket(_FuturesWebSocket):
         params = {k: v for k, v in params.items() if v is not None}
 
         topic = "sub.depth.full"
-        self._ws_subscribe(topic, callback, params)
+        await self._ws_subscribe(topic, callback, params)
 
-    def kline_stream(
+    async def kline_stream(
         self,
-        callback: Callable[..., None],
+        callback: Awaitable[Callable[..., None]],
         symbol: str,
         interval: Literal[
             "Min1", "Min5", "Min15", "Min60", "Hour1", "Hour4", "Day1", "Week1"
@@ -1646,7 +1641,7 @@ class WebSocket(_FuturesWebSocket):
         https://mexcdevelop.github.io/apidocs/contract_v1_en/#public-channels
 
         :param callback: the callback function
-        :type callback: Callable[..., None]
+        :type callback: Awaitable[Callable[..., None]]
         :param symbol: the name of the contract
         :type symbol: str
         :param interval: Min1, Min5, Min15, Min30, Min60, Hour4, Hour8, Day1, Week1, Month1
@@ -1660,9 +1655,9 @@ class WebSocket(_FuturesWebSocket):
         params = {k: v for k, v in params.items() if v is not None}
 
         topic = "sub.kline"
-        self._ws_subscribe(topic, callback, params)
+        await self._ws_subscribe(topic, callback, params)
 
-    def funding_rate_stream(self, callback: Callable[..., None], symbol: str):
+    async def funding_rate_stream(self, callback: Awaitable[Callable[..., None]], symbol: str):
         """
         ### Funding rate
         Get the contract funding rate, and keep updating.
@@ -1670,7 +1665,7 @@ class WebSocket(_FuturesWebSocket):
         https://mexcdevelop.github.io/apidocs/contract_v1_en/#public-channels
 
         :param callback: the callback function
-        :type callback: Callable[..., None]
+        :type callback: Awaitable[Callable[..., None]]
         :param symbol: the name of the contract
         :type symbol: str
 
@@ -1682,9 +1677,9 @@ class WebSocket(_FuturesWebSocket):
         params = {k: v for k, v in params.items() if v is not None}
 
         topic = "sub.funding.rate"
-        self._ws_subscribe(topic, callback, params)
+        await self._ws_subscribe(topic, callback, params)
 
-    def index_price_stream(self, callback: Callable[..., None], symbol: str):
+    async def index_price_stream(self, callback: Awaitable[Callable[..., None]], symbol: str):
         """
         ### Index price
         Get the index price, and will keep updating if there is any changes.
@@ -1692,7 +1687,7 @@ class WebSocket(_FuturesWebSocket):
         https://mexcdevelop.github.io/apidocs/contract_v1_en/#public-channels
 
         :param callback: the callback function
-        :type callback: Callable[..., None]
+        :type callback: Awaitable[Callable[..., None]]
         :param symbol: the name of the contract
         :type symbol: str
 
@@ -1704,16 +1699,16 @@ class WebSocket(_FuturesWebSocket):
         params = {k: v for k, v in params.items() if v is not None}
 
         topic = "sub.index.price"
-        self._ws_subscribe(topic, callback, params)
+        await self._ws_subscribe(topic, callback, params)
 
-    def fair_price_stream(self, callback: Callable[..., None], symbol: str):
+    async def fair_price_stream(self, callback: Awaitable[Callable[..., None]], symbol: str):
         """
         ### Fair price
 
         https://mexcdevelop.github.io/apidocs/contract_v1_en/#public-channels
 
         :param callback: the callback function
-        :type callback: Callable[..., None]
+        :type callback: Awaitable[Callable[..., None]]
         :param symbol: the name of the contract
         :type symbol: str
 
@@ -1725,7 +1720,7 @@ class WebSocket(_FuturesWebSocket):
         params = {k: v for k, v in params.items() if v is not None}
 
         topic = "sub.fair.price"
-        self._ws_subscribe(topic, callback, params)
+        await self._ws_subscribe(topic, callback, params)
 
     # <=================================================================>
     #
@@ -1733,7 +1728,7 @@ class WebSocket(_FuturesWebSocket):
     #
     # <=================================================================>
 
-    def filter_stream(
+    async def filter_stream(
         self, callback: Callable, params: Dict[str, List[dict]] = {"filters": []}
     ):
         """
@@ -1750,11 +1745,11 @@ class WebSocket(_FuturesWebSocket):
                     f"Invalid filter: `{topic}`. Valid filters: {FUTURES_PERSONAL_TOPICS}"
                 )
 
-        self._ws_subscribe("personal.filter", callback, params)
+        await self._ws_subscribe("personal.filter", callback, params)
         # set callback for provided filters
         self._set_personal_callback(callback, topics)
 
-    def personal_stream(self, callback: Callable):
-        self.filter_stream(callback, params={"filters": []})
+    async def personal_stream(self, callback: Awaitable[Callable]):
+        await self.filter_stream(callback, params={"filters": []})
         # set callback for all filters
         self._set_personal_callback(callback, FUTURES_PERSONAL_TOPICS)
