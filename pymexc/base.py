@@ -18,6 +18,17 @@ WEB = "https://futures.mexc.com"
 class MexcAPIError(Exception):
     pass
 
+class OrderSide:
+    BUY = "BUY"
+    SELL = "SELL"
+
+class OrderType:
+    LIMIT = "LIMIT"
+    MARKET = "MARKET"
+    LIMIT_MARKET = "LIMIT_MAKER"
+    IMMEDIATE_OR_CANCEL = "IMMEDIATE_OR_CANCEL"
+    FILL_OR_KILL = "FILL_OR_KILL"
+
 
 class MexcSDK(ABC):
     """
@@ -73,7 +84,7 @@ class _SpotHTTP(MexcSDK):
     def __init__(
         self, api_key: str = None, api_secret: str = None, proxies: dict = None
     ):
-        super().__init__(api_key, api_secret, SPOT, proxies=proxies)
+        super().__init__(SPOT, api_key, api_secret, proxies=proxies)
 
         self.session.headers.update({"X-MEXC-APIKEY": self.api_key})
 
@@ -123,10 +134,11 @@ class _SpotHTTP(MexcSDK):
         kwargs["params"]["recvWindow"] = self.recvWindow
 
         kwargs["params"] = {k: v for k, v in sorted(kwargs["params"].items())}
-        params = urlencode(kwargs.pop("params"), doseq=True).replace("+", "%20")
+        params = kwargs.pop("params")
+        encoded_params = urlencode(params, doseq=True).replace("+", "%20")
 
         if self.api_key and self.api_secret and auth:
-            params += "&signature=" + self.sign(params)
+            params["signature"] = self.sign(encoded_params)
 
         response = self.session.request(
             method, f"{self.base_url}{router}", params=params, *args, **kwargs
