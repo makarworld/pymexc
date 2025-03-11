@@ -46,8 +46,6 @@ while True:
 
 """
 
-from .web import futures
-
 try:
     from . import _async, futures, spot
 except ImportError:

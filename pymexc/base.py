@@ -230,10 +230,16 @@ class _FuturesHTTP(MexcSDK):
 
         # Clean None values inside 'json' or 'params'
         for variant in ("params", "json"):
-            if kwargs.get(variant):
-                kwargs[variant] = {
-                    k: v for k, v in kwargs[variant].items() if v is not None
-                }
+            if kwarg_variant := kwargs.get(variant):
+                if isinstance(kwarg_variant, dict):
+                    kwargs[variant] = {
+                        k: v for k, v in kwarg_variant.items() if v is not None
+                    }
+                # ! func cancel_order may be list
+                elif isinstance(kwarg_variant, list):
+                    kwargs[variant] = [
+                        v for v in kwarg_variant if v is not None
+                    ]
 
         if self.api_key and self.api_secret:
             # Add signature

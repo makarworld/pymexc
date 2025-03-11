@@ -335,6 +335,10 @@ class _WebSocketManager:
         Closes the websocket connection.
         """
 
+        # Cancel ping thread
+        self.ping_timer.cancel()
+        self.ping_timer = None
+
         self.ws.close()
         while self.ws.sock:
             continue

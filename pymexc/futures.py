@@ -1188,7 +1188,7 @@ class HTTP(_FuturesHTTP):
             ),
         )
 
-    def cancel_order(self, order_id: Union[List[int], int]) -> dict:
+    def cancel_order(self, order_ids: Union[List[int], int]) -> dict:
         """
         ### Cancel the order (Under maintenance)
         #### Required permissions: Trading permission
@@ -1197,8 +1197,8 @@ class HTTP(_FuturesHTTP):
 
         https://mexcdevelop.github.io/apidocs/contract_v1_en/#cancel-the-order-under-maintenance
 
-        :param order_id_list: list of order ids to cancel, maximum 50
-        :type order_id_list: List[int]
+        :param order_ids: list of order ids to cancel, maximum 50
+        :type order_ids: List[int]
 
         :return: dictionary containing the order ID and error message, if any
         :rtype: dict
@@ -1207,9 +1207,7 @@ class HTTP(_FuturesHTTP):
         return self.call(
             "POST",
             "api/v1/private/order/cancel",
-            params=dict(
-                order_ids=",".join(order_id) if isinstance(order_id, list) else order_id
-            ),
+            json = order_ids if isinstance(order_ids, list) else [order_ids]
         )
 
     def cancel_order_with_external(self, symbol: str, external_oid: str) -> dict:
