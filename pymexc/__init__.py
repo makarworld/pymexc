@@ -47,7 +47,7 @@ while True:
 """
 
 try:
-    from . import _async, futures, spot
+    from . import _async, futures, spot, web
 except ImportError:
     import _async
     import futures
@@ -55,4 +55,4 @@ except ImportError:
     import web
 
 
-__all__ = ["futures", "spot", "web", "_async"]
+__all__ = ["_async", "futures", "spot", "web"]

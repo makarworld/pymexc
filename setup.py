@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 """
 
 
-version = '1.2.3'
+version = '1.2.4'
 
 with open("README.md", "r") as f:
     long_description = f.read()
@@ -49,7 +49,22 @@ setup(
     ],
     include_package_data=True, # for MANIFEST.in
     python_requires='>=3.6.0',
-
-    package_data={package: ["py.typed", "*.pyi", "**/*.pyi"] for package in find_packages()},
+    package_data={
+        package: [
+            "py.typed",
+            "*.pyi",
+            "**/*.pyi",
+            "web/*",
+            "_async/*"
+        ] for package in find_packages()
+    },
     zip_safe=False,
+
+    project_urls={
+        "Bug Reports": "https://github.com/makarworld/pymexc/issues",
+        "Source": "https://github.com/makarworld/pymexc",
+    },
+
+    keywords=['mexc', 'mexc api', 'mexc api v1', 'mexc futures bypass', 'mexc api v3', 'mexc spot', 'mexc futures'],
+    
 )
