@@ -661,7 +661,7 @@ class HTTP(_FuturesHTTP):
         """
         return self.call(
             "GET",
-            "api/v1/private/order/history_orders",
+            "api/v1/private/order/list/history_orders",
             params=dict(
                 symbol=symbol,
                 states=states,
