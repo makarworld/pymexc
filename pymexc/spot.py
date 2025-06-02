@@ -580,11 +580,55 @@ class HTTP(_SpotHTTP):
             ),
         )
 
+    def sub_account_asset(
+        self,
+        sub_account: str,
+        account_type: Literal["SPOT", "FUTURES"],
+    ) -> dict:
+        """
+        ### Query Sub-account Asset
+        #### Required permission: SPOT_TRANSFER_READ
+
+        Weight(IP): 1
+
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-sub-account-asset
+
+        :param sub_account: subAccount
+        :type sub_account: str
+        :param account_type: accountType:"SPOT","FUTURES"
+        :type account_type: str
+
+        :return: response dictionary
+        :rtype: dict
+        """
+        return self.call(
+            "GET",
+            "api/v3/sub-account/asset",
+            params=dict(
+                subAccount=sub_account,
+                accountType=account_type,
+            ),
+        )
+
     # <=================================================================>
     #
     #                       Spot Account/Trade
     #
     # <=================================================================>
+
+    def get_kyc_status(self) -> dict:
+        """
+        ### Query KYC status
+        #### Required permission: SPOT_ACCOUNT_READ
+
+        Weight(IP): 1
+
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-kyc-status
+
+        :return: response dictionary
+        :rtype: dict
+        """
+        return self.call("GET", "api/v3/kyc/status")
 
     def get_default_symbols(self) -> dict:
         """
@@ -1032,6 +1076,23 @@ class HTTP(_SpotHTTP):
     #
     # <=================================================================>
 
+    def query_symbol_commission(self, symbol: str) -> dict:
+        """
+        ### Query Symbol Commission.
+        #### Required permission: SPOT_ACCOUNT_READ
+
+        Weight(IP): 20
+
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-symbol-commission
+
+        :param symbol: symbol
+        :type symbol: str
+
+        :return: response dictionary
+        :rtype: dict
+        """
+        return self.call("GET", "api/v3/tradeFee", params=dict(symbol=symbol))
+
     def get_currency_info(self) -> dict:
         """
         ### Query the currency information.
@@ -1051,6 +1112,7 @@ class HTTP(_SpotHTTP):
         coin: str,
         address: str,
         amount: int,
+        contract_address: Optional[str] = None,
         withdraw_order_id: Optional[str] = None,
         network: Optional[str] = None,
         memo: Optional[str] = None,
@@ -1062,7 +1124,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#withdraw
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#withdraw-new
 
         :param coin: coin
         :type coin: str
@@ -1070,6 +1132,8 @@ class HTTP(_SpotHTTP):
         :type withdraw_order_id: str
         :param network: (optional) withdraw network
         :type network: str
+        :param contract_address: (optional) contract address
+        :type contract_address: str
         :param address: withdraw address
         :type address: str
         :param memo: (optional) memo(If memo is required in the address, it must be passed in)
@@ -1084,11 +1148,12 @@ class HTTP(_SpotHTTP):
         """
         return self.call(
             "POST",
-            "api/v3/capital/withdraw/apply",
+            "api/v3/capital/withdraw",
             params=dict(
                 coin=coin,
                 withdrawOrderId=withdraw_order_id,
-                network=network,
+                netWork=network,
+                contractAddress=contract_address,
                 address=address,
                 memo=memo,
                 amount=amount,
@@ -1450,6 +1515,64 @@ class HTTP(_SpotHTTP):
             "GET",
             "api/v3/capital/convert",
             params=dict(startTime=start_time, endTime=end_time, page=page, limit=limit),
+        )
+
+    def internal_transfer(
+        self, to_account_type: str, to_account: str, asset: str, amount: float
+    ) -> dict:
+        """
+        ### Internal Transfer.
+        #### Required permission: SPOT_WITHDRAW_WRITE
+
+        Weight(IP): 1
+
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#internal-transfer
+
+        :param to_account_type: toAccountType:"EMAIL","UID","MOBILE"
+        :type to_account_type: str
+        :param to_account: toAccount
+        :type to_account: str
+        :param asset: asset
+        :type asset: str
+        :param amount: amount
+        :type amount: float
+
+        :return: response dictionary
+        :rtype: dict
+        """
+
+        return self.call(
+            "POST",
+            "api/v3/capital/transfer/internal",
+            params=dict(
+                toAccountType=to_account_type,
+                toAccount=to_account,
+                asset=asset,
+                amount=amount,
+            ),
+        )
+
+    def internal_transfer_history(self, start_time: int, end_time: int) -> dict:
+        """
+        ### Internal Transfer History.
+        #### Required permission: SPOT_WITHDRAW_READ
+
+        Weight(IP): 1
+
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#internal-transfer-history
+
+        :param start_time: startTime
+        :type start_time: int
+        :param end_time: endTime
+        :type end_time: int
+
+        :return: response dictionary
+        :rtype: dict
+        """
+        return self.call(
+            "GET",
+            "api/v3/capital/transfer/internal",
+            params=dict(startTime=start_time, endTime=end_time),
         )
 
     # <=================================================================>
