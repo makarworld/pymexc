@@ -2,3 +2,4 @@ curl-cffi
 websocket-client
 wsaccel
 websockets
+protobuf==6.31.1

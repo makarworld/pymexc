@@ -7,9 +7,11 @@ from typing import Callable, Dict, List, Union
 
 import websocket
 
+import pymexc.proto.PushDataV3ApiWrapper_pb2 as PushDataV3ApiWrapper_pb2
+
 logger = logging.getLogger(__name__)
 
-SPOT = "wss://wbs.mexc.com/ws"
+SPOT = "wss://wbs-api.mexc.com/ws"
 FUTURES = "wss://contract.mexc.com/edge"
 FUTURES_PERSONAL_TOPICS = [
     "order",
@@ -44,6 +46,7 @@ class _WebSocketManager:
         http_no_proxy=None,
         http_proxy_auth=None,
         http_proxy_timeout=None,
+        proto=False,
     ):
         # Set API keys.
         self.api_key: Union[str, None] = api_key
@@ -67,6 +70,9 @@ class _WebSocketManager:
 
         # Delta time for private auth expiration in seconds
         self.private_auth_expire = private_auth_expire
+
+        # Use new protocol
+        self.proto = proto
 
         # Setup the callback directory following the format:
         #   {
@@ -125,11 +131,33 @@ class _WebSocketManager:
         """
         Parse incoming messages.
         """
-        message = json.loads(message)
-        if self._is_custom_pong(message):
+        try:
+            json_message = json.loads(message)
+        except Exception:
+            json_message = None
+
+        if (
+            json_message
+            and json_message.get("id") == 0
+            and json_message.get("code") == 0
+        ):
+            # We get successful subscription
             return
+
+        if self.proto:
+            # Десериализация сообщения
+            proto_message = PushDataV3ApiWrapper_pb2.PushDataV3ApiWrapper()
+            proto_message.ParseFromString(message)
+
+            message = proto_message
         else:
-            self.callback(message)
+            message = json_message
+
+        # if self._is_custom_pong(message):
+        #     return
+        # else:
+
+        self.callback(message)
 
     def is_connected(self):
         try:
@@ -242,17 +270,15 @@ class _WebSocketManager:
 
         # Authenticate with API.
         self.ws.send(
-            json.dumps(
-                {
-                    "subscribe": bool(self.subscribe_callback),
-                    "method": "login",
-                    "param": {
-                        "apiKey": self.api_key,
-                        "reqTime": timestamp,
-                        "signature": signature,
-                    },
-                }
-            )
+            json.dumps({
+                "subscribe": bool(self.subscribe_callback),
+                "method": "login",
+                "param": {
+                    "apiKey": self.api_key,
+                    "reqTime": timestamp,
+                    "signature": signature,
+                },
+            })
         )
         self._set_personal_callback(self.subscribe_callback, FUTURES_PERSONAL_TOPICS)
 
@@ -366,7 +392,11 @@ class _WebSocketManager:
         """
         Redirect message to callback function
         """
-        topic = self._topic(message.get("channel") or message.get("c"))
+        if self.proto:
+            topic = self._topic(message.channel)
+        else:
+            topic = self._topic(message.get("channel") or message.get("c"))
+
         callback_data = message
         callback_function = self._get_callback(topic)
         if callback_function:
@@ -533,7 +563,10 @@ class _SpotWebSocketManager(_WebSocketManager):
         subscription_args = {
             "method": "SUBSCRIPTION",
             "params": [
-                "@".join([f"spot@{topic}.v3.api"] + list(map(str, params.values())))
+                "@".join(
+                    [f"spot@{topic}.v3.api{'.pb' if self.proto else ''}"]
+                    + list(map(str, params.values()))
+                )
                 for params in params_list
             ],
         }
@@ -565,12 +598,13 @@ class _SpotWebSocketManager(_WebSocketManager):
 
             # send unsub message
             self.ws.send(
-                json.dumps(
-                    {
-                        "method": "UNSUBSCRIPTION",
-                        "params": ["@".join([f"spot@{t}.v3.api"]) for t in topics],
-                    }
-                )
+                json.dumps({
+                    "method": "UNSUBSCRIPTION",
+                    "params": [
+                        "@".join([f"spot@{t}.v3.api{'.pb' if self.proto else ''}"])
+                        for t in topics
+                    ],
+                })
             )
 
             # remove subscriptions from list
@@ -607,7 +641,7 @@ class _SpotWebSocketManager(_WebSocketManager):
             else:
                 return False
 
-        if is_subscription_message():
+        if not self.proto and is_subscription_message():
             self._process_subscription_message(message)
         else:
             self._process_normal_message(message)
@@ -617,7 +651,7 @@ class _SpotWebSocketManager(_WebSocketManager):
 
 
 class _SpotWebSocket(_SpotWebSocketManager):
-    def __init__(self, endpoint: str = "wss://wbs.mexc.com/ws", **kwargs):
+    def __init__(self, endpoint: str = SPOT, **kwargs):
         self.ws_name = "SpotV3"
         self.endpoint = endpoint
 

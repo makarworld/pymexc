@@ -1920,6 +1920,7 @@ class WebSocket(_SpotWebSocket):
         http_no_proxy: Optional[list] = None,
         http_proxy_auth: Optional[tuple] = None,
         http_proxy_timeout: Optional[int] = None,
+        proto: Optional[bool] = False,
     ):
         """
         Initializes the class instance with the provided arguments.
@@ -1948,6 +1949,26 @@ class WebSocket(_SpotWebSocket):
 
         :param trace_logging: Whether or not to enable trace logging. (Optional)
         :type trace_logging: bool
+
+        :param http_proxy_host: The host for the HTTP proxy. (Optional)
+        :type http_proxy_host: str
+
+        :param http_proxy_port: The port for the HTTP proxy. (Optional)
+        :type http_proxy_port: int
+
+        :param http_no_proxy: A list of hosts to exclude from the HTTP proxy. (Optional)
+        :type http_no_proxy: list
+
+        :param http_proxy_auth: A tuple containing the username and password for the HTTP proxy. (Optional)
+        :type http_proxy_auth: tuple
+
+        :param http_proxy_timeout: The timeout in seconds for the HTTP proxy. (Optional)
+        :type http_proxy_timeout: int
+
+        :param proto: Whether or not to use the proto protocol. (Optional)
+        :type proto: bool
+
+        :return: None
         """
         kwargs = dict(
             api_key=api_key,
@@ -1962,6 +1983,7 @@ class WebSocket(_SpotWebSocket):
             http_no_proxy=http_no_proxy,
             http_proxy_auth=http_proxy_auth,
             http_proxy_timeout=http_proxy_timeout,
+            proto=proto,
         )
 
         self.listenKey = listenKey
@@ -1977,7 +1999,7 @@ class WebSocket(_SpotWebSocket):
             if not self.listenKey:
                 raise Exception(f"ListenKey not found. Error: {auth}")
 
-            kwargs["endpoint"] = f"wss://wbs.mexc.com/ws?listenKey={self.listenKey}"
+            kwargs["endpoint"] = f"wss://wbs-api.mexc.com/ws?listenKey={self.listenKey}"
 
             # setup keep-alive connection loop
             self.kal = threading.Thread(target=lambda: self._keep_alive_loop())
