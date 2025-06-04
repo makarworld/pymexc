@@ -47,12 +47,13 @@ while True:
 """
 
 try:
-    from . import _async, futures, spot, web
+    from . import _async, futures, spot, web, proto
 except ImportError:
     import _async
     import futures
     import spot
     import web
+    import proto
 
 
-__all__ = ["_async", "futures", "spot", "web"]
+__all__ = ["_async", "futures", "spot", "web", "proto"]

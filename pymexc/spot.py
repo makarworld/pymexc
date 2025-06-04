@@ -2067,13 +2067,24 @@ class WebSocket(_SpotWebSocket):
         self,
         callback: Callable[[dict | ProtoTyping.PublicSpotKlineV3Api], None],
         symbol: str,
-        interval: int,
+        interval: Literal[
+            "Min1",
+            "Min5",
+            "Min15",
+            "Min30",
+            "Min60",
+            "Hour4",
+            "Hour8",
+            "Day1",
+            "Week1",
+            "Month1",
+        ],
     ):
         """
         ### Kline Streams
         The Kline/Candlestick Stream push updates to the current klines/candlestick every second.
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#kline-streams
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#k-line-streams
 
         :param callback: the callback function
         :type callback: Callable[[dict | ProtoTyping.PublicSpotKlineV3Api], None]
