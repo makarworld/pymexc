@@ -52,15 +52,15 @@ import os
 try:
     from . import futures, spot
 except ImportError:
-    import futures
-    import spot
+    import _async.futures as futures
+    import _async.spot as spot
 
 
 if os.name == "nt":
     """
     Avoid error:
 
-    ...\site-packages\curl_cffi\aio.py:137: RuntimeWarning:
+    ...\\site-packages\\curl_cffi\\aio.py:137: RuntimeWarning:
         Proactor event loop does not implement add_reader family of methods required.
         Registering an additional selector thread for add_reader support.
         To avoid this warning use:

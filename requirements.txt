@@ -1,5 +1,9 @@
-curl-cffi
-websocket-client
-wsaccel
-websockets
+curl-cffi==0.11.1
+websocket-client==1.8.0
+wsaccel==0.6.7
+websockets==15.0.1
 protobuf==6.31.1
+python-dotenv==1.1.0
+pytest==8.4.0
+pytest-asyncio==1.0.0
+aiohttp==3.12.9

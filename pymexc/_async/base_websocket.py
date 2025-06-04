@@ -21,29 +21,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class CustomWebsockerClientProtocol(websockets.client.WebSocketClientProtocol):
-    def __init__(self, ws_manager: "_WebSocketManager", *args, **kwargs):
-        self.ws_manager: "_WebSocketManager" = ws_manager
-        kwargs.pop("ping_timeout")
-
-        super().__init__(*args, **kwargs, ping_timeout=None)
-
-    async def ping(self) -> Awaitable[None]:
-        await self.send(self.ws_manager.custom_ping_message)
-        # pong_waiter is no released here. ping_timeout must be None.
-        return
-
-    def connection_open(self) -> None:
-        super().connection_open()
-        #
-        self.loop.create_task(self.ws_manager._on_open())
-
-    def connection_closed_exc(self) -> Exception:
-        self.loop.create_task(self.ws_manager._on_close())
-        #
-        return super().connection_closed_exc()
-
-
 class _AsyncWebSocketManager(_WebSocketManager):
     endpoint: str
 

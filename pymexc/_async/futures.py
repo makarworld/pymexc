@@ -43,8 +43,8 @@ try:
     from base import _FuturesHTTP
     from base_websocket import FUTURES_PERSONAL_TOPICS, _FuturesWebSocket
 except ImportError:
-    from .base import _FuturesHTTP
-    from .base_websocket import FUTURES_PERSONAL_TOPICS, _FuturesWebSocket
+    from pymexc._async.base import _FuturesHTTP
+    from pymexc.base_websocket import FUTURES_PERSONAL_TOPICS, _FuturesWebSocket
 
 
 class HTTP(_FuturesHTTP):

@@ -37,6 +37,7 @@ import threading
 import time
 from tkinter import N
 from typing import Callable, List, Literal, Optional, Union
+import warnings
 
 logger = logging.getLogger(__name__)
 
@@ -140,7 +141,7 @@ class HTTP(_SpotHTTP):
             "GET", "/api/v3/depth", params=dict(symbol=symbol, limit=limit), auth=False
         )
 
-    def trades(self, symbol: str, limit: Optional[int] = 500) -> dict:
+    def trades(self, symbol: str, limit: Optional[int] = 500) -> list:
         """
         ### Recent Trades List
 
@@ -167,7 +168,7 @@ class HTTP(_SpotHTTP):
         start_time: Optional[int] = None,
         end_time: Optional[int] = None,
         limit: Optional[int] = 500,
-    ) -> dict:
+    ) -> list:
         """
         ### Compressed/Aggregate Trades List
 
@@ -207,7 +208,7 @@ class HTTP(_SpotHTTP):
         start_time: Optional[int] = None,
         end_time: Optional[int] = None,
         limit: Optional[int] = 500,
-    ) -> dict:
+    ) -> list:
         """
         ### Kline/Candlestick Data
 
@@ -241,7 +242,7 @@ class HTTP(_SpotHTTP):
                 endTime=end_time,
                 limit=limit,
             ),
-            auth=False,
+            auth=True,
         )
 
     def avg_price(self, symbol: str):
@@ -259,7 +260,7 @@ class HTTP(_SpotHTTP):
         :rtype: dict
         """
         return self.call(
-            "GET", "/api/v3/avgPrice", params=dict(symbol=symbol), auth=False
+            "GET", "/api/v3/avgPrice", params=dict(symbol=symbol), auth=True
         )
 
     def ticker_24h(self, symbol: Optional[str] = None):
@@ -647,7 +648,13 @@ class HTTP(_SpotHTTP):
         """
         return self.call("GET", "api/v3/selfSymbols")
 
-    def test_new_order(
+    def test_new_order(self, *args, **kwargs) -> dict:
+        warnings.warn(
+            "test_new_order is deprecated, use test_order instead", DeprecationWarning
+        )
+        return self.test_order(*args, **kwargs)
+
+    def test_order(
         self,
         symbol: str,
         side: str,
@@ -709,7 +716,11 @@ class HTTP(_SpotHTTP):
             ),
         )
 
-    def new_order(
+    def new_order(self, *args, **kwargs) -> dict:
+        warnings.warn("new_order is deprecated, use order instead", DeprecationWarning)
+        return self.order(*args, **kwargs)
+
+    def order(
         self,
         symbol: str,
         side: str,
@@ -1991,7 +2002,7 @@ class WebSocket(_SpotWebSocket):
             http_proxy_auth=http_proxy_auth,
             http_proxy_timeout=http_proxy_timeout,
             proto=proto,
-            extend_proto_body=extend_proto_body
+            extend_proto_body=extend_proto_body,
         )
 
         self.listenKey = listenKey
