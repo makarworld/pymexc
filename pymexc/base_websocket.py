@@ -1,13 +1,14 @@
 import hmac
 import json
 import logging
+from operator import call
 import threading
 import time
 from typing import Callable, Dict, List, Union
 
 import websocket
 
-import pymexc.proto.PushDataV3ApiWrapper_pb2 as PushDataV3ApiWrapper_pb2
+from pymexc.proto import ProtoTyping, PushDataV3ApiWrapper
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +56,9 @@ class _WebSocketManager:
         # Subscribe to private futures topics if proided
         self.subscribe_callback: Union[Callable, None] = subscribe_callback
 
-        self.callback: Callable = callback_function
+        self.callback: Callable[[dict | ProtoTyping.PushDataV3ApiWrapper], None] = (
+            callback_function
+        )
         self.ws_name: str = ws_name
         if api_key:
             self.ws_name += " (Auth)"
@@ -118,6 +121,7 @@ class _WebSocketManager:
             .replace("push.", "")
             .replace("rs.sub.", "")
             .replace("spot@", "")
+            .replace(".pb", "")
             .split(".v3.api")[0]
         )
 
@@ -127,37 +131,24 @@ class _WebSocketManager:
         """
         logger.debug(f"WebSocket {self.ws_name} opened.")
 
-    def _on_message(self, message):
+    def _on_message(self, message: str | bytes):
         """
         Parse incoming messages.
         """
-        try:
-            json_message = json.loads(message)
-        except Exception:
-            json_message = None
+        if isinstance(message, str):
+            _message = json.loads(message)
 
-        if (
-            json_message
-            and json_message.get("id") == 0
-            and json_message.get("code") == 0
-        ):
-            # We get successful subscription
-            return
+        elif isinstance(message, bytes):
+            # Deserialize message
+            _message = PushDataV3ApiWrapper()
+            _message.ParseFromString(message)
 
-        if self.proto:
-            # Десериализация сообщения
-            proto_message = PushDataV3ApiWrapper_pb2.PushDataV3ApiWrapper()
-            proto_message.ParseFromString(message)
-
-            message = proto_message
         else:
-            message = json_message
+            raise ValueError(
+                f"Unserializable message type: {type(message)} | {message}"
+            )
 
-        # if self._is_custom_pong(message):
-        #     return
-        # else:
-
-        self.callback(message)
+        self.callback(_message)
 
     def is_connected(self):
         try:
@@ -388,16 +379,17 @@ class _WebSocketManager:
             else None
         )
 
-    def _process_normal_message(self, message: dict):
+    def _process_normal_message(self, message: dict | ProtoTyping.PushDataV3ApiWrapper):
         """
         Redirect message to callback function
         """
-        if self.proto:
-            topic = self._topic(message.channel)
-        else:
+        if isinstance(message, dict):
             topic = self._topic(message.get("channel") or message.get("c"))
+            callback_data = message
+        else:
+            topic = self._topic(message.channel)
+            callback_data = message.body
 
-        callback_data = message
         callback_function = self._get_callback(topic)
         if callback_function:
             callback_function(callback_data)
@@ -564,7 +556,7 @@ class _SpotWebSocketManager(_WebSocketManager):
             "method": "SUBSCRIPTION",
             "params": [
                 "@".join(
-                    [f"spot@{topic}.v3.api{'.pb' if self.proto else ''}"]
+                    [f"spot@{topic}.v3.api" + (".pb" if self.proto else "")]
                     + list(map(str, params.values()))
                 )
                 for params in params_list
@@ -601,7 +593,7 @@ class _SpotWebSocketManager(_WebSocketManager):
                 json.dumps({
                     "method": "UNSUBSCRIPTION",
                     "params": [
-                        "@".join([f"spot@{t}.v3.api{'.pb' if self.proto else ''}"])
+                        "@".join([f"spot@{t}.v3.api" + (".pb" if self.proto else "")])
                         for t in topics
                     ],
                 })
@@ -630,7 +622,7 @@ class _SpotWebSocketManager(_WebSocketManager):
             ]
             return self.unsubscribe(*topics)
 
-    def _handle_incoming_message(self, message):
+    def _handle_incoming_message(self, message: dict):
         def is_subscription_message():
             if (
                 message.get("id") == 0
@@ -641,7 +633,7 @@ class _SpotWebSocketManager(_WebSocketManager):
             else:
                 return False
 
-        if not self.proto and is_subscription_message():
+        if isinstance(message, dict) and is_subscription_message():
             self._process_subscription_message(message)
         else:
             self._process_normal_message(message)

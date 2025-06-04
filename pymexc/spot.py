@@ -35,6 +35,7 @@ while True:
 import logging
 import threading
 import time
+from tkinter import N
 from typing import Callable, List, Literal, Optional, Union
 
 logger = logging.getLogger(__name__)
@@ -44,11 +45,13 @@ try:
     from _async.spot import WebSocket as AsyncWebSocket
     from base import _SpotHTTP
     from base_websocket import _SpotWebSocket
+    from proto import ProtoTyping
 except ImportError:
     from ._async.spot import HTTP as AsyncHTTP
     from ._async.spot import WebSocket as AsyncWebSocket
     from .base import _SpotHTTP
     from .base_websocket import _SpotWebSocket
+    from .proto import ProtoTyping
 
 __all__ = ["HTTP", "WebSocket", "AsyncHTTP", "AsyncWebSocket"]
 
@@ -2035,7 +2038,9 @@ class WebSocket(_SpotWebSocket):
     # <=================================================================>
 
     def deals_stream(
-        self, callback: Callable[..., None], symbol: Union[str, List[str]]
+        self,
+        callback: Callable[[dict | ProtoTyping.PublicDealsV3Api], None],
+        symbol: Union[str, List[str]],
     ):
         """
         ### Trade Streams
@@ -2044,7 +2049,7 @@ class WebSocket(_SpotWebSocket):
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#trade-streams
 
         :param callback: the callback function
-        :type callback: Callable[..., None]
+        :type callback: Callable[[dict | ProtoTyping.PublicDealsV3Api], None]
         :param symbol: the name of the contract
         :type symbol: Union[str,List[str]]
 
@@ -2058,7 +2063,12 @@ class WebSocket(_SpotWebSocket):
         topic = "public.deals"
         self._ws_subscribe(topic, callback, params)
 
-    def kline_stream(self, callback: Callable[..., None], symbol: str, interval: int):
+    def kline_stream(
+        self,
+        callback: Callable[[dict | ProtoTyping.PublicSpotKlineV3Api], None],
+        symbol: str,
+        interval: int,
+    ):
         """
         ### Kline Streams
         The Kline/Candlestick Stream push updates to the current klines/candlestick every second.
@@ -2066,7 +2076,7 @@ class WebSocket(_SpotWebSocket):
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#kline-streams
 
         :param callback: the callback function
-        :type callback: Callable[..., None]
+        :type callback: Callable[[dict | ProtoTyping.PublicSpotKlineV3Api], None]
         :param symbol: the name of the contract
         :type symbol: str
         :param interval: the interval of the kline
@@ -2078,7 +2088,11 @@ class WebSocket(_SpotWebSocket):
         topic = "public.kline"
         self._ws_subscribe(topic, callback, params)
 
-    def increase_depth_stream(self, callback: Callable[..., None], symbol: str):
+    def increase_depth_stream(
+        self,
+        callback: Callable[[dict | ProtoTyping.PublicIncreaseDepthsV3Api], None],
+        symbol: str,
+    ):
         """
         ### Diff.Depth Stream
         If the quantity is 0, it means that the order of the price has been cancel or traded,remove the price level.
@@ -2086,7 +2100,7 @@ class WebSocket(_SpotWebSocket):
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#diff-depth-stream
 
         :param callback: the callback function
-        :type callback: Callable[..., None]
+        :type callback: Callable[[dict | ProtoTyping.PublicIncreaseDepthsV3Api], None]
         :param symbol: the name of the contract
         :type symbol: str
 
@@ -2097,7 +2111,10 @@ class WebSocket(_SpotWebSocket):
         self._ws_subscribe(topic, callback, params)
 
     def limit_depth_stream(
-        self, callback: Callable[..., None], symbol: str, level: int
+        self,
+        callback: Callable[[dict | ProtoTyping.PublicLimitDepthsV3Api], None],
+        symbol: str,
+        level: int,
     ):
         """
         ### Partial Book Depth Streams
@@ -2106,7 +2123,7 @@ class WebSocket(_SpotWebSocket):
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#partial-book-depth-streams
 
         :param callback: the callback function
-        :type callback: Callable[..., None]
+        :type callback: Callable[[dict | ProtoTyping.PublicLimitDepthsV3Api], None]
         :param symbol: the name of the contract
         :type symbol: str
         :param level: the level of the depth. Valid are 5, 10, or 20.
@@ -2118,7 +2135,11 @@ class WebSocket(_SpotWebSocket):
         topic = "public.limit.depth"
         self._ws_subscribe(topic, callback, params)
 
-    def book_ticker_stream(self, callback: Callable[..., None], symbol: str):
+    def book_ticker_stream(
+        self,
+        callback: Callable[[dict | ProtoTyping.PublicBookTickerV3Api], None],
+        symbol: str,
+    ):
         """
         ### Individual Symbol Book Ticker Streams
         Pushes any update to the best bid or ask's price or quantity in real-time for a specified symbol.
@@ -2126,7 +2147,7 @@ class WebSocket(_SpotWebSocket):
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#partial-book-depth-streams
 
         :param callback: the callback function
-        :type callback: Callable[..., None]
+        :type callback: Callable[[dict | ProtoTyping.PublicBookTickerV3Api], None]
         :param symbols: the names of the contracts
         :type symbols: str
 
@@ -2142,7 +2163,9 @@ class WebSocket(_SpotWebSocket):
     #
     # <=================================================================>
 
-    def account_update(self, callback: Callable[..., None]):
+    def account_update(
+        self, callback: Callable[[dict | ProtoTyping.PrivateAccountV3Api], None]
+    ):
         """
         ### Spot Account Update
         The server will push an update of the account assets when the account balance changes.
@@ -2150,7 +2173,7 @@ class WebSocket(_SpotWebSocket):
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#websocket-user-data-streams
 
         :param callback: the callback function
-        :type callback: Callable[..., None]
+        :type callback: Callable[[dict | ProtoTyping.PrivateAccountV3Api], None]
 
         :return: None
         """
@@ -2158,14 +2181,16 @@ class WebSocket(_SpotWebSocket):
         topic = "private.account"
         self._ws_subscribe(topic, callback, params)
 
-    def account_deals(self, callback: Callable[..., None]):
+    def account_deals(
+        self, callback: Callable[[dict | ProtoTyping.PrivateDealsV3Api], None]
+    ):
         """
         ### Spot Account Deals
 
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#spot-account-deals
 
         :param callback: the callback function
-        :type callback: Callable[..., None]
+        :type callback: Callable[[dict | ProtoTyping.PrivateDealsV3Api], None]
 
         :return: None
         """
@@ -2173,14 +2198,16 @@ class WebSocket(_SpotWebSocket):
         topic = "private.deals"
         self._ws_subscribe(topic, callback, params)
 
-    def account_orders(self, callback: Callable[..., None]):
+    def account_orders(
+        self, callback: Callable[[dict | ProtoTyping.PrivateOrdersV3Api], None]
+    ):
         """
         ### Spot Account Orders
 
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#spot-account-orders
 
         :param callback: the callback function
-        :type callback: Callable[..., None]
+        :type callback: Callable[[dict | ProtoTyping.PrivateOrdersV3Api], None]
 
         :return: None
         """

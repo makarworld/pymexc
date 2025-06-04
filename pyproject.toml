@@ -1,0 +1,6 @@
+[project]
+requires-python = ">=3.11"
+
+[tool.ruff]
+select = []
+fixable = ["ALL"]
