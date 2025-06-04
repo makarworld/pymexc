@@ -32,6 +32,7 @@ while True:
 
 """
 
+import asyncio
 import logging
 from asyncio import AbstractEventLoop
 from typing import Callable, List, Literal, Optional, Union
@@ -39,11 +40,11 @@ from typing import Callable, List, Literal, Optional, Union
 logger = logging.getLogger(__name__)
 
 try:
-    from base import _SpotHTTP
-    from base_websocket import _SpotWebSocket
+    from base import _SpotHTTP, SPOT as SPOT_HTTP
+    from base_websocket import _SpotWebSocket, SPOT as SPOT_WS
 except ImportError:
-    from .base import _SpotHTTP
-    from .base_websocket import _SpotWebSocket
+    from .base import _SpotHTTP, SPOT as SPOT_HTTP
+    from .base_websocket import _SpotWebSocket, SPOT as SPOT_WS
 
 
 class HTTP(_SpotHTTP):
@@ -1793,6 +1794,8 @@ class WebSocket(_SpotWebSocket):
         http_proxy_auth: Optional[tuple] = None,
         http_proxy_timeout: Optional[int] = None,
         loop: Optional[AbstractEventLoop] = None,
+        proto: Optional[bool] = False,
+        extend_proto_body: Optional[bool] = False,
     ):
         """
         Initializes the class instance with the provided arguments.
@@ -1821,7 +1824,33 @@ class WebSocket(_SpotWebSocket):
 
         :param trace_logging: Whether or not to enable trace logging. (Optional)
         :type trace_logging: bool
+
+        :param http_proxy_host: The host for the HTTP proxy. (Optional)
+        :type http_proxy_host: str
+
+        :param http_proxy_port: The port for the HTTP proxy. (Optional)
+        :type http_proxy_port: int
+
+        :param http_no_proxy: A list of hosts to exclude from the HTTP proxy. (Optional)
+        :type http_no_proxy: list
+
+        :param http_proxy_auth: The authentication for the HTTP proxy. (Optional)
+        :type http_proxy_auth: tuple
+
+        :param http_proxy_timeout: The timeout for the HTTP proxy. (Optional)
+        :type http_proxy_timeout: int
+
+        :param loop: The event loop to use for the connection. (Optional)
+        :type loop: AbstractEventLoop
+
+        :param proto: Whether or not to use the proto protocol. (Optional)
+        :type proto: bool
+
+        :param extend_proto_body: Whether or not to extend the proto body. (Optional)
+        :type extend_proto_body: bool
         """
+        loop = loop or asyncio.get_event_loop()
+
         kwargs = dict(
             api_key=api_key,
             api_secret=api_secret,
@@ -1836,12 +1865,51 @@ class WebSocket(_SpotWebSocket):
             http_proxy_auth=http_proxy_auth,
             http_proxy_timeout=http_proxy_timeout,
             loop=loop,
+            proto=proto,
+            extend_proto_body=extend_proto_body,
         )
-
         self.listenKey = listenKey
-        self.http = HTTP(api_key=api_key, api_secret=api_secret)
+
+        # for keep alive connection to private spot websocket
+        # need to send listen key at connection and send keep-alive request every 60 mins
+        if api_key and api_secret:
+            # setup keep-alive connection loop
+            loop.create_task(self._keep_alive_loop())
 
         super().__init__(**kwargs)
+
+    async def _keep_alive_loop(self):
+        """
+        Runs a loop that sends a keep-alive message every 59 minutes to maintain the connection
+        with the MEXC API.
+
+        :return: None
+        """
+
+        if not self.listenKey:
+            auth = await HTTP(
+                api_key=self.api_key, api_secret=self.api_secret
+            ).create_listen_key()
+            self.listenKey = auth.get("listenKey")
+            logger.debug(f"create listenKey: {self.listenKey}")
+
+        if not self.listenKey:
+            raise Exception(f"ListenKey not found. Error: {auth}")
+
+        self.endpoint = f"{SPOT_WS}/ws?listenKey={self.listenKey}"
+
+        while True:
+            await asyncio.sleep(59 * 60)  # 59 min
+
+            if self.listenKey:
+                resp = await HTTP(
+                    api_key=self.api_key, api_secret=self.api_secret
+                ).keep_alive_listen_key(self.listenKey)
+                logger.debug(
+                    f"keep-alive listenKey - {self.listenKey}. Response: {resp}"
+                )
+            else:
+                break
 
     # <=================================================================>
     #

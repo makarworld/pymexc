@@ -35,6 +35,7 @@ while True:
 import logging
 from asyncio import AbstractEventLoop
 from typing import Awaitable, Callable, Dict, List, Literal, Optional, Union
+import warnings
 
 logger = logging.getLogger(__name__)
 
@@ -1202,9 +1203,8 @@ class HTTP(_FuturesHTTP):
         return self.call(
             "POST",
             "api/v1/private/order/cancel",
-            json = order_ids if isinstance(order_ids, list) else [order_ids]
+            json=order_ids if isinstance(order_ids, list) else [order_ids],
         )
-
 
     def cancel_order_with_external(self, symbol: str, external_oid: str) -> dict:
         """
@@ -1486,6 +1486,7 @@ class WebSocket(_FuturesWebSocket):
         http_no_proxy: Optional[list] = None,
         http_proxy_auth: Optional[tuple] = None,
         http_proxy_timeout: Optional[int] = None,
+        proto: Optional[bool] = False,
     ):
         super().__init__(
             api_key=api_key,
@@ -1503,6 +1504,11 @@ class WebSocket(_FuturesWebSocket):
             http_proxy_timeout=http_proxy_timeout,
             loop=loop,
         )
+
+        if proto:
+            warnings.warn(
+                "proto is not supported in futures websocket api", DeprecationWarning
+            )
 
     async def unsubscribe(self, method: str | Callable):
         personal_filters = ["personal.filter", "filter", "personal"]

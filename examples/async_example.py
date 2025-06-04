@@ -1,10 +1,17 @@
 import asyncio
+import logging
 from pymexc import spot, futures
 
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
 api_key = "YOUR API KEY"
 api_secret = "YOUR API SECRET KEY"
 
-async def handle_message(message: dict): 
+
+async def handle_message(message: dict):
     # handle websocket message
     print(message)
 
@@ -13,18 +20,16 @@ async def main():
     # SPOT V3
 
     # initialize HTTP client
-    spot_client = spot.AsyncHTTP(api_key = api_key, api_secret = api_secret)
+    spot_client = spot.AsyncHTTP(api_key=api_key, api_secret=api_secret)
     # initialize WebSocket client
-    ws_spot_client = spot.AsyncWebSocket(api_key = api_key, api_secret = api_secret)
-
+    ws_spot_client = spot.AsyncWebSocket(api_key=api_key, api_secret=api_secret)
 
     # FUTURES V1
 
     # initialize HTTP client
-    futures_client = futures.AsyncHTTP(api_key = api_key, api_secret = api_secret)
+    futures_client = futures.AsyncHTTP(api_key=api_key, api_secret=api_secret)
     # initialize WebSocket client
-    ws_futures_client = futures.AsyncWebSocket(api_key = api_key, api_secret = api_secret)
-
+    ws_futures_client = futures.AsyncWebSocket(api_key=api_key, api_secret=api_secret)
 
     # SPOT
 
@@ -40,7 +45,6 @@ async def main():
     # OR
     # await ws_spot_client.unsubscribe("deals")
 
-
     # FUTURES
 
     # make http request to api
@@ -54,6 +58,7 @@ async def main():
     await ws_futures_client.unsubscribe(ws_futures_client.tickers_stream)
     # OR
     # await ws_futures_client.unsubscribe("tickers")
+
 
 # create new loop
 loop = asyncio.new_event_loop()

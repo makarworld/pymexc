@@ -1,33 +1,24 @@
 import asyncio
-import functools
-import hmac
 import json
 import logging
 import time
 import warnings
 from typing import TYPE_CHECKING, Awaitable, Callable, Dict, List, Union
 
+import aiohttp
 import websockets.client
+
+from pymexc.base_websocket import (
+    _WebSocketManager,
+    SPOT,
+    FUTURES,
+)
+from aiohttp import ClientSession, ClientTimeout
 
 if TYPE_CHECKING:
     from .spot import HTTP
 
 logger = logging.getLogger(__name__)
-
-SPOT = "wss://wbs.mexc.com/ws"
-FUTURES = "wss://contract.mexc.com/edge"
-FUTURES_PERSONAL_TOPICS = [
-    "order",
-    "order.deal",
-    "position",
-    "plan.order",
-    "stop.order",
-    "stop.planorder",
-    "risk.limit",
-    "adl.level",
-    "asset",
-    "liquidate.risk",
-]
 
 
 class CustomWebsockerClientProtocol(websockets.client.WebSocketClientProtocol):
@@ -53,7 +44,7 @@ class CustomWebsockerClientProtocol(websockets.client.WebSocketClientProtocol):
         return super().connection_closed_exc()
 
 
-class _WebSocketManager:
+class _AsyncWebSocketManager(_WebSocketManager):
     endpoint: str
 
     def __init__(
@@ -75,57 +66,30 @@ class _WebSocketManager:
         http_proxy_auth=None,
         http_proxy_timeout=None,
         loop=None,
+        proto=False,
+        extend_proto_body=False,
     ):
-        # Set API keys.
-        self.api_key: Union[str, None] = api_key
-        self.api_secret: Union[str, None] = api_secret
-
-        # Subscribe to private futures topics if proided
-        self.subscribe_callback: Union[Callable, None] = subscribe_callback
-
-        self.callback: Callable = callback_function
-        self.ws_name: str = ws_name
-        if api_key:
-            self.ws_name += " (Auth)"
-
-        self.proxy_settings = dict(
+        super().__init__(
+            callback_function,
+            ws_name,
+            api_key=api_key,
+            api_secret=api_secret,
+            subscribe_callback=subscribe_callback,
+            ping_interval=ping_interval,
+            ping_timeout=ping_timeout,
+            retries=retries,
+            restart_on_error=restart_on_error,
+            trace_logging=trace_logging,
+            private_auth_expire=private_auth_expire,
             http_proxy_host=http_proxy_host,
             http_proxy_port=http_proxy_port,
             http_no_proxy=http_no_proxy,
             http_proxy_auth=http_proxy_auth,
             http_proxy_timeout=http_proxy_timeout,
+            proto=proto,
+            extend_proto_body=extend_proto_body,
         )
-
-        # Delta time for private auth expiration in seconds
-        self.private_auth_expire = private_auth_expire
-
-        # Setup the callback directory following the format:
-        #   {
-        #       "topic_name": function
-        #   }
-        self.callback_directory: Dict[str, Callable] = {}
-
-        # Record the subscriptions made so that we can resubscribe if the WSS
-        # connection is broken.
-        self.subscriptions: List[dict] = []
-
-        # Set ping settings.
-        self.ping_interval: int = ping_interval
-        self.custom_ping_message: str = json.dumps({"method": "ping"})
-        self.retries: int = retries
-
-        # Other optional data handling settings.
-        self.restart_on_error: bool = restart_on_error
-        self.trace_logging: bool = trace_logging
-
-        if self.trace_logging:
-            logging.getLogger("websockets.protocol").setLevel(logging.DEBUG)
-
-        # Set initial state, initialize dictionary and connect.
-        self._reset()
-        self.attempting_connection = False
-
-        self.last_subsctiption: Union[str, None] = None
+        self.connected = False
         self.loop = loop or asyncio.get_event_loop()
 
         if ping_timeout:
@@ -133,56 +97,31 @@ class _WebSocketManager:
                 "ping_timeout is deprecated for async websockets, please use just ping_interval.",
             )
 
-    @property
-    def is_spot(self):
-        return self.endpoint.startswith(SPOT)
-
-    @property
-    def is_futures(self):
-        return self.endpoint.startswith(FUTURES)
-
-    def _topic(self, topic: str):
-        return (
-            topic.replace("sub.", "")
-            .replace("push.", "")
-            .replace("rs.sub.", "")
-            .replace("spot@", "")
-            .split(".v3.api")[0]
-        )
-
     async def _on_open(self):
-        """
-        Log WS open.
-        """
-        logger.debug(f"WebSocket {self.ws_name} opened.")
+        self.connected = True
+        super()._on_open()
 
     async def _loop_recv(self):
-        while self.is_connected():
-            try:
-                msg = await self.ws.recv()
-                await self._on_message(msg)
-            except Exception as e:
-                await self._on_error(e)
+        try:
+            async for msg in self.ws:
+                if msg.type in [aiohttp.WSMsgType.TEXT, aiohttp.WSMsgType.BINARY]:
+                    await self._on_message(msg.data)
+                elif msg.type == aiohttp.WSMsgType.ERROR:
+                    await self._on_error(msg)
+                    break
+        finally:
+            await self._on_close()
+            await self.session.close()
 
-    async def _on_message(self, message: str):
+    async def _on_message(self, message: str | bytes):
         """
         Parse incoming messages.
         """
-        message = json.loads(message)
-        if self._is_custom_pong(message):
-            print("pong", message)
-            return
-        else:
-            await self.callback(message)
+        _message = super()._on_message(message, parse_only=True)
+        await self.callback(_message)
 
     def is_connected(self):
-        try:
-            if self.ws.open:
-                return True
-            else:
-                return False
-        except AttributeError:
-            return False
+        return self.connected
 
     async def _connect(self, url):
         """
@@ -197,7 +136,7 @@ class _WebSocketManager:
                 return
 
             for req_id, subscription_message in self.subscriptions.items():
-                await self.ws.send(json.dumps(subscription_message))
+                await self.ws.send_json(subscription_message)
 
         self.attempting_connection = True
 
@@ -212,39 +151,21 @@ class _WebSocketManager:
 
         while (infinitely_reconnect or retries > 0) and not self.is_connected():
             logger.info(f"WebSocket {self.ws_name} attempting connection...")
-            self.ws: CustomWebsockerClientProtocol = await websockets.client.connect(
-                uri=url,
-                loop=self.loop,
-                create_protocol=functools.partial(CustomWebsockerClientProtocol, self),
-                ping_interval=20,
-                ping_timeout=None,
-                # on_message=lambda ws, msg: self._on_message(msg),
-                # on_close=lambda ws, *args: self._on_close(),
-                # on_open=lambda ws, *args: self._on_open(),
-                # on_error=lambda ws, err: self._on_error(err),
-                # on_pong=lambda ws, *args: self._on_pong(),
+
+            self.session = ClientSession()
+            timeout = ClientTimeout(total=60)
+            self.ws = await self.session.ws_connect(
+                url=url,
+                proxy=f"http://{self.proxy_settings['http_proxy_host']}:{self.proxy_settings['http_proxy_port']}"
+                if self.proxy_settings["http_proxy_host"]
+                else None,
+                proxy_auth=self.proxy_settings["http_proxy_auth"],
+                timeout=timeout,
             )
 
             # parse incoming messages
+            await self._on_open()
             self.loop.create_task(self._loop_recv())
-
-            # Setup the thread running WebSocketApp.
-            # self.wst = threading.Thread(
-            #     target=lambda: self.ws.run_forever(
-            #         ping_interval=self.ping_interval,
-            #         ping_timeout=self.ping_timeout,
-            #         **self.proxy_settings,
-            #     )
-            # )
-
-            # Configure as daemon; start.
-            # self.wst.daemon = True
-            # self.wst.start()
-
-            # retries -= 1
-            # while self.wst.is_alive():
-            #     if self.ws.sock and self.is_connected():
-            #         break
 
             if not self.is_connected():
                 # If connection was not successful, raise error.
@@ -266,67 +187,14 @@ class _WebSocketManager:
 
         self.attempting_connection = False
 
-    def _set_personal_callback(
-        self, callback: Callable = None, topics: List[str] = FUTURES_PERSONAL_TOPICS
-    ):
-        if callback:
-            for topic in topics:
-                self._set_callback(f"personal.{topic}", callback)
-
     async def _auth(self):
-        # Generate signature
-
-        # make auth if futures. spot has a different auth system.
-
-        if self.is_spot:
-            return
-
-        timestamp = str(int(time.time() * 1000))
-        _val = self.api_key + timestamp
-        signature = str(
-            hmac.new(
-                bytes(self.api_secret, "utf-8"),
-                bytes(_val, "utf-8"),
-                digestmod="sha256",
-            ).hexdigest()
-        )
+        msg = super()._auth(parse_only=True)
 
         # Authenticate with API.
-        await self.ws.send(
-            json.dumps(
-                {
-                    "subscribe": bool(self.subscribe_callback),
-                    "method": "login",
-                    "param": {
-                        "apiKey": self.api_key,
-                        "reqTime": timestamp,
-                        "signature": signature,
-                    },
-                }
-            )
-        )
-        self._set_personal_callback(self.subscribe_callback, FUTURES_PERSONAL_TOPICS)
+        await self.ws.send_json(msg)
 
-    async def _on_error(self, error):
-        """
-        Exit on errors and raise exception, or attempt reconnect.
-        """
-        if type(error).__name__ not in [
-            "WebSocketConnectionClosedException",
-            "ConnectionResetError",
-            "WebSocketTimeoutException",
-            "ConnectionClosedError",
-        ]:
-            # Raises errors not related to websocket disconnection.
-            self.exit()
-            raise error
-
-        if not self.exited:
-            logger.error(
-                f"WebSocket {self.ws_name} ({self.endpoint}) "
-                f"encountered error: {error}."
-            )
-            self.exit()
+    async def _on_error(self, error: Exception):
+        super()._on_error(error, parse_only=True)
 
         # Reconnect.
         if self.restart_on_error and not self.attempting_connection:
@@ -334,85 +202,18 @@ class _WebSocketManager:
             await self._connect(self.endpoint)
 
     async def _on_close(self):
-        """
-        Log WS close.
-        """
-        logger.debug(f"WebSocket {self.ws_name} closed.")
-
-    @staticmethod
-    def _is_custom_pong(message):
-        """
-        Referring to OPCODE_TEXT pongs from Bybit, not OPCODE_PONG.
-        """
-        if message.get("ret_msg") == "pong" or message.get("op") == "pong":
-            return True
-
-    def _reset(self):
-        """
-        Set state booleans and initialize dictionary.
-        """
-        self.exited = False
-        self.auth = False
-        self.data = {}
-
-    def exit(self):
-        """
-        Closes the websocket connection.
-        """
-        self.exited = True
-
-    def _check_callback_directory(self, topics):
-        for topic in topics:
-            if topic in self.callback_directory:
-                raise Exception(f"You have already subscribed to this topic: {topic}")
-
-    def _set_callback(self, topic: str, callback_function: Callable):
-        self.callback_directory[topic] = callback_function
-
-    def _get_callback(self, topic: str) -> Union[Callable[..., None], None]:
-        return self.callback_directory.get(topic)
-
-    def _pop_callback(self, topic: str) -> Union[Callable[..., None], None]:
-        return (
-            self.callback_directory.pop(topic)
-            if self.callback_directory.get(topic)
-            else None
-        )
+        self.connected = False
+        super()._on_close()
 
     async def _process_normal_message(self, message: dict):
-        """
-        Redirect message to callback function
-        """
-        topic = self._topic(message.get("channel") or message.get("c"))
-        callback_data = message
-        callback_function = self._get_callback(topic)
-        if callback_function:
-            await callback_function(callback_data)
-        else:
-            logger.warning(
-                f"Callback for topic {topic} not found. | Message: {message}"
-            )
+        callback_function, callback_data = super()._process_normal_message(
+            message=message, parse_only=True
+        )
 
-    async def _process_subscription_message(self, message: dict):
-        if message.get("id") == 0 and message.get("code") == 0:
-            # If we get successful SPOT subscription, notify user
-            logger.debug(f"Subscription to {message['msg']} successful.")
+        if callback_function is None:
+            return
 
-        elif (
-            message.get("channel", "").startswith("rs.sub")
-            or message.get("channel", "") == "rs.personal.filter"
-            and message.get("data") == "success"
-        ):
-            # If we get successful FUTURES subscription, notify user
-            logger.debug(f"Subscription to {message['channel']} successful.")
-
-        else:
-            # SPOT or FUTURES subscription fail
-            response = message.get("msg") or message.get("data")
-
-            logger.error(f"Couldn't subscribe to topic. Error: {response}.")
-            if self.last_subsctiption:
-                self._pop_callback(self.last_subsctiption)
+        await callback_function(callback_data)
 
 
 # # # # # # # # # #
@@ -422,7 +223,7 @@ class _WebSocketManager:
 # # # # # # # # # #
 
 
-class _FuturesWebSocketManager(_WebSocketManager):
+class _FuturesWebSocketManager(_AsyncWebSocketManager):
     def __init__(self, ws_name, **kwargs):
         callback_function = (
             kwargs.pop("callback_function")
@@ -440,8 +241,7 @@ class _FuturesWebSocketManager(_WebSocketManager):
             # Wait until the connection is open before subscribing.
             time.sleep(0.1)
 
-        subscription_message = json.dumps(subscription_args)
-        await self.ws.send(subscription_message)
+        await self.ws.send_json(subscription_args)
         self.subscriptions.append(subscription_args)
         self._set_callback(self._topic(topic), callback)
         self.last_subsctiption = self._topic(topic)
@@ -454,7 +254,8 @@ class _FuturesWebSocketManager(_WebSocketManager):
             # remove callback
             self._pop_callback(method)
             # send unsub message
-            await self.ws.send(json.dumps({"method": f"unsub.{method}", "param": {}}))
+            await self.ws.send_json({"method": f"unsub.{method}", "param": {}})
+
             # remove subscription from list
             for sub in self.subscriptions:
                 if sub["method"] == f"sub.{method}":
@@ -500,7 +301,7 @@ class _FuturesWebSocketManager(_WebSocketManager):
         if is_auth_message():
             await self._process_auth_message(message)
         elif is_subscription_message():
-            await self._process_subscription_message(message)
+            self._process_subscription_message(message)
         elif is_pong_message():
             pass
         elif is_error_message():
@@ -553,7 +354,7 @@ class _FuturesWebSocket(_FuturesWebSocketManager):
 # # # # # # # # # #
 
 
-class _SpotWebSocketManager(_WebSocketManager):
+class _SpotWebSocketManager(_AsyncWebSocketManager):
     def __init__(self, ws_name, **kwargs):
         callback_function = (
             kwargs.pop("callback_function")
@@ -568,7 +369,10 @@ class _SpotWebSocketManager(_WebSocketManager):
         subscription_args = {
             "method": "SUBSCRIPTION",
             "params": [
-                "@".join([f"spot@{topic}.v3.api"] + list(map(str, params.values())))
+                "@".join(
+                    [f"spot@{topic}.v3.api" + (".pb" if self.proto else "")]
+                    + list(map(str, params.values()))
+                )
                 for params in params_list
             ],
         }
@@ -578,8 +382,7 @@ class _SpotWebSocketManager(_WebSocketManager):
             # Wait until the connection is open before subscribing.
             time.sleep(0.1)
 
-        subscription_message = json.dumps(subscription_args)
-        await self.ws.send(subscription_message)
+        await self.ws.send_json(subscription_args)
         self.subscriptions.append(subscription_args)
         self._set_callback(topic, callback)
         self.last_subsctiption = topic
@@ -599,14 +402,13 @@ class _SpotWebSocketManager(_WebSocketManager):
                 self._pop_callback(topic)
 
             # send unsub message
-            await self.ws.send(
-                json.dumps(
-                    {
-                        "method": "UNSUBSCRIPTION",
-                        "params": ["@".join([f"spot@{t}.v3.api"]) for t in topics],
-                    }
-                )
-            )
+            await self.ws.send_json({
+                "method": "UNSUBSCRIPTION",
+                "params": [
+                    "@".join([f"spot@{t}.v3.api" + (".pb" if self.proto else "")])
+                    for t in topics
+                ],
+            })
 
             # remove subscriptions from list
             for i, sub in enumerate(self.subscriptions):
@@ -642,8 +444,8 @@ class _SpotWebSocketManager(_WebSocketManager):
             else:
                 return False
 
-        if is_subscription_message():
-            await self._process_subscription_message(message)
+        if isinstance(message, dict) and is_subscription_message():
+            self._process_subscription_message(message)
         else:
             await self._process_normal_message(message)
 
@@ -667,46 +469,12 @@ class _SpotWebSocket(_SpotWebSocketManager):
         self.endpoint = endpoint
         loop = loop or asyncio.get_event_loop()
 
-        # for keep alive connection to private spot websocket
-        # need to send listen key at connection and send keep-alive request every 60 mins
-        if api_key and api_secret:
-            # setup keep-alive connection loop
-            loop.create_task(self._keep_alive_loop())
-
         super().__init__(
             self.ws_name, api_key=api_key, api_secret=api_secret, loop=loop, **kwargs
         )
 
-    async def get_listen_key(self):
-        auth = await self.http.create_listen_key()
-        self.listenKey = auth.get("listenKey")
-        logger.debug(f"create listenKey: {self.listenKey}")
-
-    async def _keep_alive_loop(self):
-        """
-        Runs a loop that sends a keep-alive message every 59 minutes to maintain the connection
-        with the MEXC API.
-
-        :return: None
-        """
-        while True:
-            if self.listenKey:
-                resp = await self.http.keep_alive_listen_key(self.listenKey)
-                logger.debug(
-                    f"keep-alive listenKey - {self.listenKey}. Response: {resp}"
-                )
-            else:
-                await self.get_listen_key()
-
-            await asyncio.sleep(59 * 60)  # 59 min
-
-    async def connect(self):
-        if not self.is_connected():
-            if self.listenKey is None:
-                await self.get_listen_key()
-
-            await self._connect(self.endpoint + f"?listenKey={self.listenKey}")
-
     async def _ws_subscribe(self, topic, callback, params: list = []):
-        await self.connect()
+        if not self.is_connected():
+            await self._connect(self.endpoint)
+
         await self.subscribe(topic, callback, params)

@@ -1,5 +1,12 @@
+import logging
 from pymexc import spot
 from pymexc.proto import ProtoTyping
+
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
 
 
 def handle_message(msg: ProtoTyping.PublicSpotKlineV3Api):

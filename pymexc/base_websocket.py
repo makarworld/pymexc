@@ -1,3 +1,4 @@
+from email.policy import default
 import hmac
 import json
 import logging
@@ -8,7 +9,7 @@ from typing import Callable, Dict, List, Union
 
 import websocket
 
-from pymexc.proto import ProtoTyping, PushDataV3ApiWrapper
+from pymexc.proto import ProtoTyping, PublicSpotKlineV3Api, PushDataV3ApiWrapper
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +30,8 @@ FUTURES_PERSONAL_TOPICS = [
 
 
 class _WebSocketManager:
+    endpoint: str
+
     def __init__(
         self,
         callback_function,
@@ -48,6 +51,7 @@ class _WebSocketManager:
         http_proxy_auth=None,
         http_proxy_timeout=None,
         proto=False,
+        extend_proto_body=False,
     ):
         # Set API keys.
         self.api_key: Union[str, None] = api_key
@@ -76,6 +80,7 @@ class _WebSocketManager:
 
         # Use new protocol
         self.proto = proto
+        self.extend_proto_body = extend_proto_body
 
         # Setup the callback directory following the format:
         #   {
@@ -131,7 +136,7 @@ class _WebSocketManager:
         """
         logger.debug(f"WebSocket {self.ws_name} opened.")
 
-    def _on_message(self, message: str | bytes):
+    def _on_message(self, message: str | bytes, parse_only: bool = False):
         """
         Parse incoming messages.
         """
@@ -147,6 +152,9 @@ class _WebSocketManager:
             raise ValueError(
                 f"Unserializable message type: {type(message)} | {message}"
             )
+
+        if parse_only:
+            return _message
 
         self.callback(_message)
 
@@ -241,7 +249,7 @@ class _WebSocketManager:
             for topic in topics:
                 self._set_callback(f"personal.{topic}", callback)
 
-    def _auth(self):
+    def _auth(self, parse_only: bool = False):
         # Generate signature
 
         # make auth if futures. spot has a different auth system.
@@ -259,21 +267,25 @@ class _WebSocketManager:
             ).hexdigest()
         )
 
-        # Authenticate with API.
-        self.ws.send(
-            json.dumps({
-                "subscribe": bool(self.subscribe_callback),
-                "method": "login",
-                "param": {
-                    "apiKey": self.api_key,
-                    "reqTime": timestamp,
-                    "signature": signature,
-                },
-            })
-        )
         self._set_personal_callback(self.subscribe_callback, FUTURES_PERSONAL_TOPICS)
 
-    def _on_error(self, error):
+        msg = {
+            "subscribe": bool(self.subscribe_callback),
+            "method": "login",
+            "param": {
+                "apiKey": self.api_key,
+                "reqTime": timestamp,
+                "signature": signature,
+            },
+        }
+
+        if parse_only:
+            return msg
+
+        # Authenticate with API.
+        self.ws.send(json.dumps(msg))
+
+    def _on_error(self, error: Exception, parse_only: bool = False):
         """
         Exit on errors and raise exception, or attempt reconnect.
         """
@@ -292,6 +304,9 @@ class _WebSocketManager:
                 f"encountered error: {error}."
             )
             self.exit()
+
+        if parse_only:
+            return
 
         # Reconnect.
         if self.restart_on_error and not self.attempting_connection:
@@ -379,7 +394,34 @@ class _WebSocketManager:
             else None
         )
 
-    def _process_normal_message(self, message: dict | ProtoTyping.PushDataV3ApiWrapper):
+    def get_proto_body(self, message: ProtoTyping.PushDataV3ApiWrapper) -> dict:
+        if self.extend_proto_body:
+            return message
+
+        topic = self._topic(message.channel)
+        bodies = {
+            "public.kline": "publicSpotKline",
+            "public.deals": "publicDeals",
+            "public.increase.depth": "publicIncreaseDepths",
+            "public.limit.depth": "publicLimitDepths",
+            "public.bookTicker": "publicBookTicker",
+            "private.account": "privateAccount",
+            "private.deals": "privateDeals",
+            "private.orders": "privateOrders",
+        }
+
+        if topic in bodies:
+            return getattr(message, bodies[topic])  # default=message
+
+        else:
+            logger.warning(
+                f"Body for topic {topic} not found. | Message: {message.__dict__}"
+            )
+            return message
+
+    def _process_normal_message(
+        self, message: dict | ProtoTyping.PushDataV3ApiWrapper, parse_only: bool = False
+    ):
         """
         Redirect message to callback function
         """
@@ -388,15 +430,19 @@ class _WebSocketManager:
             callback_data = message
         else:
             topic = self._topic(message.channel)
-            callback_data = message.body
+            callback_data = self.get_proto_body(message)
 
         callback_function = self._get_callback(topic)
-        if callback_function:
-            callback_function(callback_data)
-        else:
+        if not callback_function:
             logger.warning(
                 f"Callback for topic {topic} not found. | Message: {message}"
             )
+            return None, None
+        else:
+            if parse_only:
+                return callback_function, callback_data
+
+            callback_function(callback_data)
 
     def _process_subscription_message(self, message: dict):
         if message.get("id") == 0 and message.get("code") == 0:
@@ -652,4 +698,5 @@ class _SpotWebSocket(_SpotWebSocketManager):
     def _ws_subscribe(self, topic, callback, params: list = []):
         if not self.is_connected():
             self._connect(self.endpoint)
+
         self.subscribe(topic, callback, params)

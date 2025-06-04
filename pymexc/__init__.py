@@ -46,6 +46,8 @@ while True:
 
 """
 
+import logging
+
 try:
     from . import _async, futures, spot, web, proto
 except ImportError:
@@ -54,6 +56,8 @@ except ImportError:
     import spot
     import web
     import proto
+
+logger = logging.getLogger(__name__)
 
 
 __all__ = ["_async", "futures", "spot", "web", "proto"]

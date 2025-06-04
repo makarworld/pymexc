@@ -1924,6 +1924,7 @@ class WebSocket(_SpotWebSocket):
         http_proxy_auth: Optional[tuple] = None,
         http_proxy_timeout: Optional[int] = None,
         proto: Optional[bool] = False,
+        extend_proto_body: Optional[bool] = False,
     ):
         """
         Initializes the class instance with the provided arguments.
@@ -1971,6 +1972,9 @@ class WebSocket(_SpotWebSocket):
         :param proto: Whether or not to use the proto protocol. (Optional)
         :type proto: bool
 
+        :param extend_proto_body: Whether or not to extend the proto body. (Optional)
+        :type extend_proto_body: bool
+
         :return: None
         """
         kwargs = dict(
@@ -1987,6 +1991,7 @@ class WebSocket(_SpotWebSocket):
             http_proxy_auth=http_proxy_auth,
             http_proxy_timeout=http_proxy_timeout,
             proto=proto,
+            extend_proto_body=extend_proto_body
         )
 
         self.listenKey = listenKey
@@ -2002,7 +2007,7 @@ class WebSocket(_SpotWebSocket):
             if not self.listenKey:
                 raise Exception(f"ListenKey not found. Error: {auth}")
 
-            kwargs["endpoint"] = f"wss://wbs-api.mexc.com/ws?listenKey={self.listenKey}"
+            self.endpoint = f"wss://wbs-api.mexc.com/ws?listenKey={self.listenKey}"
 
             # setup keep-alive connection loop
             self.kal = threading.Thread(target=lambda: self._keep_alive_loop())

@@ -218,23 +218,23 @@ class ProtoTyping:
 
     class PushDataV3ApiWrapper(protoc):
         channel: str
-        body: Union[
-            ProtoTyping.PublicDealsV3Api,
-            ProtoTyping.PublicIncreaseDepthsV3Api,
-            ProtoTyping.PublicLimitDepthsV3Api,
-            ProtoTyping.PrivateOrdersV3Api,
-            ProtoTyping.PublicBookTickerV3Api,
-            ProtoTyping.PrivateDealsV3Api,
-            ProtoTyping.PrivateAccountV3Api,
-            ProtoTyping.PublicSpotKlineV3Api,
-            ProtoTyping.PublicMiniTickerV3Api,
-            ProtoTyping.PublicMiniTickersV3Api,
-            ProtoTyping.PublicBookTickerBatchV3Api,
-            ProtoTyping.PublicIncreaseDepthsBatchV3Api,
-            ProtoTyping.PublicAggreDepthsV3Api,
-            ProtoTyping.PublicAggreDealsV3Api,
-            ProtoTyping.PublicAggreBookTickerV3Api,
-        ]
+
+        publicDeals: ProtoTyping.PublicDealsV3Api
+        publicIncreaseDepths: ProtoTyping.PublicIncreaseDepthsV3Api
+        publicLimitDepths: ProtoTyping.PublicLimitDepthsV3Api
+        privateOrders: ProtoTyping.PrivateOrdersV3Api
+        publicBookTicker: ProtoTyping.PublicBookTickerV3Api
+        privateDeals: ProtoTyping.PrivateDealsV3Api
+        privateAccount: ProtoTyping.PrivateAccountV3Api
+        publicSpotKline: ProtoTyping.PublicSpotKlineV3Api
+        publicMiniTicker: ProtoTyping.PublicMiniTickerV3Api
+        publicMiniTickers: ProtoTyping.PublicMiniTickersV3Api
+        publicBookTickerBatch: ProtoTyping.PublicBookTickerBatchV3Api
+        publicIncreaseDepthsBatch: ProtoTyping.PublicIncreaseDepthsBatchV3Api
+        publicAggreDepths: ProtoTyping.PublicAggreDepthsV3Api
+        publicAggreDeals: ProtoTyping.PublicAggreDealsV3Api
+        publicAggreBookTicker: ProtoTyping.PublicAggreBookTickerV3Api
+
         symbol: Optional[str]
         symbolId: Optional[str]
         createTime: Optional[int]
@@ -263,7 +263,9 @@ PrivateOrdersV3Api: ProtoTyping.PrivateOrdersV3Api = (
 PublicBookTickerV3Api: ProtoTyping.PublicBookTickerV3Api = (
     PublicBookTickerV3Api__pb2.PublicBookTickerV3Api
 )
-PrivateDealsV3Api: ProtoTyping.PrivateDealsV3Api = PrivateDealsV3Api__pb2.PrivateDealsV3Api
+PrivateDealsV3Api: ProtoTyping.PrivateDealsV3Api = (
+    PrivateDealsV3Api__pb2.PrivateDealsV3Api
+)
 PrivateAccountV3Api: ProtoTyping.PrivateAccountV3Api = (
     PrivateAccountV3Api__pb2.PrivateAccountV3Api
 )
@@ -312,5 +314,5 @@ __all__ = [
     "PublicAggreDealsV3Api",
     "PublicAggreBookTickerV3Api",
     "PushDataV3ApiWrapper",
-    "ProtoTyping"
+    "ProtoTyping",
 ]
