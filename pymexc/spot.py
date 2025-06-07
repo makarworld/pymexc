@@ -38,6 +38,7 @@ import time
 from tkinter import N
 from typing import Callable, List, Literal, Optional, Union
 import warnings
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -668,37 +669,47 @@ class HTTP(_SpotHTTP):
         time_in_force: Optional[str] = None,
     ) -> dict:
         """
-        ### New Order.
+        ### Test New Order.
         #### Required permission: SPOT_DEAL_WRITE
 
         Weight(IP): 1, Weight(UID): 1
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#new-order
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#test-new-order
 
-        :param symbol:
+        :param symbol: Trading pair
         :type symbol: str
-        :param side: ENUM:Order Side
+        :param side: Order side (BUY/SELL)
         :type side: str
-        :param order_type: ENUM:Order Type
+        :param order_type: Order type (LIMIT/MARKET)
         :type order_type: str
-        :param quantity: (optional) Quantity
-        :type quantity: int
-        :param quote_order_qty: (optional) Quote order quantity
-        :type quote_order_qty: int
-        :param price: (optional) Price
-        :type price: int
-        :param new_client_order_id: (optional) Unique order id
-        :type new_client_order_id: str
-        :param stop_price: (optional) Stop price
-        :type stop_price: int
-        :param iceberg_qty: (optional) Iceberg quantity
-        :type iceberg_qty: int
-        :param time_in_force: (optional) ENUM:Time In Force
-        :type time_in_force: str
+        :param quantity: Order quantity
+        :type quantity: Optional[int]
+        :param quote_order_qty: Quote order quantity
+        :type quote_order_qty: Optional[int]
+        :param price: Order price
+        :type price: Optional[int]
+        :param new_client_order_id: Client order ID
+        :type new_client_order_id: Optional[str]
+        :param stop_price: Stop price
+        :type stop_price: Optional[int]
+        :param iceberg_qty: Iceberg quantity
+        :type iceberg_qty: Optional[int]
+        :param time_in_force: Time in force
+        :type time_in_force: Optional[str]
 
-        :return: response dictionary
+        :return: Empty dict if successful
         :rtype: dict
         """
+        # Validate required parameters based on order type
+        if order_type == "LIMIT":
+            if not quantity or not price:
+                raise ValueError("LIMIT orders require both quantity and price")
+        elif order_type == "MARKET":
+            if not quantity and not quote_order_qty:
+                raise ValueError(
+                    "MARKET orders require either quantity or quoteOrderQty"
+                )
+
         return self.call(
             "POST",
             "/api/v3/order/test",
@@ -741,30 +752,40 @@ class HTTP(_SpotHTTP):
 
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#new-order
 
-        :param symbol:
+        :param symbol: Trading pair
         :type symbol: str
-        :param side: ENUM:Order Side
+        :param side: Order side (BUY/SELL)
         :type side: str
-        :param order_type: ENUM:Order Type
+        :param order_type: Order type (LIMIT/MARKET)
         :type order_type: str
-        :param quantity: (optional) Quantity
-        :type quantity: int
-        :param quote_order_qty: (optional) Quote order quantity
-        :type quote_order_qty: int
-        :param price: (optional) Price
-        :type price: int
-        :param new_client_order_id: (optional) Unique order id
-        :type new_client_order_id: str
-        :param stop_price: (optional) Stop price
-        :type stop_price: int
-        :param iceberg_qty: (optional) Iceberg quantity
-        :type iceberg_qty: int
-        :param time_in_force: (optional) ENUM:Time In Force
-        :type time_in_force: str
+        :param quantity: Order quantity
+        :type quantity: Optional[int]
+        :param quote_order_qty: Quote order quantity
+        :type quote_order_qty: Optional[int]
+        :param price: Order price
+        :type price: Optional[int]
+        :param new_client_order_id: Client order ID
+        :type new_client_order_id: Optional[str]
+        :param stop_price: Stop price
+        :type stop_price: Optional[int]
+        :param iceberg_qty: Iceberg quantity
+        :type iceberg_qty: Optional[int]
+        :param time_in_force: Time in force
+        :type time_in_force: Optional[str]
 
-        :return: response dictionary
+        :return: Order response dictionary
         :rtype: dict
         """
+        # Validate required parameters based on order type
+        if order_type == "LIMIT":
+            if not quantity or not price:
+                raise ValueError("LIMIT orders require both quantity and price")
+        elif order_type == "MARKET":
+            if not quantity and not quote_order_qty:
+                raise ValueError(
+                    "MARKET orders require either quantity or quoteOrderQty"
+                )
+
         return self.call(
             "POST",
             "api/v3/order",
@@ -784,61 +805,81 @@ class HTTP(_SpotHTTP):
 
     def batch_orders(
         self,
-        batch_orders: List[str],
+        batch_orders: List[dict],
         symbol: str,
         side: Literal["BUY", "SELL"],
         order_type: Literal[
             "LIMIT", "MARKET", "LIMIT_MARKET", "IMMEDIATE_OR_CANCEL", "FILL_OR_KILL"
         ],
-        quantity: Optional[int] = None,
-        quote_order_qty: Optional[int] = None,
-        price: Optional[int] = None,
+        quantity: Optional[float] = None,
+        quote_order_qty: Optional[float] = None,
+        price: Optional[float] = None,
         new_client_order_id: Optional[str] = None,
-    ) -> dict:
+    ) -> list:
         """
-        ### Batch Orders
-        #### Supports 20 orders with a same symbol in a batch,rate limit:2 times/s.
+        ### Batch Orders.
         #### Required permission: SPOT_DEAL_WRITE
 
-        Weight(IP): 1,Weight(UID): 1
+        Weight(IP): 1, Weight(UID): 1
+
+        Supports 20 orders with a same symbol in a batch, rate limit: 2 times/s.
 
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#batch-orders
 
-
-        :param batch_orders: list of batchOrders,supports max 20 orders
+        :param batch_orders: list of batchOrders, supports max 20 orders
         :type batch_orders: List[dict]
         :param symbol: symbol
         :type symbol: str
         :param side: order side
-        :type side: str
+        :type side: Literal["BUY", "SELL"]
         :param order_type: order type
-        :type order_type: str
-        :param quantity: (optional) quantity
-        :type quantity: int
-        :param quote_order_qty: (optional) quoteOrderQty
-        :type quote_order_qty: int
-        :param price: (optional) order price
-        :type price: int
-        :param new_client_order_id: (optional) ClientOrderId
-        :type new_client_order_id: str
+        :type order_type: Literal["LIMIT", "MARKET", "LIMIT_MARKET", "IMMEDIATE_OR_CANCEL", "FILL_OR_KILL"]
+        :param quantity: quantity (required for LIMIT and MARKET orders)
+        :type quantity: Optional[float]
+        :param quote_order_qty: quoteOrderQty (required for MARKET orders if quantity not provided)
+        :type quote_order_qty: Optional[float]
+        :param price: order price (required for LIMIT orders)
+        :type price: Optional[float]
+        :param new_client_order_id: ClientOrderId
+        :type new_client_order_id: Optional[str]
 
-
-        :return: response dictionary
-        :rtype: dict
+        :return: list of order responses
+        :rtype: list
         """
+        # Validate required parameters based on order type
+        if order_type == "LIMIT":
+            if not quantity or not price:
+                raise ValueError("LIMIT orders require both quantity and price")
+        elif order_type == "MARKET":
+            if not quantity and not quote_order_qty:
+                raise ValueError(
+                    "MARKET orders require either quantity or quoteOrderQty"
+                )
+
+        # Prepare batch orders
+        orders = []
+        for order in batch_orders:
+            order_data = {
+                "symbol": symbol,
+                "side": side,
+                "type": order_type,
+            }
+
+            if quantity:
+                order_data["quantity"] = str(quantity)
+            if quote_order_qty:
+                order_data["quoteOrderQty"] = str(quote_order_qty)
+            if price:
+                order_data["price"] = str(price)
+            if new_client_order_id:
+                order_data["newClientOrderId"] = new_client_order_id
+
+            # Add any additional fields from the batch order
+            order_data.update(order)
+            orders.append(order_data)
+
         return self.call(
-            "POST",
-            "api/v3/batchOrders",
-            params=dict(
-                batchOrders=batch_orders,
-                symbol=symbol,
-                side=side,
-                type=order_type,
-                quantity=quantity,
-                quoteOrderQty=quote_order_qty,
-                price=price,
-                newClientOrderId=new_client_order_id,
-            ),
+            "POST", "api/v3/batchOrders", params=dict(batchOrders=json.dumps(orders))
         )
 
     def cancel_order(
@@ -1608,6 +1649,11 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
+        warnings.warn(
+            "get_etf_info is deprecated in documentation and now returns empty data",
+            DeprecationWarning,
+        )
+
         return self.call("GET", "api/v3/etf/info", params=dict(symbol=symbol))
 
     # <=================================================================>
@@ -1633,44 +1679,61 @@ class HTTP(_SpotHTTP):
 
         Start a new user data stream. The stream will close after 60 minutes unless a keepalive is sent.
 
-        :return: response dictionary
+        :return: response dictionary containing listenKey
         :rtype: dict
         """
-        return self.call(
-            "POST", "api/v3/userDataStream", params={"please_sign_it": None}
-        )
+        return self.call("POST", "api/v3/userDataStream")
+
+    def get_listen_keys(self) -> dict:
+        """
+        ### Get Valid Listen Keys.
+        #### Required permission: SPOT_ACCOUNT_R
+
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#listen-key
+
+        Retrieves all currently valid listen keys.
+
+        :return: response dictionary containing list of listenKeys
+        :rtype: dict
+        """
+        return self.call("GET", "api/v3/userDataStream")
 
     def keep_alive_listen_key(self, listen_key: str) -> dict:
         """
         ### Keep-alive a ListenKey.
-        #### Required permission: none
+        #### Required permission: SPOT_ACCOUNT_R
 
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#listen-key
+
+        Extends the validity to 60 minutes from the time of this call. It is recommended to send a request every 30 minutes.
 
         :param listen_key: Listen key
         :type listen_key: str
 
-        :return: response dictionary
+        :return: response dictionary containing listenKey
         :rtype: dict
         """
         return self.call(
             "PUT", "api/v3/userDataStream", params=dict(listenKey=listen_key)
         )
 
-    def close_listen_key(self) -> dict:
+    def close_listen_key(self, listen_key: str) -> dict:
         """
         ### Close a ListenKey.
-        #### Required permission: None
-
-        Weight(IP): 1, Weight(UID): 1
+        #### Required permission: SPOT_ACCOUNT_R
 
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#listen-key
 
-        :return: response dictionary
+        Closes the user data stream.
+
+        :param listen_key: Listen key
+        :type listen_key: str
+
+        :return: response dictionary containing listenKey
         :rtype: dict
         """
         return self.call(
-            "DELETE", "api/v3/userDataStream", params={"please_sign_it": None}
+            "DELETE", "api/v3/userDataStream", params=dict(listenKey=listen_key)
         )
 
     # <=================================================================>

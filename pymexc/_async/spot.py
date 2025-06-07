@@ -36,6 +36,7 @@ import asyncio
 import logging
 from asyncio import AbstractEventLoop
 from typing import Callable, List, Literal, Optional, Union
+import warnings
 
 logger = logging.getLogger(__name__)
 
@@ -594,7 +595,13 @@ class HTTP(_SpotHTTP):
         """
         return await self.call("GET", "api/v3/selfSymbols")
 
-    async def test_new_order(
+    async def test_new_order(self, *args, **kwargs) -> dict:
+        warnings.warn(
+            "test_new_order is deprecated, use test_order instead", DeprecationWarning
+        )
+        return await self.test_order(*args, **kwargs)
+
+    async def test_order(
         self,
         symbol: str,
         side: str,
@@ -608,37 +615,47 @@ class HTTP(_SpotHTTP):
         time_in_force: Optional[str] = None,
     ) -> dict:
         """
-        ### New Order.
+        ### Test New Order.
         #### Required permission: SPOT_DEAL_WRITE
 
         Weight(IP): 1, Weight(UID): 1
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#new-order
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#test-new-order
 
-        :param symbol:
+        :param symbol: Trading pair
         :type symbol: str
-        :param side: ENUM:Order Side
+        :param side: Order side (BUY/SELL)
         :type side: str
-        :param order_type: ENUM:Order Type
+        :param order_type: Order type (LIMIT/MARKET)
         :type order_type: str
-        :param quantity: (optional) Quantity
-        :type quantity: int
-        :param quote_order_qty: (optional) Quote order quantity
-        :type quote_order_qty: int
-        :param price: (optional) Price
-        :type price: int
-        :param new_client_order_id: (optional) Unique order id
-        :type new_client_order_id: str
-        :param stop_price: (optional) Stop price
-        :type stop_price: int
-        :param iceberg_qty: (optional) Iceberg quantity
-        :type iceberg_qty: int
-        :param time_in_force: (optional) ENUM:Time In Force
-        :type time_in_force: str
+        :param quantity: Order quantity
+        :type quantity: Optional[int]
+        :param quote_order_qty: Quote order quantity
+        :type quote_order_qty: Optional[int]
+        :param price: Order price
+        :type price: Optional[int]
+        :param new_client_order_id: Client order ID
+        :type new_client_order_id: Optional[str]
+        :param stop_price: Stop price
+        :type stop_price: Optional[int]
+        :param iceberg_qty: Iceberg quantity
+        :type iceberg_qty: Optional[int]
+        :param time_in_force: Time in force
+        :type time_in_force: Optional[str]
 
-        :return: response dictionary
+        :return: Empty dict if successful
         :rtype: dict
         """
+        # Validate required parameters based on order type
+        if order_type == "LIMIT":
+            if not quantity or not price:
+                raise ValueError("LIMIT orders require both quantity and price")
+        elif order_type == "MARKET":
+            if not quantity and not quote_order_qty:
+                raise ValueError(
+                    "MARKET orders require either quantity or quoteOrderQty"
+                )
+
         return await self.call(
             "POST",
             "/api/v3/order/test",
@@ -656,7 +673,38 @@ class HTTP(_SpotHTTP):
             ),
         )
 
-    async def new_order(
+    async def new_order(self, *args, **kwargs) -> dict:
+        warnings.warn("new_order is deprecated, use order instead", DeprecationWarning)
+        return await self.order(*args, **kwargs)
+
+    async def order(
+        self,
+        symbol: str,
+        side: str,
+        order_type: str,
+        quantity: Optional[int] = None,
+        quote_order_qty: Optional[int] = None,
+        price: Optional[int] = None,
+        new_client_order_id: Optional[str] = None,
+        stop_price: Optional[int] = None,
+        iceberg_qty: Optional[int] = None,
+        time_in_force: Optional[str] = None,
+    ) -> dict:
+        warnings.warn("new_order is deprecated, use order instead", DeprecationWarning)
+        return await self.order(
+            symbol=symbol,
+            side=side,
+            order_type=order_type,
+            quantity=quantity,
+            quote_order_qty=quote_order_qty,
+            price=price,
+            new_client_order_id=new_client_order_id,
+            stop_price=stop_price,
+            iceberg_qty=iceberg_qty,
+            time_in_force=time_in_force,
+        )
+
+    async def order(
         self,
         symbol: str,
         side: str,
@@ -677,30 +725,40 @@ class HTTP(_SpotHTTP):
 
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#new-order
 
-        :param symbol:
+        :param symbol: Trading pair
         :type symbol: str
-        :param side: ENUM:Order Side
+        :param side: Order side (BUY/SELL)
         :type side: str
-        :param order_type: ENUM:Order Type
+        :param order_type: Order type (LIMIT/MARKET)
         :type order_type: str
-        :param quantity: (optional) Quantity
-        :type quantity: int
-        :param quote_order_qty: (optional) Quote order quantity
-        :type quote_order_qty: int
-        :param price: (optional) Price
-        :type price: int
-        :param new_client_order_id: (optional) Unique order id
-        :type new_client_order_id: str
-        :param stop_price: (optional) Stop price
-        :type stop_price: int
-        :param iceberg_qty: (optional) Iceberg quantity
-        :type iceberg_qty: int
-        :param time_in_force: (optional) ENUM:Time In Force
-        :type time_in_force: str
+        :param quantity: Order quantity
+        :type quantity: Optional[int]
+        :param quote_order_qty: Quote order quantity
+        :type quote_order_qty: Optional[int]
+        :param price: Order price
+        :type price: Optional[int]
+        :param new_client_order_id: Client order ID
+        :type new_client_order_id: Optional[str]
+        :param stop_price: Stop price
+        :type stop_price: Optional[int]
+        :param iceberg_qty: Iceberg quantity
+        :type iceberg_qty: Optional[int]
+        :param time_in_force: Time in force
+        :type time_in_force: Optional[str]
 
-        :return: response dictionary
+        :return: Order response dictionary
         :rtype: dict
         """
+        # Validate required parameters based on order type
+        if order_type == "LIMIT":
+            if not quantity or not price:
+                raise ValueError("LIMIT orders require both quantity and price")
+        elif order_type == "MARKET":
+            if not quantity and not quote_order_qty:
+                raise ValueError(
+                    "MARKET orders require either quantity or quoteOrderQty"
+                )
+
         return await self.call(
             "POST",
             "api/v3/order",
@@ -1492,44 +1550,61 @@ class HTTP(_SpotHTTP):
 
         Start a new user data stream. The stream will close after 60 minutes unless a keepalive is sent.
 
-        :return: response dictionary
+        :return: response dictionary containing listenKey
         :rtype: dict
         """
-        return await self.call(
-            "POST", "api/v3/userDataStream", params={"please_sign_it": None}
-        )
+        return await self.call("POST", "api/v3/userDataStream")
+
+    async def get_listen_keys(self) -> dict:
+        """
+        ### Get Valid Listen Keys.
+        #### Required permission: SPOT_ACCOUNT_R
+
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#listen-key
+
+        Retrieves all currently valid listen keys.
+
+        :return: response dictionary containing list of listenKeys
+        :rtype: dict
+        """
+        return await self.call("GET", "api/v3/userDataStream")
 
     async def keep_alive_listen_key(self, listen_key: str) -> dict:
         """
         ### Keep-alive a ListenKey.
-        #### Required permission: none
+        #### Required permission: SPOT_ACCOUNT_R
 
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#listen-key
+
+        Extends the validity to 60 minutes from the time of this call. It is recommended to send a request every 30 minutes.
 
         :param listen_key: Listen key
         :type listen_key: str
 
-        :return: response dictionary
+        :return: response dictionary containing listenKey
         :rtype: dict
         """
         return await self.call(
             "PUT", "api/v3/userDataStream", params=dict(listenKey=listen_key)
         )
 
-    async def close_listen_key(self) -> dict:
+    async def close_listen_key(self, listen_key: str) -> dict:
         """
         ### Close a ListenKey.
-        #### Required permission: None
-
-        Weight(IP): 1, Weight(UID): 1
+        #### Required permission: SPOT_ACCOUNT_R
 
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#listen-key
 
-        :return: response dictionary
+        Closes the user data stream.
+
+        :param listen_key: Listen key
+        :type listen_key: str
+
+        :return: response dictionary containing listenKey
         :rtype: dict
         """
         return await self.call(
-            "DELETE", "api/v3/userDataStream", params={"please_sign_it": None}
+            "DELETE", "api/v3/userDataStream", params=dict(listenKey=listen_key)
         )
 
     # <=================================================================>
