@@ -38,11 +38,9 @@ class MexcSDK(ABC):
         self.base_url = base_url
 
         self.session = requests.AsyncSession()
-        self.session.headers.update(
-            {
-                "Content-Type": "application/json",
-            }
-        )
+        self.session.headers.update({
+            "Content-Type": "application/json",
+        })
 
         if proxies:
             self.session.proxies.update(proxies)
@@ -127,6 +125,7 @@ class _SpotHTTP(MexcSDK):
         )
 
         if not response.ok:
+            print(response.json())
             raise MexcAPIError(
                 f"(code={response.json()['code']}): {response.json()['msg']}"
             )
@@ -148,9 +147,10 @@ class _FuturesHTTP(MexcSDK):
                 "[pymexc] You can bypass Futures API maintance. See https://github.com/makarworld/pymexc/issues/15 for more information."
             )
 
-        self.session.headers.update(
-            {"Content-Type": "application/json", "ApiKey": self.api_key}
-        )
+        self.session.headers.update({
+            "Content-Type": "application/json",
+            "ApiKey": self.api_key,
+        })
 
     def sign(self, timestamp: str, **kwargs) -> str:
         """
@@ -217,10 +217,7 @@ class _FuturesHTTP(MexcSDK):
                     }
                 # ! func cancel_order may be list
                 elif isinstance(kwarg_variant, list):
-                    kwargs[variant] = [
-                        v for v in kwarg_variant if v is not None
-                    ]
-
+                    kwargs[variant] = [v for v in kwarg_variant if v is not None]
 
         if self.api_key and self.api_secret:
             # Add signature

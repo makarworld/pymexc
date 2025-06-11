@@ -49,15 +49,41 @@ while True:
 import logging
 
 try:
-    from . import _async, futures, spot, web, proto
+    from . import _async, futures, proto, spot, web
+    from ._async.futures import HTTP as AsyncFuturesHTTP
+    from ._async.futures import WebSocket as AsyncFuturesWebSocket
+    from ._async.spot import HTTP as AsyncSpotHTTP
+    from ._async.spot import WebSocket as AsyncSpotWebSocket
 except ImportError:
     import _async
     import futures
+    import proto
     import spot
     import web
-    import proto
+    from _async.futures import HTTP as AsyncFuturesHTTP
+    from _async.futures import WebSocket as AsyncFuturesWebSocket
+    from _async.spot import HTTP as AsyncSpotHTTP
+    from _async.spot import WebSocket as AsyncSpotWebSocket
+    from futures import HTTP as FuturesHTTP
+    from futures import WebSocket as FuturesWebSocket
+    from spot import HTTP as SpotHTTP
+    from spot import WebSocket as SpotWebSocket
 
 logger = logging.getLogger(__name__)
 
 
-__all__ = ["_async", "futures", "spot", "web", "proto"]
+__all__ = [
+    "_async",
+    "futures",
+    "spot",
+    "web",
+    "proto",
+    "AsyncFuturesHTTP",
+    "AsyncFuturesWebSocket",
+    "AsyncSpotHTTP",
+    "AsyncSpotWebSocket",
+    "FuturesHTTP",
+    "FuturesWebSocket",
+    "SpotHTTP",
+    "SpotWebSocket",
+]

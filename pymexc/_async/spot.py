@@ -44,8 +44,8 @@ try:
     from base import _SpotHTTP, SPOT as SPOT_HTTP
     from base_websocket import _SpotWebSocket, SPOT as SPOT_WS
 except ImportError:
-    from .base import _SpotHTTP, SPOT as SPOT_HTTP
-    from .base_websocket import _SpotWebSocket, SPOT as SPOT_WS
+    from pymexc._async.base import _SpotHTTP, SPOT as SPOT_HTTP
+    from pymexc._async.base_websocket import _SpotWebSocket, SPOT as SPOT_WS
 
 
 class HTTP(_SpotHTTP):
@@ -233,7 +233,7 @@ class HTTP(_SpotHTTP):
                 endTime=end_time,
                 limit=limit,
             ),
-            auth=False,
+            auth=True,
         )
 
     async def avg_price(self, symbol: str):
@@ -251,7 +251,7 @@ class HTTP(_SpotHTTP):
         :rtype: dict
         """
         return await self.call(
-            "GET", "/api/v3/avgPrice", params=dict(symbol=symbol), auth=False
+            "GET", "/api/v3/avgPrice", params=dict(symbol=symbol), auth=True
         )
 
     async def ticker_24h(self, symbol: Optional[str] = None):
@@ -575,11 +575,50 @@ class HTTP(_SpotHTTP):
             ),
         )
 
+    async def sub_account_asset(
+        self, sub_account: str, account_type: str = "SPOT"
+    ) -> dict:
+        """
+        ### Query Sub-account Assets
+        #### Required permission: SPOT_ACCOUNT_READ
+
+        Weight(IP): 1
+
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-sub-account-assets
+
+        :param sub_account: Sub-account name
+        :type sub_account: str
+        :param account_type: Account type (SPOT/MARGIN)
+        :type account_type: str
+
+        :return: response dictionary
+        :rtype: dict
+        """
+        return await self.call(
+            "GET",
+            "api/v3/sub-account/asset",
+            params=dict(subAccount=sub_account, accountType=account_type),
+        )
+
     # <=================================================================>
     #
     #                       Spot Account/Trade
     #
     # <=================================================================>
+
+    async def get_kyc_status(self) -> dict:
+        """
+        ### Get KYC Status
+        #### Required permission: SPOT_ACCOUNT_READ
+
+        Weight(IP): 1
+
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-kyc-status
+
+        :return: response dictionary
+        :rtype: dict
+        """
+        return await self.call("GET", "/api/v3/kyc/status")
 
     async def get_default_symbols(self) -> dict:
         """
@@ -1085,6 +1124,99 @@ class HTTP(_SpotHTTP):
     #                          Wallet Endpoints
     #
     # <=================================================================>
+
+    async def query_symbol_commission(self, symbol: str) -> dict:
+        """
+        ### Query Symbol Commission
+        #### Required permission: SPOT_ACCOUNT_READ
+
+        Weight(IP): 1
+
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-symbol-commission
+
+        :param symbol: Trading pair
+        :type symbol: str
+
+        :return: response dictionary
+        :rtype: dict
+        """
+        return await self.call("GET", "api/v3/tradeFee", params=dict(symbol=symbol))
+
+    async def internal_transfer(
+        self,
+        to_account_type: str,
+        to_account: str,
+        asset: str,
+        amount: float,
+    ) -> dict:
+        """
+        ### Internal Transfer
+        #### Required permission: SPOT_ACCOUNT_WRITE
+
+        Weight(IP): 1
+
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#internal-transfer
+
+        :param to_account_type: Account type (SPOT/MARGIN)
+        :type to_account_type: str
+        :param to_account: Account name
+        :type to_account: str
+        :param asset: Asset name
+        :type asset: str
+        :param amount: Transfer amount
+        :type amount: float
+
+        :return: response dictionary
+        :rtype: dict
+        """
+        return await self.call(
+            "POST",
+            "/api/v3/capital/transfer",
+            params=dict(
+                toAccountType=to_account_type,
+                toAccount=to_account,
+                asset=asset,
+                amount=amount,
+            ),
+        )
+
+    async def internal_transfer_history(
+        self,
+        start_time: Optional[int] = None,
+        end_time: Optional[int] = None,
+        page: Optional[int] = None,
+        size: Optional[int] = None,
+    ) -> dict:
+        """
+        ### Internal Transfer History
+        #### Required permission: SPOT_ACCOUNT_READ
+
+        Weight(IP): 1
+
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#internal-transfer-history
+
+        :param start_time: Start time in milliseconds
+        :type start_time: Optional[int]
+        :param end_time: End time in milliseconds
+        :type end_time: Optional[int]
+        :param page: Page number
+        :type page: Optional[int]
+        :param size: Page size
+        :type size: Optional[int]
+
+        :return: response dictionary
+        :rtype: dict
+        """
+        return await self.call(
+            "GET",
+            "api/v3/capital/transfer/internal",
+            params=dict(
+                startTime=start_time,
+                endTime=end_time,
+                page=page,
+                size=size,
+            ),
+        )
 
     async def get_currency_info(self) -> dict:
         """
