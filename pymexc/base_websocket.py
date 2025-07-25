@@ -448,6 +448,7 @@ class _WebSocketManager:
         if message.get("id") == 0 and message.get("code") == 0:
             # If we get successful SPOT subscription, notify user
             logger.debug(f"Subscription to {message['msg']} successful.")
+            return
 
         elif (
             message.get("channel", "").startswith("rs.sub")
@@ -456,6 +457,7 @@ class _WebSocketManager:
         ):
             # If we get successful FUTURES subscription, notify user
             logger.debug(f"Subscription to {message['channel']} successful.")
+            return
 
         else:
             # SPOT or FUTURES subscription fail
@@ -673,7 +675,6 @@ class _SpotWebSocketManager(_WebSocketManager):
             if (
                 message.get("id") == 0
                 and message.get("code") == 0
-                and message.get("msg")
             ):
                 return True
             else:
