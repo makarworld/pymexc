@@ -1,8 +1,6 @@
-from email.policy import default
 import hmac
 import json
 import logging
-from operator import call
 import threading
 import time
 from typing import Callable, Dict, List, Union
@@ -60,9 +58,7 @@ class _WebSocketManager:
         # Subscribe to private futures topics if proided
         self.subscribe_callback: Union[Callable, None] = subscribe_callback
 
-        self.callback: Callable[[dict | ProtoTyping.PushDataV3ApiWrapper], None] = (
-            callback_function
-        )
+        self.callback: Callable[[dict | ProtoTyping.PushDataV3ApiWrapper], None] = callback_function
         self.ws_name: str = ws_name
         if api_key:
             self.ws_name += " (Auth)"
@@ -149,9 +145,7 @@ class _WebSocketManager:
             _message.ParseFromString(message)
 
         else:
-            raise ValueError(
-                f"Unserializable message type: {type(message)} | {message}"
-            )
+            raise ValueError(f"Unserializable message type: {type(message)} | {message}")
 
         if parse_only:
             return _message
@@ -242,9 +236,7 @@ class _WebSocketManager:
 
         self.attempting_connection = False
 
-    def _set_personal_callback(
-        self, callback: Callable = None, topics: List[str] = FUTURES_PERSONAL_TOPICS
-    ):
+    def _set_personal_callback(self, callback: Callable = None, topics: List[str] = FUTURES_PERSONAL_TOPICS):
         if callback:
             for topic in topics:
                 self._set_callback(f"personal.{topic}", callback)
@@ -299,10 +291,7 @@ class _WebSocketManager:
             raise error
 
         if not self.exited:
-            logger.error(
-                f"WebSocket {self.ws_name} ({self.endpoint}) "
-                f"encountered error: {error}."
-            )
+            logger.error(f"WebSocket {self.ws_name} ({self.endpoint}) encountered error: {error}.")
             self.exit()
 
         if parse_only:
@@ -388,11 +377,7 @@ class _WebSocketManager:
         return self.callback_directory.get(topic)
 
     def _pop_callback(self, topic: str) -> Union[Callable[..., None], None]:
-        return (
-            self.callback_directory.pop(topic)
-            if self.callback_directory.get(topic)
-            else None
-        )
+        return self.callback_directory.pop(topic) if self.callback_directory.get(topic) else None
 
     def get_proto_body(self, message: ProtoTyping.PushDataV3ApiWrapper) -> dict:
         if self.extend_proto_body:
@@ -414,14 +399,10 @@ class _WebSocketManager:
             return getattr(message, bodies[topic])  # default=message
 
         else:
-            logger.warning(
-                f"Body for topic {topic} not found. | Message: {message.__dict__}"
-            )
+            logger.warning(f"Body for topic {topic} not found. | Message: {message.__dict__}")
             return message
 
-    def _process_normal_message(
-        self, message: dict | ProtoTyping.PushDataV3ApiWrapper, parse_only: bool = False
-    ):
+    def _process_normal_message(self, message: dict | ProtoTyping.PushDataV3ApiWrapper, parse_only: bool = False):
         """
         Redirect message to callback function
         """
@@ -434,9 +415,7 @@ class _WebSocketManager:
 
         callback_function = self._get_callback(topic)
         if not callback_function:
-            logger.warning(
-                f"Callback for topic {topic} not found. | Message: {message}"
-            )
+            logger.warning(f"Callback for topic {topic} not found. | Message: {message}")
             return None, None
         else:
             if parse_only:
@@ -478,9 +457,7 @@ class _WebSocketManager:
 class _FuturesWebSocketManager(_WebSocketManager):
     def __init__(self, ws_name, **kwargs):
         callback_function = (
-            kwargs.pop("callback_function")
-            if kwargs.get("callback_function")
-            else self._handle_incoming_message
+            kwargs.pop("callback_function") if kwargs.get("callback_function") else self._handle_incoming_message
         )
 
         super().__init__(callback_function, ws_name, **kwargs)
@@ -529,20 +506,14 @@ class _FuturesWebSocketManager(_WebSocketManager):
 
         # If we get unsuccessful auth, notify user.
         elif message.get("data") != "success":  # !!!!
-            logger.debug(
-                f"Authorization for {self.ws_name} failed. Please "
-                f"check your API keys and restart."
-            )
+            logger.debug(f"Authorization for {self.ws_name} failed. Please check your API keys and restart.")
 
     def _handle_incoming_message(self, message):
         def is_auth_message():
             return message.get("channel", "") == "rs.login"
 
         def is_subscription_message():
-            return (
-                message.get("channel", "").startswith("rs.sub")
-                or message.get("channel", "") == "rs.personal.filter"
-            )
+            return message.get("channel", "").startswith("rs.sub") or message.get("channel", "") == "rs.personal.filter"
 
         def is_pong_message():
             return message.get("channel", "") in ("pong", "clientId")
@@ -591,9 +562,7 @@ class _FuturesWebSocket(_FuturesWebSocketManager):
 class _SpotWebSocketManager(_WebSocketManager):
     def __init__(self, ws_name, **kwargs):
         callback_function = (
-            kwargs.pop("callback_function")
-            if kwargs.get("callback_function")
-            else self._handle_incoming_message
+            kwargs.pop("callback_function") if kwargs.get("callback_function") else self._handle_incoming_message
         )
         super().__init__(callback_function, ws_name, **kwargs)
 
@@ -603,10 +572,7 @@ class _SpotWebSocketManager(_WebSocketManager):
         subscription_args = {
             "method": "SUBSCRIPTION",
             "params": [
-                "@".join(
-                    [f"spot@{topic}.v3.api" + (".pb" if self.proto else "")]
-                    + list(map(str, params.values()))
-                )
+                "@".join([f"spot@{topic}.v3.api" + (".pb" if self.proto else "")] + list(map(str, params.values())))
                 for params in params_list
             ],
         }
@@ -638,20 +604,17 @@ class _SpotWebSocketManager(_WebSocketManager):
 
             # send unsub message
             self.ws.send(
-                json.dumps({
-                    "method": "UNSUBSCRIPTION",
-                    "params": [
-                        "@".join([f"spot@{t}.v3.api" + (".pb" if self.proto else "")])
-                        for t in topics
-                    ],
-                })
+                json.dumps(
+                    {
+                        "method": "UNSUBSCRIPTION",
+                        "params": ["@".join([f"spot@{t}.v3.api" + (".pb" if self.proto else "")]) for t in topics],
+                    }
+                )
             )
 
             # remove subscriptions from list
             for i, sub in enumerate(self.subscriptions):
-                new_params = [
-                    x for x in sub["params"] for _topic in topics if _topic not in x
-                ]
+                new_params = [x for x in sub["params"] for _topic in topics if _topic not in x]
                 if new_params:
                     self.subscriptions[i]["params"] = new_params
                 else:
@@ -662,9 +625,7 @@ class _SpotWebSocketManager(_WebSocketManager):
         else:
             # some funcs in list
             topics = [
-                x.__name__.replace("_stream", "").replace("_", ".")
-                if getattr(x, "__name__", None)
-                else x
+                x.__name__.replace("_stream", "").replace("_", ".") if getattr(x, "__name__", None) else x
                 #
                 for x in topics
             ]
@@ -672,10 +633,7 @@ class _SpotWebSocketManager(_WebSocketManager):
 
     def _handle_incoming_message(self, message: dict):
         def is_subscription_message():
-            if (
-                message.get("id") == 0
-                and message.get("code") == 0
-            ):
+            if message.get("id") == 0 and message.get("code") == 0:
                 return True
             else:
                 return False

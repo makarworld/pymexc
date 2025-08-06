@@ -41,8 +41,8 @@ import warnings
 logger = logging.getLogger(__name__)
 
 try:
-    from base import _SpotHTTP, SPOT as SPOT_HTTP
-    from base_websocket import _SpotWebSocket, SPOT as SPOT_WS
+    from .base import _SpotHTTP, SPOT as SPOT_HTTP
+    from .base_websocket import _SpotWebSocket, SPOT as SPOT_WS
 except ImportError:
     from pymexc._async.base import _SpotHTTP, SPOT as SPOT_HTTP
     from pymexc._async.base_websocket import _SpotWebSocket, SPOT as SPOT_WS
@@ -85,9 +85,7 @@ class HTTP(_SpotHTTP):
         """
         return await self.call("GET", "/api/v3/defaultSymbols", auth=False)
 
-    async def exchange_info(
-        self, symbol: Optional[str] = None, symbols: Optional[List[str]] = None
-    ) -> dict:
+    async def exchange_info(self, symbol: Optional[str] = None, symbols: Optional[List[str]] = None) -> dict:
         """
         ### Exchange Information
 
@@ -128,9 +126,7 @@ class HTTP(_SpotHTTP):
         :return: The order book data in JSON format.
         :rtype: dict
         """
-        return await self.call(
-            "GET", "/api/v3/depth", params=dict(symbol=symbol, limit=limit), auth=False
-        )
+        return await self.call("GET", "/api/v3/depth", params=dict(symbol=symbol, limit=limit), auth=False)
 
     async def trades(self, symbol: str, limit: Optional[int] = 500) -> dict:
         """
@@ -149,9 +145,7 @@ class HTTP(_SpotHTTP):
         :rtype: dict
         """
 
-        return await self.call(
-            "GET", "/api/v3/trades", params=dict(symbol=symbol, limit=limit), auth=False
-        )
+        return await self.call("GET", "/api/v3/trades", params=dict(symbol=symbol, limit=limit), auth=False)
 
     async def agg_trades(
         self,
@@ -186,9 +180,7 @@ class HTTP(_SpotHTTP):
         return await self.call(
             "GET",
             "/api/v3/aggTrades",
-            params=dict(
-                symbol=symbol, startTime=start_time, endTime=end_time, limit=limit
-            ),
+            params=dict(symbol=symbol, startTime=start_time, endTime=end_time, limit=limit),
             auth=False,
         )
 
@@ -250,9 +242,7 @@ class HTTP(_SpotHTTP):
         :return: A dictionary containing average price.
         :rtype: dict
         """
-        return await self.call(
-            "GET", "/api/v3/avgPrice", params=dict(symbol=symbol), auth=True
-        )
+        return await self.call("GET", "/api/v3/avgPrice", params=dict(symbol=symbol), auth=True)
 
     async def ticker_24h(self, symbol: Optional[str] = None):
         """
@@ -269,9 +259,7 @@ class HTTP(_SpotHTTP):
         :return: A dictionary.
         :rtype: dict
         """
-        return await self.call(
-            "GET", "/api/v3/ticker/24hr", params=dict(symbol=symbol), auth=False
-        )
+        return await self.call("GET", "/api/v3/ticker/24hr", params=dict(symbol=symbol), auth=False)
 
     async def ticker_price(self, symbol: Optional[str] = None):
         """
@@ -288,9 +276,7 @@ class HTTP(_SpotHTTP):
         :return: A dictionary.
         :rtype: dict
         """
-        return await self.call(
-            "GET", "/api/v3/ticker/price", params=dict(symbol=symbol), auth=False
-        )
+        return await self.call("GET", "/api/v3/ticker/price", params=dict(symbol=symbol), auth=False)
 
     async def ticker_book_price(self, symbol: Optional[str] = None):
         """
@@ -308,9 +294,7 @@ class HTTP(_SpotHTTP):
         :return: A dictionary.
         :rtype: dict
         """
-        return await self.call(
-            "GET", "/api/v3/ticker/bookTicker", params=dict(symbol=symbol), auth=False
-        )
+        return await self.call("GET", "/api/v3/ticker/bookTicker", params=dict(symbol=symbol), auth=False)
 
     # <=================================================================>
     #
@@ -371,9 +355,7 @@ class HTTP(_SpotHTTP):
         return await self.call(
             "GET",
             "api/v3/sub-account/list",
-            params=dict(
-                subAccount=sub_account, isFreeze=is_freeze, page=page, limit=limit
-            ),
+            params=dict(subAccount=sub_account, isFreeze=is_freeze, page=page, limit=limit),
         )
 
     async def create_sub_account_api_key(
@@ -425,9 +407,7 @@ class HTTP(_SpotHTTP):
             params=dict(
                 subAccount=sub_account,
                 note=note,
-                permissions=",".join(permissions)
-                if isinstance(permissions, list)
-                else permissions,
+                permissions=",".join(permissions) if isinstance(permissions, list) else permissions,
                 ip=ip,
             ),
         )
@@ -448,9 +428,7 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return await self.call(
-            "GET", "api/v3/sub-account/apiKey", params=dict(subAccount=sub_account)
-        )
+        return await self.call("GET", "api/v3/sub-account/apiKey", params=dict(subAccount=sub_account))
 
     async def delete_sub_account_api_key(self, sub_account: str, api_key: str) -> dict:
         """
@@ -575,9 +553,7 @@ class HTTP(_SpotHTTP):
             ),
         )
 
-    async def sub_account_asset(
-        self, sub_account: str, account_type: str = "SPOT"
-    ) -> dict:
+    async def sub_account_asset(self, sub_account: str, account_type: str = "SPOT") -> dict:
         """
         ### Query Sub-account Assets
         #### Required permission: SPOT_ACCOUNT_READ
@@ -635,9 +611,7 @@ class HTTP(_SpotHTTP):
         return await self.call("GET", "api/v3/selfSymbols")
 
     async def test_new_order(self, *args, **kwargs) -> dict:
-        warnings.warn(
-            "test_new_order is deprecated, use test_order instead", DeprecationWarning
-        )
+        warnings.warn("test_new_order is deprecated, use test_order instead", DeprecationWarning)
         return await self.test_order(*args, **kwargs)
 
     async def test_order(
@@ -691,9 +665,7 @@ class HTTP(_SpotHTTP):
                 raise ValueError("LIMIT orders require both quantity and price")
         elif order_type == "MARKET":
             if not quantity and not quote_order_qty:
-                raise ValueError(
-                    "MARKET orders require either quantity or quoteOrderQty"
-                )
+                raise ValueError("MARKET orders require either quantity or quoteOrderQty")
 
         return await self.call(
             "POST",
@@ -794,9 +766,7 @@ class HTTP(_SpotHTTP):
                 raise ValueError("LIMIT orders require both quantity and price")
         elif order_type == "MARKET":
             if not quantity and not quote_order_qty:
-                raise ValueError(
-                    "MARKET orders require either quantity or quoteOrderQty"
-                )
+                raise ValueError("MARKET orders require either quantity or quoteOrderQty")
 
         return await self.call(
             "POST",
@@ -820,9 +790,7 @@ class HTTP(_SpotHTTP):
         batch_orders: List[str],
         symbol: str,
         side: Literal["BUY", "SELL"],
-        order_type: Literal[
-            "LIMIT", "MARKET", "LIMIT_MARKET", "IMMEDIATE_OR_CANCEL", "FILL_OR_KILL"
-        ],
+        order_type: Literal["LIMIT", "MARKET", "LIMIT_MARKET", "IMMEDIATE_OR_CANCEL", "FILL_OR_KILL"],
         quantity: Optional[int] = None,
         quote_order_qty: Optional[int] = None,
         price: Optional[int] = None,
@@ -927,9 +895,7 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return await self.call(
-            "DELETE", "api/v3/openOrders", params=dict(symbol=symbol)
-        )
+        return await self.call("DELETE", "api/v3/openOrders", params=dict(symbol=symbol))
 
     async def query_order(
         self,
@@ -961,9 +927,7 @@ class HTTP(_SpotHTTP):
         return await self.call(
             "GET",
             "api/v3/order",
-            params=dict(
-                symbol=symbol, origClientOrderId=orig_client_order_id, orderId=order_id
-            ),
+            params=dict(symbol=symbol, origClientOrderId=orig_client_order_id, orderId=order_id),
         )
 
     async def current_open_orders(self, symbol: str) -> dict:
@@ -1015,9 +979,7 @@ class HTTP(_SpotHTTP):
         return await self.call(
             "GET",
             "api/v3/allOrders",
-            params=dict(
-                symbol=symbol, startTime=start_time, endTime=end_time, limit=limit
-            ),
+            params=dict(symbol=symbol, startTime=start_time, endTime=end_time, limit=limit),
         )
 
     async def account_information(self) -> dict:
@@ -1564,9 +1526,7 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return await self.call(
-            "GET", "api/v3/capital/transfer/tranId", params=dict(tranId=tran_id)
-        )
+        return await self.call("GET", "api/v3/capital/transfer/tranId", params=dict(tranId=tran_id))
 
     async def get_assets_convert_into_mx(self) -> dict:
         """
@@ -1716,9 +1676,7 @@ class HTTP(_SpotHTTP):
         :return: response dictionary containing listenKey
         :rtype: dict
         """
-        return await self.call(
-            "PUT", "api/v3/userDataStream", params=dict(listenKey=listen_key)
-        )
+        return await self.call("PUT", "api/v3/userDataStream", params=dict(listenKey=listen_key))
 
     async def close_listen_key(self, listen_key: str) -> dict:
         """
@@ -1735,9 +1693,7 @@ class HTTP(_SpotHTTP):
         :return: response dictionary containing listenKey
         :rtype: dict
         """
-        return await self.call(
-            "DELETE", "api/v3/userDataStream", params=dict(listenKey=listen_key)
-        )
+        return await self.call("DELETE", "api/v3/userDataStream", params=dict(listenKey=listen_key))
 
     # <=================================================================>
     #
@@ -1849,9 +1805,7 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return await self.call(
-            "GET", "api/v3/rebate/referCode", params=dict(please_sign_me=None)
-        )
+        return await self.call("GET", "api/v3/rebate/referCode", params=dict(please_sign_me=None))
 
     async def affiliate_commission_record(
         self,
@@ -2094,9 +2048,7 @@ class WebSocket(_SpotWebSocket):
         """
 
         if not self.listenKey:
-            auth = await HTTP(
-                api_key=self.api_key, api_secret=self.api_secret
-            ).create_listen_key()
+            auth = await HTTP(api_key=self.api_key, api_secret=self.api_secret).create_listen_key()
             self.listenKey = auth.get("listenKey")
             logger.debug(f"create listenKey: {self.listenKey}")
 
@@ -2109,12 +2061,10 @@ class WebSocket(_SpotWebSocket):
             await asyncio.sleep(59 * 60)  # 59 min
 
             if self.listenKey:
-                resp = await HTTP(
-                    api_key=self.api_key, api_secret=self.api_secret
-                ).keep_alive_listen_key(self.listenKey)
-                logger.debug(
-                    f"keep-alive listenKey - {self.listenKey}. Response: {resp}"
+                resp = await HTTP(api_key=self.api_key, api_secret=self.api_secret).keep_alive_listen_key(
+                    self.listenKey
                 )
+                logger.debug(f"keep-alive listenKey - {self.listenKey}. Response: {resp}")
             else:
                 break
 
@@ -2124,9 +2074,7 @@ class WebSocket(_SpotWebSocket):
     #
     # <=================================================================>
 
-    async def deals_stream(
-        self, callback: Callable[..., None], symbol: Union[str, List[str]]
-    ):
+    async def deals_stream(self, callback: Callable[..., None], symbol: Union[str, List[str]]):
         """
         ### Trade Streams
         The Trade Streams push raw trade information; each trade has a unique buyer and seller.
@@ -2148,9 +2096,7 @@ class WebSocket(_SpotWebSocket):
         topic = "public.deals"
         await self._ws_subscribe(topic, callback, params)
 
-    async def kline_stream(
-        self, callback: Callable[..., None], symbol: str, interval: int
-    ):
+    async def kline_stream(self, callback: Callable[..., None], symbol: str, interval: int):
         """
         ### Kline Streams
         The Kline/Candlestick Stream push updates to the current klines/candlestick every second.
@@ -2188,9 +2134,7 @@ class WebSocket(_SpotWebSocket):
         topic = "public.increase.depth"
         await self._ws_subscribe(topic, callback, params)
 
-    async def limit_depth_stream(
-        self, callback: Callable[..., None], symbol: str, level: int
-    ):
+    async def limit_depth_stream(self, callback: Callable[..., None], symbol: str, level: int):
         """
         ### Partial Book Depth Streams
         Top bids and asks, Valid are 5, 10, or 20.

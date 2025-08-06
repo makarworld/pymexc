@@ -52,8 +52,8 @@ import os
 try:
     from . import futures, spot
 except ImportError:
-    import _async.futures as futures
-    import _async.spot as spot
+    import pymexc._async.futures as futures
+    import pymexc._async.spot as spot
 
 
 if os.name == "nt":
