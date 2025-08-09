@@ -2139,7 +2139,7 @@ class WebSocket(_SpotWebSocket):
         else:
             symbols = symbol  # list
         params = [dict(symbol=s) for s in symbols]
-        topic = "public.deals"
+        topic = "public.aggre.deals"
         self._ws_subscribe(topic, callback, params)
 
     def kline_stream(
