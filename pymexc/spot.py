@@ -95,9 +95,7 @@ class HTTP(_SpotHTTP):
         """
         return self.call("GET", "/api/v3/defaultSymbols", auth=False)
 
-    def exchange_info(
-        self, symbol: Optional[str] = None, symbols: Optional[List[str]] = None
-    ) -> dict:
+    def exchange_info(self, symbol: Optional[str] = None, symbols: Optional[List[str]] = None) -> dict:
         """
         ### Exchange Information
 
@@ -138,9 +136,7 @@ class HTTP(_SpotHTTP):
         :return: The order book data in JSON format.
         :rtype: dict
         """
-        return self.call(
-            "GET", "/api/v3/depth", params=dict(symbol=symbol, limit=limit), auth=False
-        )
+        return self.call("GET", "/api/v3/depth", params=dict(symbol=symbol, limit=limit), auth=False)
 
     def trades(self, symbol: str, limit: Optional[int] = 500) -> list:
         """
@@ -159,9 +155,7 @@ class HTTP(_SpotHTTP):
         :rtype: dict
         """
 
-        return self.call(
-            "GET", "/api/v3/trades", params=dict(symbol=symbol, limit=limit), auth=False
-        )
+        return self.call("GET", "/api/v3/trades", params=dict(symbol=symbol, limit=limit), auth=False)
 
     def agg_trades(
         self,
@@ -196,9 +190,7 @@ class HTTP(_SpotHTTP):
         return self.call(
             "GET",
             "/api/v3/aggTrades",
-            params=dict(
-                symbol=symbol, startTime=start_time, endTime=end_time, limit=limit
-            ),
+            params=dict(symbol=symbol, startTime=start_time, endTime=end_time, limit=limit),
             auth=False,
         )
 
@@ -260,9 +252,7 @@ class HTTP(_SpotHTTP):
         :return: A dictionary containing average price.
         :rtype: dict
         """
-        return self.call(
-            "GET", "/api/v3/avgPrice", params=dict(symbol=symbol), auth=True
-        )
+        return self.call("GET", "/api/v3/avgPrice", params=dict(symbol=symbol), auth=True)
 
     def ticker_24h(self, symbol: Optional[str] = None):
         """
@@ -279,9 +269,7 @@ class HTTP(_SpotHTTP):
         :return: A dictionary.
         :rtype: dict
         """
-        return self.call(
-            "GET", "/api/v3/ticker/24hr", params=dict(symbol=symbol), auth=False
-        )
+        return self.call("GET", "/api/v3/ticker/24hr", params=dict(symbol=symbol), auth=False)
 
     def ticker_price(self, symbol: Optional[str] = None):
         """
@@ -298,9 +286,7 @@ class HTTP(_SpotHTTP):
         :return: A dictionary.
         :rtype: dict
         """
-        return self.call(
-            "GET", "/api/v3/ticker/price", params=dict(symbol=symbol), auth=False
-        )
+        return self.call("GET", "/api/v3/ticker/price", params=dict(symbol=symbol), auth=False)
 
     def ticker_book_price(self, symbol: Optional[str] = None):
         """
@@ -318,9 +304,7 @@ class HTTP(_SpotHTTP):
         :return: A dictionary.
         :rtype: dict
         """
-        return self.call(
-            "GET", "/api/v3/ticker/bookTicker", params=dict(symbol=symbol), auth=False
-        )
+        return self.call("GET", "/api/v3/ticker/bookTicker", params=dict(symbol=symbol), auth=False)
 
     # <=================================================================>
     #
@@ -381,9 +365,7 @@ class HTTP(_SpotHTTP):
         return self.call(
             "GET",
             "api/v3/sub-account/list",
-            params=dict(
-                subAccount=sub_account, isFreeze=is_freeze, page=page, limit=limit
-            ),
+            params=dict(subAccount=sub_account, isFreeze=is_freeze, page=page, limit=limit),
         )
 
     def create_sub_account_api_key(
@@ -435,9 +417,7 @@ class HTTP(_SpotHTTP):
             params=dict(
                 subAccount=sub_account,
                 note=note,
-                permissions=",".join(permissions)
-                if isinstance(permissions, list)
-                else permissions,
+                permissions=",".join(permissions) if isinstance(permissions, list) else permissions,
                 ip=ip,
             ),
         )
@@ -458,9 +438,7 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call(
-            "GET", "api/v3/sub-account/apiKey", params=dict(subAccount=sub_account)
-        )
+        return self.call("GET", "api/v3/sub-account/apiKey", params=dict(subAccount=sub_account))
 
     def delete_sub_account_api_key(self, sub_account: str, api_key: str) -> dict:
         """
@@ -650,9 +628,7 @@ class HTTP(_SpotHTTP):
         return self.call("GET", "api/v3/selfSymbols")
 
     def test_new_order(self, *args, **kwargs) -> dict:
-        warnings.warn(
-            "test_new_order is deprecated, use test_order instead", DeprecationWarning
-        )
+        warnings.warn("test_new_order is deprecated, use test_order instead", DeprecationWarning)
         return self.test_order(*args, **kwargs)
 
     def test_order(
@@ -706,9 +682,7 @@ class HTTP(_SpotHTTP):
                 raise ValueError("LIMIT orders require both quantity and price")
         elif order_type == "MARKET":
             if not quantity and not quote_order_qty:
-                raise ValueError(
-                    "MARKET orders require either quantity or quoteOrderQty"
-                )
+                raise ValueError("MARKET orders require either quantity or quoteOrderQty")
 
         return self.call(
             "POST",
@@ -782,9 +756,7 @@ class HTTP(_SpotHTTP):
                 raise ValueError("LIMIT orders require both quantity and price")
         elif order_type == "MARKET":
             if not quantity and not quote_order_qty:
-                raise ValueError(
-                    "MARKET orders require either quantity or quoteOrderQty"
-                )
+                raise ValueError("MARKET orders require either quantity or quoteOrderQty")
 
         return self.call(
             "POST",
@@ -808,9 +780,7 @@ class HTTP(_SpotHTTP):
         batch_orders: List[dict],
         symbol: str,
         side: Literal["BUY", "SELL"],
-        order_type: Literal[
-            "LIMIT", "MARKET", "LIMIT_MARKET", "IMMEDIATE_OR_CANCEL", "FILL_OR_KILL"
-        ],
+        order_type: Literal["LIMIT", "MARKET", "LIMIT_MARKET", "IMMEDIATE_OR_CANCEL", "FILL_OR_KILL"],
         quantity: Optional[float] = None,
         quote_order_qty: Optional[float] = None,
         price: Optional[float] = None,
@@ -852,9 +822,7 @@ class HTTP(_SpotHTTP):
                 raise ValueError("LIMIT orders require both quantity and price")
         elif order_type == "MARKET":
             if not quantity and not quote_order_qty:
-                raise ValueError(
-                    "MARKET orders require either quantity or quoteOrderQty"
-                )
+                raise ValueError("MARKET orders require either quantity or quoteOrderQty")
 
         # Prepare batch orders
         orders = []
@@ -878,9 +846,7 @@ class HTTP(_SpotHTTP):
             order_data.update(order)
             orders.append(order_data)
 
-        return self.call(
-            "POST", "api/v3/batchOrders", params=dict(batchOrders=json.dumps(orders))
-        )
+        return self.call("POST", "api/v3/batchOrders", params=dict(batchOrders=json.dumps(orders)))
 
     def cancel_order(
         self,
@@ -967,9 +933,7 @@ class HTTP(_SpotHTTP):
         return self.call(
             "GET",
             "api/v3/order",
-            params=dict(
-                symbol=symbol, origClientOrderId=orig_client_order_id, orderId=order_id
-            ),
+            params=dict(symbol=symbol, origClientOrderId=orig_client_order_id, orderId=order_id),
         )
 
     def current_open_orders(self, symbol: str) -> dict:
@@ -1021,9 +985,7 @@ class HTTP(_SpotHTTP):
         return self.call(
             "GET",
             "api/v3/allOrders",
-            params=dict(
-                symbol=symbol, startTime=start_time, endTime=end_time, limit=limit
-            ),
+            params=dict(symbol=symbol, startTime=start_time, endTime=end_time, limit=limit),
         )
 
     def account_information(self) -> dict:
@@ -1400,9 +1362,7 @@ class HTTP(_SpotHTTP):
             params=dict(coin=coin, page=page, limit=limit),
         )
 
-    def user_universal_transfer(
-        self, from_account_type: str, to_account_type: str, asset: str, amount: int
-    ) -> dict:
+    def user_universal_transfer(self, from_account_type: str, to_account_type: str, asset: str, amount: int) -> dict:
         """
         ### User Universal Transfer.
         #### Required permission: SPOT_TRANSFER_WRITE
@@ -1498,9 +1458,7 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call(
-            "GET", "api/v3/capital/transfer/tranId", params=dict(tranId=tran_id)
-        )
+        return self.call("GET", "api/v3/capital/transfer/tranId", params=dict(tranId=tran_id))
 
     def get_assets_convert_into_mx(self) -> dict:
         """
@@ -1572,9 +1530,7 @@ class HTTP(_SpotHTTP):
             params=dict(startTime=start_time, endTime=end_time, page=page, limit=limit),
         )
 
-    def internal_transfer(
-        self, to_account_type: str, to_account: str, asset: str, amount: float
-    ) -> dict:
+    def internal_transfer(self, to_account_type: str, to_account: str, asset: str, amount: float) -> dict:
         """
         ### Internal Transfer.
         #### Required permission: SPOT_WITHDRAW_WRITE
@@ -1629,32 +1585,6 @@ class HTTP(_SpotHTTP):
             "api/v3/capital/transfer/internal",
             params=dict(startTime=start_time, endTime=end_time),
         )
-
-    # <=================================================================>
-    #
-    #                               ETF
-    #
-    # <=================================================================>
-
-    def get_etf_info(self, symbol: Optional[str] = None) -> dict:
-        """
-        ### Get ETF info.
-        #### Weight(IP): 1
-
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-etf-info
-
-        :param symbol: (optional) ETF symbol
-        :type symbol: str
-
-        :return: response dictionary
-        :rtype: dict
-        """
-        warnings.warn(
-            "get_etf_info is deprecated in documentation and now returns empty data",
-            DeprecationWarning,
-        )
-
-        return self.call("GET", "api/v3/etf/info", params=dict(symbol=symbol))
 
     # <=================================================================>
     #
@@ -1713,9 +1643,7 @@ class HTTP(_SpotHTTP):
         :return: response dictionary containing listenKey
         :rtype: dict
         """
-        return self.call(
-            "PUT", "api/v3/userDataStream", params=dict(listenKey=listen_key)
-        )
+        return self.call("PUT", "api/v3/userDataStream", params=dict(listenKey=listen_key))
 
     def close_listen_key(self, listen_key: str) -> dict:
         """
@@ -1732,9 +1660,7 @@ class HTTP(_SpotHTTP):
         :return: response dictionary containing listenKey
         :rtype: dict
         """
-        return self.call(
-            "DELETE", "api/v3/userDataStream", params=dict(listenKey=listen_key)
-        )
+        return self.call("DELETE", "api/v3/userDataStream", params=dict(listenKey=listen_key))
 
     # <=================================================================>
     #
@@ -1846,9 +1772,7 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call(
-            "GET", "api/v3/rebate/referCode", params=dict(please_sign_me=None)
-        )
+        return self.call("GET", "api/v3/rebate/referCode", params=dict(please_sign_me=None))
 
     def affiliate_commission_record(
         self,
@@ -2101,12 +2025,8 @@ class WebSocket(_SpotWebSocket):
         while True:
             time.sleep(59 * 60)  # 59 min
             if self.listenKey:
-                resp = HTTP(
-                    api_key=self.api_key, api_secret=self.api_secret
-                ).keep_alive_listen_key(self.listenKey)
-                logger.debug(
-                    f"keep-alive listenKey - {self.listenKey}. Response: {resp}"
-                )
+                resp = HTTP(api_key=self.api_key, api_secret=self.api_secret).keep_alive_listen_key(self.listenKey)
+                logger.debug(f"keep-alive listenKey - {self.listenKey}. Response: {resp}")
             else:
                 break
 
@@ -2178,14 +2098,14 @@ class WebSocket(_SpotWebSocket):
         topic = "public.kline"
         self._ws_subscribe(topic, callback, params)
 
-    def increase_depth_stream(
+    def depth_stream(
         self,
         callback: Callable[[dict | ProtoTyping.PublicIncreaseDepthsV3Api], None],
         symbol: str,
     ):
         """
         ### Diff.Depth Stream
-        If the quantity is 0, it means that the order of the price has been cancel or traded,remove the price level.
+        If the order quantity (quantity) for a price level is 0, it indicates that the order at that price has been canceled or executed, and that price level should be removed.
 
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#diff-depth-stream
 
@@ -2197,7 +2117,7 @@ class WebSocket(_SpotWebSocket):
         :return: None
         """
         params = [dict(symbol=symbol)]
-        topic = "public.increase.depth"
+        topic = "public.aggre.depth"
         self._ws_subscribe(topic, callback, params)
 
     def limit_depth_stream(
@@ -2244,7 +2164,29 @@ class WebSocket(_SpotWebSocket):
         :return: None
         """
         params = [dict(symbol=symbol)]
-        topic = "public.bookTicker"
+        topic = "public.aggre.bookTicker"
+        self._ws_subscribe(topic, callback, params)
+
+    def book_ticker_batch_stream(
+        self,
+        callback: Callable[[dict | ProtoTyping.PublicBookTickerBatchV3Api], None],
+        symbols: List[str],
+    ):
+        """
+        ### Individual Symbol Book Ticker Streams (Batch Aggregation)
+        This batch aggregation version pushes the best order information for a specified trading pair.
+
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#individual-symbol-book-ticker-streams-batch-aggregation
+
+        :param callback: the callback function
+        :type callback: Callable[[dict | ProtoTyping.PublicBookTickerBatchV3Api], None]
+        :param symbols: the names of the contracts
+        :type symbols: List[str]
+
+        :return: None
+        """
+        params = [dict(symbol=symbol) for symbol in symbols]
+        topic = "public.bookTicker.batch"
         self._ws_subscribe(topic, callback, params)
 
     # <=================================================================>
@@ -2253,9 +2195,7 @@ class WebSocket(_SpotWebSocket):
     #
     # <=================================================================>
 
-    def account_update(
-        self, callback: Callable[[dict | ProtoTyping.PrivateAccountV3Api], None]
-    ):
+    def account_update(self, callback: Callable[[dict | ProtoTyping.PrivateAccountV3Api], None]):
         """
         ### Spot Account Update
         The server will push an update of the account assets when the account balance changes.
@@ -2271,9 +2211,7 @@ class WebSocket(_SpotWebSocket):
         topic = "private.account"
         self._ws_subscribe(topic, callback, params)
 
-    def account_deals(
-        self, callback: Callable[[dict | ProtoTyping.PrivateDealsV3Api], None]
-    ):
+    def account_deals(self, callback: Callable[[dict | ProtoTyping.PrivateDealsV3Api], None]):
         """
         ### Spot Account Deals
 
@@ -2288,9 +2226,7 @@ class WebSocket(_SpotWebSocket):
         topic = "private.deals"
         self._ws_subscribe(topic, callback, params)
 
-    def account_orders(
-        self, callback: Callable[[dict | ProtoTyping.PrivateOrdersV3Api], None]
-    ):
+    def account_orders(self, callback: Callable[[dict | ProtoTyping.PrivateOrdersV3Api], None]):
         """
         ### Spot Account Orders
 

@@ -1600,27 +1600,6 @@ class HTTP(_SpotHTTP):
 
     # <=================================================================>
     #
-    #                               ETF
-    #
-    # <=================================================================>
-
-    async def get_etf_info(self, symbol: Optional[str] = None) -> dict:
-        """
-        ### Get ETF info.
-        #### Weight(IP): 1
-
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-etf-info
-
-        :param symbol: (optional) ETF symbol
-        :type symbol: str
-
-        :return: response dictionary
-        :rtype: dict
-        """
-        return await self.call("GET", "api/v3/etf/info", params=dict(symbol=symbol))
-
-    # <=================================================================>
-    #
     #                     Websocket Market Streams
     #
     # <=================================================================>
@@ -2093,7 +2072,7 @@ class WebSocket(_SpotWebSocket):
         else:
             symbols = symbol  # list
         params = [dict(symbol=s) for s in symbols]
-        topic = "public.deals"
+        topic = "public.aggre.deals"
         await self._ws_subscribe(topic, callback, params)
 
     async def kline_stream(self, callback: Callable[..., None], symbol: str, interval: int):
@@ -2116,7 +2095,7 @@ class WebSocket(_SpotWebSocket):
         topic = "public.kline"
         await self._ws_subscribe(topic, callback, params)
 
-    async def increase_depth_stream(self, callback: Callable[..., None], symbol: str):
+    async def depth_stream(self, callback: Callable[..., None], symbol: str):
         """
         ### Diff.Depth Stream
         If the quantity is 0, it means that the order of the price has been cancel or traded,remove the price level.
@@ -2131,7 +2110,7 @@ class WebSocket(_SpotWebSocket):
         :return: None
         """
         params = [dict(symbol=symbol)]
-        topic = "public.increase.depth"
+        topic = "public.aggre.depth"
         await self._ws_subscribe(topic, callback, params)
 
     async def limit_depth_stream(self, callback: Callable[..., None], symbol: str, level: int):
@@ -2169,7 +2148,25 @@ class WebSocket(_SpotWebSocket):
         :return: None
         """
         params = [dict(symbol=symbol)]
-        topic = "public.bookTicker"
+        topic = "public.aggre.bookTicker"
+        await self._ws_subscribe(topic, callback, params)
+
+    async def book_ticker_batch_stream(self, callback: Callable[..., None], symbols: List[str]):
+        """
+        ### Individual Symbol Book Ticker Streams (Batch Aggregation)
+        This batch aggregation version pushes the best order information for a specified trading pair.
+
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#individual-symbol-book-ticker-streams-batch-aggregation
+
+        :param callback: the callback function
+        :type callback: Callable[..., None]
+        :param symbols: the names of the contracts
+        :type symbols: List[str]
+
+        :return: None
+        """
+        params = [dict(symbol=symbol) for symbol in symbols]
+        topic = "public.bookTicker.batch"
         await self._ws_subscribe(topic, callback, params)
 
     # <=================================================================>

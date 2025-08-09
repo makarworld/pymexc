@@ -114,9 +114,7 @@ class HTTP(_FuturesHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call(
-            "GET", f"api/v1/contract/depth/{symbol}", params=dict(limit=limit)
-        )
+        return self.call("GET", f"api/v1/contract/depth/{symbol}", params=dict(limit=limit))
 
     def depth_commits(self, symbol: str, limit: int) -> dict:
         """
@@ -371,9 +369,7 @@ class HTTP(_FuturesHTTP):
         """
         return self.call("GET", "api/v1/contract/risk_reverse")
 
-    def risk_reverse_history(
-        self, symbol: str, page_num: Optional[int] = 1, page_size: Optional[int] = 20
-    ) -> dict:
+    def risk_reverse_history(self, symbol: str, page_num: Optional[int] = 1, page_size: Optional[int] = 20) -> dict:
         """
         ### Get contract risk fund balance history
 
@@ -396,9 +392,7 @@ class HTTP(_FuturesHTTP):
             params=dict(symbol=symbol, page_num=page_num, page_size=page_size),
         )
 
-    def funding_rate_history(
-        self, symbol: str, page_num: Optional[int] = 1, page_size: Optional[int] = 20
-    ) -> dict:
+    def funding_rate_history(self, symbol: str, page_num: Optional[int] = 1, page_size: Optional[int] = 20) -> dict:
         """
         ### Get contract funding rate history
 
@@ -527,9 +521,7 @@ class HTTP(_FuturesHTTP):
         return self.call(
             "GET",
             "api/v1/private/position/list/history_positions",
-            params=dict(
-                symbol=symbol, type=type, page_num=page_num, page_size=page_size
-            ),
+            params=dict(symbol=symbol, type=type, page_num=page_num, page_size=page_size),
         )
 
     def open_positions(self, symbol: Optional[str] = None) -> dict:
@@ -547,9 +539,7 @@ class HTTP(_FuturesHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call(
-            "GET", "api/v1/private/position/open_positions", params=dict(symbol=symbol)
-        )
+        return self.call("GET", "api/v1/private/position/open_positions", params=dict(symbol=symbol))
 
     def funding_records(
         self,
@@ -692,9 +682,7 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
 
-        return self.call(
-            "GET", f"api/v1/private/order/external/{symbol}/{external_oid}"
-        )
+        return self.call("GET", f"api/v1/private/order/external/{symbol}/{external_oid}")
 
     def get_order(self, order_id: int) -> dict:
         """
@@ -731,11 +719,7 @@ class HTTP(_FuturesHTTP):
         return self.call(
             "GET",
             "api/v1/private/order/batch_query",
-            params=dict(
-                order_ids=",".join(order_ids)
-                if isinstance(order_ids, list)
-                else order_ids
-            ),
+            params=dict(order_ids=",".join(order_ids) if isinstance(order_ids, list) else order_ids),
         )
 
     def deal_details(self, order_id: int) -> dict:
@@ -903,9 +887,7 @@ class HTTP(_FuturesHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call(
-            "GET", "api/v1/private/account/risk_limit", params=dict(symbol=symbol)
-        )
+        return self.call("GET", "api/v1/private/account/risk_limit", params=dict(symbol=symbol))
 
     def tiered_fee_rate(self, symbol: Optional[str] = None) -> dict:
         """
@@ -923,9 +905,7 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
 
-        return self.call(
-            "GET", "api/v1/private/account/tiered_fee_rate", params=dict(symbol=symbol)
-        )
+        return self.call("GET", "api/v1/private/account/tiered_fee_rate", params=dict(symbol=symbol))
 
     def change_margin(self, position_id: int, amount: int, type: str) -> dict:
         """
@@ -968,9 +948,7 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
 
-        return self.call(
-            "GET", "api/v1/private/position/leverage", params=dict(symbol=symbol)
-        )
+        return self.call("GET", "api/v1/private/position/leverage", params=dict(symbol=symbol))
 
     def change_leverage(
         self,
@@ -1205,9 +1183,7 @@ class HTTP(_FuturesHTTP):
         """
 
         return self.call(
-            "POST",
-            "api/v1/private/order/cancel",
-            json = order_ids if isinstance(order_ids, list) else [order_ids]
+            "POST", "api/v1/private/order/cancel", json=order_ids if isinstance(order_ids, list) else [order_ids]
         )
 
     def cancel_order_with_external(self, symbol: str, external_oid: str) -> dict:
@@ -1250,9 +1226,7 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
 
-        return self.call(
-            "POST", "api/v1/private/order/cancel_all", params=dict(symbol=symbol)
-        )
+        return self.call("POST", "api/v1/private/order/cancel_all", params=dict(symbol=symbol))
 
     def change_risk_level(self) -> dict:
         """
@@ -1347,9 +1321,7 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
 
-        return self.call(
-            "POST", "api/v1/private/planorder/cancel", params=dict(order_id=order_id)
-        )
+        return self.call("POST", "api/v1/private/planorder/cancel", params=dict(order_id=order_id))
 
     def cancel_all_trigger_orders(self, symbol: Optional[str] = None) -> dict:
         """
@@ -1364,9 +1336,7 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
 
-        return self.call(
-            "POST", "api/v1/private/planorder/cancel_all", params=dict(symbol=symbol)
-        )
+        return self.call("POST", "api/v1/private/planorder/cancel_all", params=dict(symbol=symbol))
 
     def cancel_stop_order(self, order_id: int) -> dict:
         """
@@ -1381,13 +1351,9 @@ class HTTP(_FuturesHTTP):
         :rtype: dict
         """
 
-        return self.call(
-            "POST", "api/v1/private/stoporder/cancel", params=dict(order_id=order_id)
-        )
+        return self.call("POST", "api/v1/private/stoporder/cancel", params=dict(order_id=order_id))
 
-    def cancel_all_stop_order(
-        self, position_id: Optional[int] = None, symbol: Optional[str] = None
-    ) -> dict:
+    def cancel_all_stop_order(self, position_id: Optional[int] = None, symbol: Optional[str] = None) -> dict:
         """
         ### Cancel all Stop-Limit price trigger orders (Under maintenance)
 
@@ -1512,8 +1478,7 @@ class WebSocket(_FuturesWebSocket):
         personal_filters = ["personal.filter", "filter", "personal"]
         if (
             method in personal_filters
-            or getattr(method, "__name__", "").replace("_stream", "").replace("_", ".")
-            in personal_filters
+            or getattr(method, "__name__", "").replace("_stream", "").replace("_", ".") in personal_filters
         ):
             return self.personal_stream(lambda: ...)
 
@@ -1604,9 +1569,7 @@ class WebSocket(_FuturesWebSocket):
         topic = "sub.depth"
         self._ws_subscribe(topic, callback, params)
 
-    def depth_full_stream(
-        self, callback: Callable[..., None], symbol: str, limit: int = 20
-    ):
+    def depth_full_stream(self, callback: Callable[..., None], symbol: str, limit: int = 20):
         """
         ### Depth full
 
@@ -1633,9 +1596,7 @@ class WebSocket(_FuturesWebSocket):
         self,
         callback: Callable[..., None],
         symbol: str,
-        interval: Literal[
-            "Min1", "Min5", "Min15", "Min60", "Hour1", "Hour4", "Day1", "Week1"
-        ] = "Min1",
+        interval: Literal["Min1", "Min5", "Min15", "Min60", "Hour1", "Hour4", "Day1", "Week1"] = "Min1",
     ):
         """
         ### K-line
@@ -1731,9 +1692,7 @@ class WebSocket(_FuturesWebSocket):
     #
     # <=================================================================>
 
-    def filter_stream(
-        self, callback: Callable, params: Dict[str, List[dict]] = {"filters": []}
-    ):
+    def filter_stream(self, callback: Callable, params: Dict[str, List[dict]] = {"filters": []}):
         """
         ## Filter personal data about account
         Provide `{"filters":[]}` as params for subscribe to all info
@@ -1744,9 +1703,7 @@ class WebSocket(_FuturesWebSocket):
         topics = [x.get("filter") for x in params.get("filters", [])]
         for topic in topics:
             if topic not in FUTURES_PERSONAL_TOPICS:
-                raise ValueError(
-                    f"Invalid filter: `{topic}`. Valid filters: {FUTURES_PERSONAL_TOPICS}"
-                )
+                raise ValueError(f"Invalid filter: `{topic}`. Valid filters: {FUTURES_PERSONAL_TOPICS}")
 
         self._ws_subscribe("personal.filter", callback, params)
         # set callback for provided filters

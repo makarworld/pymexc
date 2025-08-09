@@ -4,14 +4,17 @@
 [![Github last commit date](https://img.shields.io/github/last-commit/makarworld/pymexc.svg?label=Updated&logo=github&cacheSeconds=600)](https://github.com/makarworld/pymexc/commits)
 
 # pymexc
+
 `pymexc` is an unofficial Python library for interacting with the [MEXC crypto exchange](https://www.mexc.com/). It provides a simple and intuitive API for making requests to the [MEXC API endpoints](https://mexcdevelop.github.io/apidocs/spot_v3_en/#introduction).
 
 Base of code was taken from [pybit](https://github.com/bybit-exchange/pybit) library.
 
 # Futures orders API
+
 MEXC Futures API for create orders is on maintance now. **_But you can bypass it_**. See [this issue](https://github.com/makarworld/pymexc/issues/15) for more information.
 
 # Installation
+
 You can install pymexc using pip:
 
 ```bash
@@ -19,10 +22,10 @@ pip install pymexc
 ```
 
 # Getting Started
+
 To start working with pymexc, you must import spot or futures from the library. Each of them contains 2 classes: HTTP and WebSocket. To work with simple requests, you need to initialize the HTTP class. To work with web sockets you need to initialize the WebSocket class 
 
-
-## Example:
+## Example
 
 ```python
 from pymexc import spot, futures
@@ -74,9 +77,10 @@ while True:
     ...
 ```
 
-
 # Documentation
+
 You can find the official documentation for the MEXC API [here](https://mexcdevelop.github.io/apidocs/spot_v3_en/#introduction).
 
 # License
+
 This library is licensed under the MIT License.

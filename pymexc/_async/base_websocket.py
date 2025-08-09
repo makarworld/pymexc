@@ -183,9 +183,7 @@ class _AsyncWebSocketManager(_WebSocketManager):
         super()._on_close()
 
     async def _process_normal_message(self, message: dict):
-        callback_function, callback_data = super()._process_normal_message(
-            message=message, parse_only=True
-        )
+        callback_function, callback_data = super()._process_normal_message(message=message, parse_only=True)
 
         if callback_function is None:
             return
@@ -203,9 +201,7 @@ class _AsyncWebSocketManager(_WebSocketManager):
 class _FuturesWebSocketManager(_AsyncWebSocketManager):
     def __init__(self, ws_name, **kwargs):
         callback_function = (
-            kwargs.pop("callback_function")
-            if kwargs.get("callback_function")
-            else self._handle_incoming_message
+            kwargs.pop("callback_function") if kwargs.get("callback_function") else self._handle_incoming_message
         )
 
         super().__init__(callback_function, ws_name, **kwargs)
@@ -254,20 +250,14 @@ class _FuturesWebSocketManager(_AsyncWebSocketManager):
 
         # If we get unsuccessful auth, notify user.
         elif message.get("data") != "success":  # !!!!
-            logger.debug(
-                f"Authorization for {self.ws_name} failed. Please "
-                f"check your API keys and restart."
-            )
+            logger.debug(f"Authorization for {self.ws_name} failed. Please check your API keys and restart.")
 
     async def _handle_incoming_message(self, message: dict):
         def is_auth_message():
             return message.get("channel", "") == "rs.login"
 
         def is_subscription_message():
-            return (
-                message.get("channel", "").startswith("rs.sub")
-                or message.get("channel", "") == "rs.personal.filter"
-            )
+            return message.get("channel", "").startswith("rs.sub") or message.get("channel", "") == "rs.personal.filter"
 
         def is_pong_message():
             return message.get("channel", "") in ("pong", "clientId")
@@ -334,9 +324,7 @@ class _FuturesWebSocket(_FuturesWebSocketManager):
 class _SpotWebSocketManager(_AsyncWebSocketManager):
     def __init__(self, ws_name, **kwargs):
         callback_function = (
-            kwargs.pop("callback_function")
-            if kwargs.get("callback_function")
-            else self._handle_incoming_message
+            kwargs.pop("callback_function") if kwargs.get("callback_function") else self._handle_incoming_message
         )
         super().__init__(callback_function, ws_name, **kwargs)
 
@@ -346,10 +334,7 @@ class _SpotWebSocketManager(_AsyncWebSocketManager):
         subscription_args = {
             "method": "SUBSCRIPTION",
             "params": [
-                "@".join(
-                    [f"spot@{topic}.v3.api" + (".pb" if self.proto else "")]
-                    + list(map(str, params.values()))
-                )
+                "@".join([f"spot@{topic}.v3.api" + (".pb" if self.proto else "")] + list(map(str, params.values())))
                 for params in params_list
             ],
         }
@@ -379,19 +364,16 @@ class _SpotWebSocketManager(_AsyncWebSocketManager):
                 self._pop_callback(topic)
 
             # send unsub message
-            await self.ws.send_json({
-                "method": "UNSUBSCRIPTION",
-                "params": [
-                    "@".join([f"spot@{t}.v3.api" + (".pb" if self.proto else "")])
-                    for t in topics
-                ],
-            })
+            await self.ws.send_json(
+                {
+                    "method": "UNSUBSCRIPTION",
+                    "params": ["@".join([f"spot@{t}.v3.api" + (".pb" if self.proto else "")]) for t in topics],
+                }
+            )
 
             # remove subscriptions from list
             for i, sub in enumerate(self.subscriptions):
-                new_params = [
-                    x for x in sub["params"] for _topic in topics if _topic not in x
-                ]
+                new_params = [x for x in sub["params"] for _topic in topics if _topic not in x]
                 if new_params:
                     self.subscriptions[i]["params"] = new_params
                 else:
@@ -402,9 +384,7 @@ class _SpotWebSocketManager(_AsyncWebSocketManager):
         else:
             # some funcs in list
             topics = [
-                x.__name__.replace("_stream", "").replace("_", ".")
-                if getattr(x, "__name__", None)
-                else x
+                x.__name__.replace("_stream", "").replace("_", ".") if getattr(x, "__name__", None) else x
                 #
                 for x in topics
             ]
@@ -412,11 +392,7 @@ class _SpotWebSocketManager(_AsyncWebSocketManager):
 
     async def _handle_incoming_message(self, message):
         def is_subscription_message():
-            if (
-                message.get("id") == 0
-                and message.get("code") == 0
-                and message.get("msg")
-            ):
+            if message.get("id") == 0 and message.get("code") == 0 and message.get("msg"):
                 return True
             else:
                 return False
@@ -446,9 +422,7 @@ class _SpotWebSocket(_SpotWebSocketManager):
         self.endpoint = endpoint
         loop = loop or asyncio.get_event_loop()
 
-        super().__init__(
-            self.ws_name, api_key=api_key, api_secret=api_secret, loop=loop, **kwargs
-        )
+        super().__init__(self.ws_name, api_key=api_key, api_secret=api_secret, loop=loop, **kwargs)
 
     async def _ws_subscribe(self, topic, callback, params: list = []):
         if not self.is_connected():

@@ -18,9 +18,11 @@ WEB = "https://futures.mexc.com"
 class MexcAPIError(Exception):
     pass
 
+
 class OrderSide:
     BUY = "BUY"
     SELL = "SELL"
+
 
 class OrderType:
     LIMIT = "LIMIT"
@@ -71,9 +73,7 @@ class MexcSDK(ABC):
     @classmethod
     def call(
         self,
-        method: Union[
-            Literal["GET"], Literal["POST"], Literal["PUT"], Literal["DELETE"]
-        ],
+        method: Union[Literal["GET"], Literal["POST"], Literal["PUT"], Literal["DELETE"]],
         router: str,
         *args,
         **kwargs,
@@ -81,9 +81,7 @@ class MexcSDK(ABC):
 
 
 class _SpotHTTP(MexcSDK):
-    def __init__(
-        self, api_key: str = None, api_secret: str = None, proxies: dict = None
-    ):
+    def __init__(self, api_key: str = None, api_secret: str = None, proxies: dict = None):
         super().__init__(SPOT, api_key, api_secret, proxies=proxies)
 
         self.session.headers.update({"X-MEXC-APIKEY": self.api_key})
@@ -108,9 +106,7 @@ class _SpotHTTP(MexcSDK):
 
     def call(
         self,
-        method: Union[
-            Literal["GET"], Literal["POST"], Literal["PUT"], Literal["DELETE"]
-        ],
+        method: Union[Literal["GET"], Literal["POST"], Literal["PUT"], Literal["DELETE"]],
         router: str,
         auth: bool = True,
         *args,
@@ -123,9 +119,7 @@ class _SpotHTTP(MexcSDK):
         kwargs = {k: v for k, v in kwargs.items() if v is not None}
 
         if kwargs.get("params"):
-            kwargs["params"] = {
-                k: v for k, v in kwargs["params"].items() if v is not None
-            }
+            kwargs["params"] = {k: v for k, v in kwargs["params"].items() if v is not None}
         else:
             kwargs["params"] = {}
 
@@ -140,14 +134,10 @@ class _SpotHTTP(MexcSDK):
         if self.api_key and self.api_secret and auth:
             params["signature"] = self.sign(encoded_params)
 
-        response = self.session.request(
-            method, f"{self.base_url}{router}", params=params, *args, **kwargs
-        )
+        response = self.session.request(method, f"{self.base_url}{router}", params=params, *args, **kwargs)
 
         if not response.ok:
-            raise MexcAPIError(
-                f"(code={response.json()['code']}): {response.json()['msg']}"
-            )
+            raise MexcAPIError(f"(code={response.json()['code']}): {response.json()['msg']}")
 
         return response.json()
 
@@ -160,17 +150,13 @@ class _FuturesHTTP(MexcSDK):
         proxies: dict = None,
         ignore_ad: bool = False,
     ):
-        super().__init__(
-            FUTURES, api_key=api_key, api_secret=api_secret, proxies=proxies
-        )
+        super().__init__(FUTURES, api_key=api_key, api_secret=api_secret, proxies=proxies)
         if not ignore_ad:
             print(
                 "[pymexc] You can bypass Futures API maintance. See https://github.com/makarworld/pymexc/issues/15 for more information."
             )
 
-        self.session.headers.update(
-            {"Content-Type": "application/json", "ApiKey": self.api_key}
-        )
+        self.session.headers.update({"Content-Type": "application/json", "ApiKey": self.api_key})
 
     def sign(self, timestamp: str, **kwargs) -> str:
         """
@@ -196,9 +182,7 @@ class _FuturesHTTP(MexcSDK):
 
     def call(
         self,
-        method: Union[
-            Literal["GET"], Literal["POST"], Literal["PUT"], Literal["DELETE"]
-        ],
+        method: Union[Literal["GET"], Literal["POST"], Literal["PUT"], Literal["DELETE"]],
         router: str,
         *args,
         **kwargs,
@@ -232,14 +216,10 @@ class _FuturesHTTP(MexcSDK):
         for variant in ("params", "json"):
             if kwarg_variant := kwargs.get(variant):
                 if isinstance(kwarg_variant, dict):
-                    kwargs[variant] = {
-                        k: v for k, v in kwarg_variant.items() if v is not None
-                    }
+                    kwargs[variant] = {k: v for k, v in kwarg_variant.items() if v is not None}
                 # ! func cancel_order may be list
                 elif isinstance(kwarg_variant, list):
-                    kwargs[variant] = [
-                        v for v in kwarg_variant if v is not None
-                    ]
+                    kwargs[variant] = [v for v in kwarg_variant if v is not None]
 
         if self.api_key and self.api_secret:
             # Add signature
@@ -251,9 +231,7 @@ class _FuturesHTTP(MexcSDK):
                 "Signature": self.sign(timestamp, **payload),
             }
 
-        response = self.session.request(
-            method, f"{self.base_url}{router}", *args, **kwargs
-        )
+        response = self.session.request(method, f"{self.base_url}{router}", *args, **kwargs)
 
         return response.json()
 
@@ -274,9 +252,7 @@ class _WebHTTP(MexcSDK):
 
     def call(
         self,
-        method: Union[
-            Literal["GET"], Literal["POST"], Literal["PUT"], Literal["DELETE"]
-        ],
+        method: Union[Literal["GET"], Literal["POST"], Literal["PUT"], Literal["DELETE"]],
         router: str,
         *args,
         **kwargs,
@@ -309,12 +285,8 @@ class _WebHTTP(MexcSDK):
         # Clean None values inside 'json' or 'params'
         for variant in ("params", "json"):
             if kwargs.get(variant):
-                kwargs[variant] = {
-                    k: v for k, v in kwargs[variant].items() if v is not None
-                }
+                kwargs[variant] = {k: v for k, v in kwargs[variant].items() if v is not None}
 
-        response = self.session.request(
-            method, f"{self.base_url}{router}", *args, **kwargs
-        )
+        response = self.session.request(method, f"{self.base_url}{router}", *args, **kwargs)
 
         return response.json()
