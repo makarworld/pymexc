@@ -1991,8 +1991,9 @@ class WebSocket(_SpotWebSocket):
             proto=proto,
             extend_proto_body=extend_proto_body,
         )
-
         self.listenKey = listenKey
+
+        super().__init__(**kwargs)
 
         # for keep alive connection to private spot websocket
         # need to send listen key at connection and send keep-alive request every 60 mins
@@ -2011,8 +2012,6 @@ class WebSocket(_SpotWebSocket):
             self.kal = threading.Thread(target=lambda: self._keep_alive_loop())
             self.kal.daemon = True
             self.kal.start()
-
-        super().__init__(**kwargs)
 
     def _keep_alive_loop(self):
         """

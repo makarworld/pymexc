@@ -23,7 +23,7 @@ pip install pymexc
 
 # Getting Started
 
-To start working with pymexc, you must import spot or futures from the library. Each of them contains 2 classes: HTTP and WebSocket. To work with simple requests, you need to initialize the HTTP class. To work with web sockets you need to initialize the WebSocket class 
+To start working with pymexc, you must import spot or futures from the library. Each of them contains 2 classes: HTTP and WebSocket. To work with simple requests, you need to initialize the HTTP class. To work with web sockets you need to initialize the WebSocket class
 
 ## Example
 

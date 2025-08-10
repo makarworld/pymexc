@@ -2010,13 +2010,13 @@ class WebSocket(_SpotWebSocket):
         )
         self.listenKey = listenKey
 
+        super().__init__(**kwargs)
+
         # for keep alive connection to private spot websocket
         # need to send listen key at connection and send keep-alive request every 60 mins
         if api_key and api_secret:
             # setup keep-alive connection loop
             loop.create_task(self._keep_alive_loop())
-
-        super().__init__(**kwargs)
 
     async def _keep_alive_loop(self):
         """
