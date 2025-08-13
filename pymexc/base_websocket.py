@@ -568,11 +568,15 @@ class _SpotWebSocketManager(_WebSocketManager):
 
         self.private_topics = ["account", "deals", "orders"]
 
-    def subscribe(self, topic: str, callback: Callable, params_list: list):
+    def subscribe(self, topic: str, callback: Callable, params_list: list, interval: str = None):
         subscription_args = {
             "method": "SUBSCRIPTION",
             "params": [
-                "@".join([f"spot@{topic}.v3.api" + (".pb" if self.proto else "")] + list(map(str, params.values())))
+                "@".join(
+                    [f"spot@{topic}.v3.api" + (".pb" if self.proto else "")] 
+                    + ([str(interval)] if interval else [])
+                    + list(map(str, params.values()))
+                )
                 for params in params_list
             ],
         }
@@ -654,8 +658,8 @@ class _SpotWebSocket(_SpotWebSocketManager):
 
         super().__init__(self.ws_name, **kwargs)
 
-    def _ws_subscribe(self, topic, callback, params: list = []):
+    def _ws_subscribe(self, topic, callback, params: list = [], interval: str = None):
         if not self.is_connected():
             self._connect(self.endpoint)
 
-        self.subscribe(topic, callback, params)
+        self.subscribe(topic, callback, params, interval)
