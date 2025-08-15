@@ -2053,7 +2053,7 @@ class WebSocket(_SpotWebSocket):
     #
     # <=================================================================>
 
-    async def deals_stream(self, callback: Callable[..., None], symbol: Union[str, List[str]]):
+    async def deals_stream(self, callback: Callable[..., None], symbol: Union[str, List[str]], interval: str = None):
         """
         ### Trade Streams
         The Trade Streams push raw trade information; each trade has a unique buyer and seller.
@@ -2064,6 +2064,8 @@ class WebSocket(_SpotWebSocket):
         :type callback: Callable[..., None]
         :param symbol: the name of the contract
         :type symbol: Union[str,List[str]]
+        :param interval: the interval for the stream, default is None. Possible values '100ms' or '10s'
+        :type symbol: str
 
         :return: None
         """
@@ -2073,7 +2075,7 @@ class WebSocket(_SpotWebSocket):
             symbols = symbol  # list
         params = [dict(symbol=s) for s in symbols]
         topic = "public.aggre.deals"
-        await self._ws_subscribe(topic, callback, params)
+        await self._ws_subscribe(topic, callback, params, interval)
 
     async def kline_stream(self, callback: Callable[..., None], symbol: str, interval: int):
         """
