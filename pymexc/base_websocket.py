@@ -173,7 +173,7 @@ class _WebSocketManager:
                 # no previous WSS connection.
                 return
 
-            for req_id, subscription_message in self.subscriptions.items():
+            for subscription_message in self.subscriptions:
                 self.ws.send(json.dumps(subscription_message))
 
         self.attempting_connection = True
