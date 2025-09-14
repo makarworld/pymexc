@@ -330,11 +330,15 @@ class _SpotWebSocketManager(_AsyncWebSocketManager):
 
         self.private_topics = ["account", "deals", "orders"]
 
-    async def subscribe(self, topic: str, callback: Callable, params_list: list):
+    async def subscribe(self, topic: str, callback: Callable, params_list: list, interval: str = None):
         subscription_args = {
             "method": "SUBSCRIPTION",
             "params": [
-                "@".join([f"spot@{topic}.v3.api" + (".pb" if self.proto else "")] + list(map(str, params.values())))
+                "@".join(
+                    [f"spot@{topic}.v3.api" + (".pb" if self.proto else "")] 
+                    + ([str(interval)] if interval else [])
+                    + list(map(str, params.values()))
+                )
                 for params in params_list
             ],
         }
@@ -342,7 +346,7 @@ class _SpotWebSocketManager(_AsyncWebSocketManager):
 
         while not self.is_connected():
             # Wait until the connection is open before subscribing.
-            time.sleep(0.1)
+            await asyncio.sleep(0.1)
 
         await self.ws.send_json(subscription_args)
         self.subscriptions.append(subscription_args)
@@ -424,8 +428,8 @@ class _SpotWebSocket(_SpotWebSocketManager):
 
         super().__init__(self.ws_name, api_key=api_key, api_secret=api_secret, loop=loop, **kwargs)
 
-    async def _ws_subscribe(self, topic, callback, params: list = []):
+    async def _ws_subscribe(self, topic, callback, params: list = [], interval: str = None):
         if not self.is_connected():
             await self._connect(self.endpoint)
 
-        await self.subscribe(topic, callback, params)
+        await self.subscribe(topic, callback, params, interval)

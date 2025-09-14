@@ -2039,6 +2039,7 @@ class WebSocket(_SpotWebSocket):
         self,
         callback: Callable[[dict | ProtoTyping.PublicDealsV3Api], None],
         symbol: Union[str, List[str]],
+        interval: str = None
     ):
         """
         ### Trade Streams
@@ -2050,6 +2051,8 @@ class WebSocket(_SpotWebSocket):
         :type callback: Callable[[dict | ProtoTyping.PublicDealsV3Api], None]
         :param symbol: the name of the contract
         :type symbol: Union[str,List[str]]
+        :param interval: the interval for the stream, default is None. Possible values '100ms' or '10s'
+        :type symbol: str
 
         :return: None
         """
@@ -2059,7 +2062,7 @@ class WebSocket(_SpotWebSocket):
             symbols = symbol  # list
         params = [dict(symbol=s) for s in symbols]
         topic = "public.aggre.deals"
-        self._ws_subscribe(topic, callback, params)
+        self._ws_subscribe(topic, callback, params, interval)
 
     def kline_stream(
         self,
