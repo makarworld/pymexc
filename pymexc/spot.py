@@ -2039,7 +2039,7 @@ class WebSocket(_SpotWebSocket):
         self,
         callback: Callable[[dict | ProtoTyping.PublicDealsV3Api], None],
         symbol: Union[str, List[str]],
-        interval: str = None
+        speed: str = "100ms",
     ):
         """
         ### Trade Streams
@@ -2051,7 +2051,7 @@ class WebSocket(_SpotWebSocket):
         :type callback: Callable[[dict | ProtoTyping.PublicDealsV3Api], None]
         :param symbol: the name of the contract
         :type symbol: Union[str,List[str]]
-        :param interval: the interval for the stream, default is None. Possible values '100ms' or '10s'
+        :param speed: aggregated stream speed. Possible values '100ms' or '10ms'
         :type symbol: str
 
         :return: None
@@ -2062,7 +2062,7 @@ class WebSocket(_SpotWebSocket):
             symbols = symbol  # list
         params = [dict(symbol=s) for s in symbols]
         topic = "public.aggre.deals"
-        self._ws_subscribe(topic, callback, params, interval)
+        self._ws_subscribe(topic, callback, params, speed)
 
     def kline_stream(
         self,
@@ -2104,6 +2104,7 @@ class WebSocket(_SpotWebSocket):
         self,
         callback: Callable[[dict | ProtoTyping.PublicIncreaseDepthsV3Api], None],
         symbol: str,
+        speed: str = "100ms",
     ):
         """
         ### Diff.Depth Stream
@@ -2120,7 +2121,7 @@ class WebSocket(_SpotWebSocket):
         """
         params = [dict(symbol=symbol)]
         topic = "public.aggre.depth"
-        self._ws_subscribe(topic, callback, params)
+        self._ws_subscribe(topic, callback, params, speed)
 
     def limit_depth_stream(
         self,
@@ -2151,6 +2152,7 @@ class WebSocket(_SpotWebSocket):
         self,
         callback: Callable[[dict | ProtoTyping.PublicBookTickerV3Api], None],
         symbol: str,
+        speed: str = "100ms",
     ):
         """
         ### Individual Symbol Book Ticker Streams
@@ -2167,7 +2169,7 @@ class WebSocket(_SpotWebSocket):
         """
         params = [dict(symbol=symbol)]
         topic = "public.aggre.bookTicker"
-        self._ws_subscribe(topic, callback, params)
+        self._ws_subscribe(topic, callback, params, speed)
 
     def book_ticker_batch_stream(
         self,

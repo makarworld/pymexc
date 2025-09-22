@@ -212,7 +212,7 @@ class _FuturesWebSocketManager(_AsyncWebSocketManager):
 
         while not self.is_connected():
             # Wait until the connection is open before subscribing.
-            time.sleep(0.1)
+            await asyncio.sleep(0.1)
 
         await self.ws.send_json(subscription_args)
         self.subscriptions.append(subscription_args)

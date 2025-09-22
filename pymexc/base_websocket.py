@@ -390,6 +390,11 @@ class _WebSocketManager:
             "public.increase.depth": "publicIncreaseDepths",
             "public.limit.depth": "publicLimitDepths",
             "public.bookTicker": "publicBookTicker",
+            # Aggregated public topics
+            "public.aggre.deals": "publicAggreDeals",
+            "public.aggre.depth": "publicAggreDepths",
+            "public.aggre.bookTicker": "publicAggreBookTicker",
+            "public.bookTicker.batch": "publicBookTickerBatch",
             "private.account": "privateAccount",
             "private.deals": "privateDeals",
             "private.orders": "privateOrders",

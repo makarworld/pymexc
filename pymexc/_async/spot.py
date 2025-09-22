@@ -2053,7 +2053,7 @@ class WebSocket(_SpotWebSocket):
     #
     # <=================================================================>
 
-    async def deals_stream(self, callback: Callable[..., None], symbol: Union[str, List[str]], interval: str = None):
+    async def deals_stream(self, callback: Callable[..., None], symbol: Union[str, List[str]], speed: str = "100ms"):
         """
         ### Trade Streams
         The Trade Streams push raw trade information; each trade has a unique buyer and seller.
@@ -2064,7 +2064,7 @@ class WebSocket(_SpotWebSocket):
         :type callback: Callable[..., None]
         :param symbol: the name of the contract
         :type symbol: Union[str,List[str]]
-        :param interval: the interval for the stream, default is None. Possible values '100ms' or '10s'
+        :param speed: aggregated stream speed. Possible values '100ms' or '10ms'
         :type symbol: str
 
         :return: None
@@ -2075,9 +2075,9 @@ class WebSocket(_SpotWebSocket):
             symbols = symbol  # list
         params = [dict(symbol=s) for s in symbols]
         topic = "public.aggre.deals"
-        await self._ws_subscribe(topic, callback, params, interval)
+        await self._ws_subscribe(topic, callback, params, speed)
 
-    async def kline_stream(self, callback: Callable[..., None], symbol: str, interval: int):
+    async def kline_stream(self, callback: Callable[..., None], symbol: str, interval: int | str):
         """
         ### Kline Streams
         The Kline/Candlestick Stream push updates to the current klines/candlestick every second.
@@ -2088,16 +2088,31 @@ class WebSocket(_SpotWebSocket):
         :type callback: Callable[..., None]
         :param symbol: the name of the contract
         :type symbol: str
-        :param interval: the interval of the kline
-        :type interval: int
+        :param interval: the interval of the kline (e.g. 1, 5, 15, 30, 60, 4h, 1d)
+        :type interval: int | str
 
         :return: None
         """
-        params = [dict(symbol=symbol, interval=interval)]
+        # Convert common interval formats to MEXC format
+        interval_str = f"{interval}m" if isinstance(interval, int) else str(interval)
+        mapping = {
+            "1m": "Min1",
+            "5m": "Min5",
+            "15m": "Min15",
+            "30m": "Min30",
+            "60m": "Min60",
+            "4h": "Hour4",
+            "8h": "Hour8",
+            "1d": "Day1",
+            "1w": "Week1",
+            "1M": "Month1",
+        }
+        mexc_interval = mapping.get(interval_str, interval_str)
+        params = [dict(symbol=symbol, interval=mexc_interval)]
         topic = "public.kline"
         await self._ws_subscribe(topic, callback, params)
 
-    async def depth_stream(self, callback: Callable[..., None], symbol: str):
+    async def depth_stream(self, callback: Callable[..., None], symbol: str, speed: str = "100ms"):
         """
         ### Diff.Depth Stream
         If the quantity is 0, it means that the order of the price has been cancel or traded,remove the price level.
@@ -2113,7 +2128,7 @@ class WebSocket(_SpotWebSocket):
         """
         params = [dict(symbol=symbol)]
         topic = "public.aggre.depth"
-        await self._ws_subscribe(topic, callback, params)
+        await self._ws_subscribe(topic, callback, params, speed)
 
     async def limit_depth_stream(self, callback: Callable[..., None], symbol: str, level: int):
         """
@@ -2135,7 +2150,7 @@ class WebSocket(_SpotWebSocket):
         topic = "public.limit.depth"
         await self._ws_subscribe(topic, callback, params)
 
-    async def book_ticker_stream(self, callback: Callable[..., None], symbol: str):
+    async def book_ticker_stream(self, callback: Callable[..., None], symbol: str, speed: str = "100ms"):
         """
         ### Individual Symbol Book Ticker Streams
         Pushes any update to the best bid or ask's price or quantity in real-time for a specified symbol.
@@ -2151,7 +2166,7 @@ class WebSocket(_SpotWebSocket):
         """
         params = [dict(symbol=symbol)]
         topic = "public.aggre.bookTicker"
-        await self._ws_subscribe(topic, callback, params)
+        await self._ws_subscribe(topic, callback, params, speed)
 
     async def book_ticker_batch_stream(self, callback: Callable[..., None], symbols: List[str]):
         """
