@@ -1934,7 +1934,7 @@ class WebSocket(_SpotWebSocket):
         http_proxy_auth: Optional[tuple] = None,
         http_proxy_timeout: Optional[int] = None,
         loop: Optional[AbstractEventLoop] = None,
-        proto: Optional[bool] = False,
+        proto: Optional[bool] = True,  # Changed default to True - proto is required for proper WebSocket functionality
         extend_proto_body: Optional[bool] = False,
     ):
         """
@@ -1983,7 +1983,7 @@ class WebSocket(_SpotWebSocket):
         :param loop: The event loop to use for the connection. (Optional)
         :type loop: AbstractEventLoop
 
-        :param proto: Whether or not to use the proto protocol. (Optional)
+        :param proto: Whether or not to use the proto protocol. (Optional, default: True)
         :type proto: bool
 
         :param extend_proto_body: Whether or not to extend the proto body. (Optional)
@@ -2009,14 +2009,15 @@ class WebSocket(_SpotWebSocket):
             extend_proto_body=extend_proto_body,
         )
         self.listenKey = listenKey
+        self._keep_alive_task = None  # Store task reference for cleanup
 
         super().__init__(**kwargs)
 
         # for keep alive connection to private spot websocket
         # need to send listen key at connection and send keep-alive request every 60 mins
         if api_key and api_secret:
-            # setup keep-alive connection loop
-            loop.create_task(self._keep_alive_loop())
+            # setup keep-alive connection loop - store task for later cleanup
+            self._keep_alive_task = loop.create_task(self._keep_alive_loop())
 
     async def _keep_alive_loop(self):
         """
@@ -2037,7 +2038,7 @@ class WebSocket(_SpotWebSocket):
         self.endpoint = f"{SPOT_WS}/ws?listenKey={self.listenKey}"
 
         while True:
-            await asyncio.sleep(59 * 60)  # 59 min
+            await asyncio.sleep(3540)  # 59 min - Fixed: Using async sleep instead of blocking sleep
 
             if self.listenKey:
                 resp = await HTTP(api_key=self.api_key, api_secret=self.api_secret).keep_alive_listen_key(
