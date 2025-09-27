@@ -41,10 +41,12 @@ logger = logging.getLogger(__name__)
 
 try:
     from .base import _FuturesHTTP
-    from ..base_websocket import FUTURES_PERSONAL_TOPICS, _FuturesWebSocket
+    from .base_websocket import _FuturesWebSocket
+    from ..base_websocket import FUTURES_PERSONAL_TOPICS
 except ImportError:
     from pymexc._async.base import _FuturesHTTP
-    from pymexc.base_websocket import FUTURES_PERSONAL_TOPICS, _FuturesWebSocket
+    from pymexc._async.base_websocket import _FuturesWebSocket
+    from pymexc.base_websocket import FUTURES_PERSONAL_TOPICS
 
 
 class HTTP(_FuturesHTTP):

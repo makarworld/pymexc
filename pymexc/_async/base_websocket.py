@@ -429,6 +429,20 @@ class _SpotWebSocket(_SpotWebSocketManager):
         super().__init__(self.ws_name, api_key=api_key, api_secret=api_secret, loop=loop, **kwargs)
 
     async def _ws_subscribe(self, topic, callback, params: list = [], interval: str = None):
+        # For private topics, ensure we have a listenKey before connecting
+        if topic.startswith("private.") and self.api_key and self.api_secret:
+            # Wait for listenKey to be generated if needed
+            if not hasattr(self, 'listenKey') or not self.listenKey:
+                # Wait a bit for _keep_alive_loop to generate the listenKey
+                import asyncio
+                for _ in range(10):  # Try for up to 5 seconds
+                    await asyncio.sleep(0.5)
+                    if hasattr(self, 'listenKey') and self.listenKey:
+                        break
+                else:
+                    # If still no listenKey, we have a problem
+                    raise Exception("Failed to generate listenKey for private streams. Check API credentials.")
+        
         if not self.is_connected():
             await self._connect(self.endpoint)
 

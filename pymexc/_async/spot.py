@@ -2192,6 +2192,16 @@ class WebSocket(_SpotWebSocket):
     #
     # <=================================================================>
 
+    async def _ensure_listen_key(self):
+        """Ensure listenKey is available for private streams"""
+        if not self.listenKey and self.api_key and self.api_secret:
+            auth = await HTTP(api_key=self.api_key, api_secret=self.api_secret).create_listen_key()
+            self.listenKey = auth.get("listenKey")
+            if not self.listenKey:
+                raise Exception(f"ListenKey not found. Error: {auth}")
+            logger.debug(f"Created listenKey for private streams: {self.listenKey}")
+            self.endpoint = f"{SPOT_WS}?listenKey={self.listenKey}"
+
     async def account_update(self, callback: Callable[..., None]):
         """
         ### Spot Account Update
@@ -2204,6 +2214,7 @@ class WebSocket(_SpotWebSocket):
 
         :return: None
         """
+        await self._ensure_listen_key()
         params = [{}]
         topic = "private.account"
         await self._ws_subscribe(topic, callback, params)
@@ -2219,6 +2230,7 @@ class WebSocket(_SpotWebSocket):
 
         :return: None
         """
+        await self._ensure_listen_key()
         params = [{}]
         topic = "private.deals"
         await self._ws_subscribe(topic, callback, params)
@@ -2234,6 +2246,7 @@ class WebSocket(_SpotWebSocket):
 
         :return: None
         """
+        await self._ensure_listen_key()
         params = [{}]
         topic = "private.orders"
         await self._ws_subscribe(topic, callback, params)

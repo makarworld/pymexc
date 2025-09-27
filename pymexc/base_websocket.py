@@ -117,6 +117,10 @@ class _WebSocketManager:
         return self.endpoint.startswith(FUTURES)
 
     def _topic(self, topic):
+        # Handle None case for private streams
+        if topic is None:
+            return None
+        
         return (
             topic.replace("sub.", "")
             .replace("push.", "")
@@ -357,8 +361,9 @@ class _WebSocketManager:
         """
 
         # Cancel ping thread
-        self.ping_timer.cancel()
-        self.ping_timer = None
+        if self.ping_timer:
+            self.ping_timer.cancel()
+            self.ping_timer = None
 
         self.ws.close()
         while self.ws.sock:
@@ -412,7 +417,35 @@ class _WebSocketManager:
         Redirect message to callback function
         """
         if isinstance(message, dict):
-            topic = self._topic(message.get("channel") or message.get("c"))
+            channel = message.get("channel") or message.get("c")
+            
+            # Special handling for private messages that might not have channel field
+            if channel is None:
+                # Log the message structure for debugging
+                logger.debug(f"Message without channel - keys: {list(message.keys())[:10]}")
+                
+                # Check for MEXC private message patterns
+                # Private messages might use different field names
+                if "s" in message:  # Symbol field often indicates private message
+                    # Try to determine topic from message content
+                    # Check for order-related fields
+                    if "o" in message or "orderId" in message or "orderStatus" in message:
+                        topic = "private.orders"
+                    # Check for deal/trade fields  
+                    elif "t" in message or "tradeId" in message or "price" in message and "quantity" in message:
+                        topic = "private.deals"
+                    # Default to account updates
+                    else:
+                        topic = "private.account"
+                        
+                    logger.debug(f"Routed private message to {topic} based on content")
+                else:
+                    # No channel and no recognizable pattern
+                    topic = None
+                    logger.debug(f"Could not determine topic for message: {str(message)[:200]}")
+            else:
+                topic = self._topic(channel)
+                
             callback_data = message
         else:
             topic = self._topic(message.channel)
