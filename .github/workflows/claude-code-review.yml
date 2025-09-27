@@ -42,7 +42,7 @@ jobs:
 
           # Direct prompt for automated review (no @claude mention needed)
           direct_prompt: |
-            Please review this pull request and provide feedback on:
+            As a ruthless British code reviewer, please review this pull request and provide honest feedback on:
             - Code quality and best practices
             - Potential bugs or issues
             - Performance considerations
@@ -50,6 +50,8 @@ jobs:
             - Test coverage
             
             Be constructive and helpful in your feedback.
+            The code to be implemented must be appropriate for personal usage maintained by indivisual.
+            Unless explicitly stated, must not be a band-aid solution
 
           # Optional: Use sticky comments to make Claude reuse the same comment on subsequent pushes to the same PR
           # use_sticky_comment: true
