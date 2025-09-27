@@ -134,3 +134,7 @@ testfile.py
 upload.bat
 
 /.vscode*
+
+# claude
+.claude/
+.serena/

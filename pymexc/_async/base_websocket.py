@@ -43,7 +43,7 @@ class _AsyncWebSocketManager(_WebSocketManager):
         http_proxy_auth=None,
         http_proxy_timeout=None,
         loop=None,
-        proto=False,
+        proto=True,  # Changed default to True - proto is required for proper WebSocket functionality
         extend_proto_body=False,
     ):
         super().__init__(
@@ -182,6 +182,88 @@ class _AsyncWebSocketManager(_WebSocketManager):
         self.connected = False
         super()._on_close()
 
+    async def __aenter__(self):
+        """
+        Async context manager entry - ensures connection is established.
+        """
+        # Connect if not already connected
+        if not self.is_connected() and hasattr(self, 'endpoint'):
+            await self._connect(self.endpoint)
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """
+        Async context manager exit - ensures proper cleanup.
+        """
+        # Unsubscribe from all topics
+        if hasattr(self, 'unsubscribe_all'):
+            await self.unsubscribe_all()
+        
+        # Close the websocket connection
+        if self.ws and not self.ws.closed:
+            await self.ws.close()
+        
+        # Close the session
+        if hasattr(self, 'session') and self.session:
+            await self.session.close()
+        
+        # Cancel any background tasks
+        if hasattr(self, '_keep_alive_task') and self._keep_alive_task:
+            self._keep_alive_task.cancel()
+            try:
+                await self._keep_alive_task
+            except asyncio.CancelledError:
+                pass
+        
+        # Mark as disconnected
+        self.connected = False
+        
+        return False  # Don't suppress exceptions
+
+    async def close_all(self):
+        """
+        Close all connections and cleanup resources.
+        This method is called automatically when using context manager,
+        but can also be called manually.
+        """
+        # First unsubscribe from everything
+        if hasattr(self, 'unsubscribe_all'):
+            try:
+                await self.unsubscribe_all()
+            except Exception as e:
+                logger.debug(f"Error during unsubscribe_all: {e}")
+        
+        # Close websocket
+        if hasattr(self, 'ws') and self.ws and not self.ws.closed:
+            try:
+                await self.ws.close()
+            except Exception as e:
+                logger.debug(f"Error closing websocket: {e}")
+        
+        # Close session
+        if hasattr(self, 'session') and self.session:
+            try:
+                await self.session.close()
+            except Exception as e:
+                logger.debug(f"Error closing session: {e}")
+        
+        # Cancel background tasks
+        if hasattr(self, '_keep_alive_task') and self._keep_alive_task:
+            self._keep_alive_task.cancel()
+            try:
+                await self._keep_alive_task
+            except asyncio.CancelledError:
+                pass
+            except Exception as e:
+                logger.debug(f"Error canceling keep-alive task: {e}")
+        
+        # Reset state
+        self.connected = False
+        self.subscriptions = []
+        self._reset_callback_directory() if hasattr(self, '_reset_callback_directory') else None
+        
+        logger.debug(f"WebSocket {self.ws_name if hasattr(self, 'ws_name') else ''} closed and cleaned up")
+
     async def _process_normal_message(self, message: dict):
         callback_function, callback_data = super()._process_normal_message(message=message, parse_only=True)
 
@@ -241,6 +323,30 @@ class _FuturesWebSocketManager(_AsyncWebSocketManager):
             topic_name = method.__name__.replace("_stream", "").replace("_", ".")
 
             return await self.unsubscribe(topic_name)
+
+    async def unsubscribe_all(self) -> None:
+        """
+        Unsubscribe from all topics at once.
+        """
+        if not self.subscriptions:
+            return
+        
+        # Get all topics from subscriptions
+        topics_to_unsub = []
+        for sub in self.subscriptions:
+            if sub.get("method", "").startswith("sub."):
+                topic = sub["method"].replace("sub.", "")
+                topics_to_unsub.append(topic)
+        
+        # Unsubscribe from all topics
+        for topic in topics_to_unsub:
+            await self.unsubscribe(topic)
+        
+        # Clear all subscriptions and callbacks
+        self.subscriptions.clear() if hasattr(self.subscriptions, 'clear') else self.subscriptions.clear()
+        self._reset_callback_directory()
+        
+        logger.debug(f"Unsubscribed from all topics")
 
     async def _process_auth_message(self, message: dict):
         # If we get successful futures auth, notify user
@@ -393,6 +499,32 @@ class _SpotWebSocketManager(_AsyncWebSocketManager):
                 for x in topics
             ]
             return await self.unsubscribe(*topics)
+
+    async def unsubscribe_all(self) -> None:
+        """
+        Unsubscribe from all active subscriptions at once.
+        """
+        if not self.subscriptions:
+            return
+        
+        # Collect all params from subscriptions
+        all_params = []
+        for sub in self.subscriptions:
+            if sub.get("params"):
+                all_params.extend(sub["params"])
+        
+        # Send unsubscribe message for all
+        if all_params:
+            await self.ws.send_json({
+                "method": "UNSUBSCRIPTION",
+                "params": all_params
+            })
+        
+        # Clear all subscriptions and callbacks
+        self.subscriptions.clear() if hasattr(self.subscriptions, 'clear') else self.subscriptions.clear()
+        self._reset_callback_directory()
+        
+        logger.debug(f"Unsubscribed from all topics")
 
     async def _handle_incoming_message(self, message):
         def is_subscription_message():
