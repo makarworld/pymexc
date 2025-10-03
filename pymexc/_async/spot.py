@@ -2187,6 +2187,53 @@ class WebSocket(_SpotWebSocket):
         topic = "public.bookTicker.batch"
         await self._ws_subscribe(topic, callback, params)
 
+    async def mini_ticker_stream(
+        self,
+        callback: Callable[..., None],
+        symbol: str,
+        timezone: str = "UTC+8",
+    ):
+        """
+        ### MiniTicker Stream
+        MiniTicker of the specified trading pair in the specified timezone, pushed every 3 seconds.
+
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#miniticker
+
+        :param callback: the callback function
+        :type callback: Callable[..., None]
+        :param symbol: the name of the trading pair
+        :type symbol: str
+        :param timezone: timezone for the ticker data. Valid values: 24H, UTC-10, UTC-8, UTC-7, UTC-6, UTC-5, UTC-4, UTC-3, UTC+0, UTC+1, UTC+2, UTC+3, UTC+4, UTC+4:30, UTC+5, UTC+5:30, UTC+6, UTC+7, UTC+8 (default), UTC+9, UTC+10, UTC+11, UTC+12, UTC+12:45, UTC+13
+        :type timezone: str
+
+        :return: None
+        """
+        params = [dict(symbol=symbol, timezone=timezone)]
+        topic = "public.miniTicker"
+        await self._ws_subscribe(topic, callback, params)
+
+    async def mini_tickers_stream(
+        self,
+        callback: Callable[..., None],
+        timezone: str = "UTC+8",
+    ):
+        """
+        ### MiniTickers Stream
+        MiniTickers of all trading pairs in the specified timezone, pushed every 3 seconds.
+
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#minitickers
+
+        :param callback: the callback function
+        :type callback: Callable[..., None]
+        :param timezone: timezone for the ticker data. Valid values: 24H, UTC-10, UTC-8, UTC-7, UTC-6, UTC-5, UTC-4, UTC-3, UTC+0, UTC+1, UTC+2, UTC+3, UTC+4, UTC+4:30, UTC+5, UTC+5:30, UTC+6, UTC+7, UTC+8 (default), UTC+9, UTC+10, UTC+11, UTC+12, UTC+12:45, UTC+13
+        :type timezone: str
+
+        :return: None
+        """
+        params = [dict(timezone=timezone)]
+        topic = "public.miniTickers"
+        await self._ws_subscribe(topic, callback, params)
+
     # <=================================================================>
     #
     #                                Private
