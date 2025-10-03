@@ -37,15 +37,49 @@ import logging
 from asyncio import AbstractEventLoop
 from typing import Callable, List, Literal, Optional, Union
 import warnings
+from enum import Enum
 
 logger = logging.getLogger(__name__)
 
 try:
     from .base import _SpotHTTP, SPOT as SPOT_HTTP
     from .base_websocket import _SpotWebSocket, SPOT as SPOT_WS
+    from ..proto import ProtoTyping
 except ImportError:
     from pymexc._async.base import _SpotHTTP, SPOT as SPOT_HTTP
     from pymexc._async.base_websocket import _SpotWebSocket, SPOT as SPOT_WS
+    from pymexc.proto import ProtoTyping
+
+
+class Timezone(str, Enum):
+    """Valid timezone values for miniTicker and miniTickers streams"""
+    H24 = "24H"
+    UTC_M10 = "UTC-10"
+    UTC_M8 = "UTC-8"
+    UTC_M7 = "UTC-7"
+    UTC_M6 = "UTC-6"
+    UTC_M5 = "UTC-5"
+    UTC_M4 = "UTC-4"
+    UTC_M3 = "UTC-3"
+    UTC_0 = "UTC+0"
+    UTC_1 = "UTC+1"
+    UTC_2 = "UTC+2"
+    UTC_3 = "UTC+3"
+    UTC_4 = "UTC+4"
+    UTC_4_30 = "UTC+4:30"
+    UTC_5 = "UTC+5"
+    UTC_5_30 = "UTC+5:30"
+    UTC_6 = "UTC+6"
+    UTC_7 = "UTC+7"
+    UTC_8 = "UTC+8"
+    UTC_9 = "UTC+9"
+    UTC_10 = "UTC+10"
+    UTC_11 = "UTC+11"
+    UTC_12 = "UTC+12"
+    UTC_12_45 = "UTC+12:45"
+    UTC_13 = "UTC+13"
+
+VALID_TIMEZONES = {tz.value for tz in Timezone}
 
 
 class HTTP(_SpotHTTP):
@@ -2185,6 +2219,57 @@ class WebSocket(_SpotWebSocket):
         """
         params = [dict(symbol=symbol) for symbol in symbols]
         topic = "public.bookTicker.batch"
+        await self._ws_subscribe(topic, callback, params)
+
+    async def mini_ticker_stream(
+        self,
+        callback: Callable[[dict | ProtoTyping.PublicMiniTickerV3Api], None],
+        symbol: str,
+        timezone: str = "UTC+8",
+    ):
+        """
+        ### MiniTicker Stream
+        MiniTicker of the specified trading pair in the specified timezone, pushed every 3 seconds.
+
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#miniticker
+
+        :param callback: the callback function
+        :type callback: Callable[[dict | ProtoTyping.PublicMiniTickerV3Api], None]
+        :param symbol: the name of the trading pair
+        :type symbol: str
+        :param timezone: timezone for the ticker data. Valid values: 24H, UTC-10, UTC-8, UTC-7, UTC-6, UTC-5, UTC-4, UTC-3, UTC+0, UTC+1, UTC+2, UTC+3, UTC+4, UTC+4:30, UTC+5, UTC+5:30, UTC+6, UTC+7, UTC+8 (default), UTC+9, UTC+10, UTC+11, UTC+12, UTC+12:45, UTC+13
+        :type timezone: str
+
+        :return: None
+        """
+        if timezone not in VALID_TIMEZONES:
+            raise ValueError(f"Invalid timezone: {timezone}. Must be one of {sorted(VALID_TIMEZONES)}")
+        params = [dict(symbol=symbol, timezone=timezone)]
+        topic = "public.miniTicker"
+        await self._ws_subscribe(topic, callback, params)
+
+    async def mini_tickers_stream(
+        self,
+        callback: Callable[[dict | ProtoTyping.PublicMiniTickersV3Api], None],
+        timezone: str = "UTC+8",
+    ):
+        """
+        ### MiniTickers Stream
+        MiniTickers of all trading pairs in the specified timezone, pushed every 3 seconds.
+
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#minitickers
+
+        :param callback: the callback function
+        :type callback: Callable[[dict | ProtoTyping.PublicMiniTickersV3Api], None]
+        :param timezone: timezone for the ticker data. Valid values: 24H, UTC-10, UTC-8, UTC-7, UTC-6, UTC-5, UTC-4, UTC-3, UTC+0, UTC+1, UTC+2, UTC+3, UTC+4, UTC+4:30, UTC+5, UTC+5:30, UTC+6, UTC+7, UTC+8 (default), UTC+9, UTC+10, UTC+11, UTC+12, UTC+12:45, UTC+13
+        :type timezone: str
+
+        :return: None
+        """
+        if timezone not in VALID_TIMEZONES:
+            raise ValueError(f"Invalid timezone: {timezone}. Must be one of {sorted(VALID_TIMEZONES)}")
+        params = [dict(timezone=timezone)]
+        topic = "public.miniTickers"
         await self._ws_subscribe(topic, callback, params)
 
     # <=================================================================>
