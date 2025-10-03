@@ -2193,6 +2193,53 @@ class WebSocket(_SpotWebSocket):
         topic = "public.bookTicker.batch"
         self._ws_subscribe(topic, callback, params)
 
+    def mini_ticker_stream(
+        self,
+        callback: Callable[[dict | ProtoTyping.PublicMiniTickerV3Api], None],
+        symbol: str,
+        timezone: str = "UTC+8",
+    ):
+        """
+        ### MiniTicker Stream
+        MiniTicker of the specified trading pair in the specified timezone, pushed every 3 seconds.
+
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#miniticker
+
+        :param callback: the callback function
+        :type callback: Callable[[dict | ProtoTyping.PublicMiniTickerV3Api], None]
+        :param symbol: the name of the trading pair
+        :type symbol: str
+        :param timezone: the timezone (e.g., UTC+8, UTC+0, 24H)
+        :type timezone: str
+
+        :return: None
+        """
+        params = [dict(symbol=symbol, timezone=timezone)]
+        topic = "public.miniTicker"
+        self._ws_subscribe(topic, callback, params)
+
+    def mini_tickers_stream(
+        self,
+        callback: Callable[[dict | ProtoTyping.PublicMiniTickersV3Api], None],
+        timezone: str = "UTC+8",
+    ):
+        """
+        ### MiniTickers Stream
+        MiniTickers of all trading pairs in the specified timezone, pushed every 3 seconds.
+
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#minitickers
+
+        :param callback: the callback function
+        :type callback: Callable[[dict | ProtoTyping.PublicMiniTickersV3Api], None]
+        :param timezone: the timezone (e.g., UTC+8, UTC+0, 24H)
+        :type timezone: str
+
+        :return: None
+        """
+        params = [dict(timezone=timezone)]
+        topic = "public.miniTickers"
+        self._ws_subscribe(topic, callback, params)
+
     # <=================================================================>
     #
     #                                Private
