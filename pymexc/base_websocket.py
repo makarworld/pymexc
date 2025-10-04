@@ -395,6 +395,8 @@ class _WebSocketManager:
             "public.increase.depth": "publicIncreaseDepths",
             "public.limit.depth": "publicLimitDepths",
             "public.bookTicker": "publicBookTicker",
+            "public.miniTicker": "publicMiniTicker",
+            "public.miniTickers": "publicMiniTickers",
             # Aggregated public topics
             "public.aggre.deals": "publicAggreDeals",
             "public.aggre.depth": "publicAggreDepths",
