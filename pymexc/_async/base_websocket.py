@@ -3,7 +3,7 @@ import json
 import logging
 import time
 import warnings
-from typing import TYPE_CHECKING, Awaitable, Callable, Dict, List, Union
+from typing import TYPE_CHECKING, Awaitable, Callable, Dict, List, Optional, Union
 
 import aiohttp
 import websockets.client
@@ -68,6 +68,7 @@ class _AsyncWebSocketManager(_WebSocketManager):
         )
         self.connected = False
         self.loop = loop or asyncio.get_event_loop()
+        self._keep_alive_task: Optional[asyncio.Task] = None
 
         if ping_timeout:
             warnings.warn(
@@ -161,6 +162,8 @@ class _AsyncWebSocketManager(_WebSocketManager):
             await self._auth()
 
         await resubscribe_to_topics()
+        await self._send_ping()
+        self._start_ping_loop()
 
         self.attempting_connection = False
 
@@ -180,6 +183,12 @@ class _AsyncWebSocketManager(_WebSocketManager):
 
     async def _on_close(self):
         self.connected = False
+        if self._keep_alive_task:
+            self._keep_alive_task.cancel()
+            try:
+                await self._keep_alive_task
+            except asyncio.CancelledError:
+                pass
         super()._on_close()
 
     async def __aenter__(self):
@@ -256,7 +265,7 @@ class _AsyncWebSocketManager(_WebSocketManager):
                 await self._keep_alive_task
             except asyncio.CancelledError:
                 pass  # Expected when cancelling a task
-        
+
         # Reset state
         self.connected = False
         self.subscriptions = []
@@ -271,6 +280,39 @@ class _AsyncWebSocketManager(_WebSocketManager):
             return
 
         await callback_function(callback_data)
+
+    def _start_ping_loop(self):
+        if not self.ping_interval or self.ping_interval <= 0:
+            return
+
+        if self._keep_alive_task and not self._keep_alive_task.done():
+            return
+
+        self._keep_alive_task = self.loop.create_task(self._ping_loop())
+
+    async def _ping_loop(self):
+        try:
+            while True:
+                if not self.is_connected() or not self.ws or self.ws.closed:
+                    await asyncio.sleep(self.ping_interval)
+                    continue
+
+                await self._send_ping()
+                await asyncio.sleep(self.ping_interval)
+        except asyncio.CancelledError:
+            pass
+
+    async def _send_ping(self):
+        if not self.ping_interval or self.ping_interval <= 0:
+            return
+
+        if not self.ws or self.ws.closed:
+            return
+
+        try:
+            await self.ws.send_str(self.custom_ping_message)
+        except (aiohttp.ClientError, ConnectionError, asyncio.TimeoutError) as exc:
+            logger.debug(f"Ping failed: {exc}")
 
 
 # # # # # # # # # #

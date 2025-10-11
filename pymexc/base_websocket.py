@@ -199,7 +199,6 @@ class _WebSocketManager:
                 on_close=lambda ws, *args: self._on_close(),
                 on_open=lambda ws, *args: self._on_open(),
                 on_error=lambda ws, err: self._on_error(err),
-                on_pong=lambda ws, *args: self._on_pong(),
             )
 
             # Setup the thread running WebSocketApp.
@@ -236,7 +235,8 @@ class _WebSocketManager:
             self._auth()
 
         resubscribe_to_topics()
-        self._send_initial_ping()
+        self._send_ping_message()
+        self._schedule_next_ping()
 
         self.attempting_connection = False
 
@@ -311,41 +311,41 @@ class _WebSocketManager:
         Log WS close.
         """
         logger.debug(f"WebSocket {self.ws_name} closed.")
+        self._cancel_ping_timer()
 
-    def _on_pong(self):
-        """
-        Sends a custom ping upon the receipt of the pong frame.
+    def _send_ping_message(self):
+        if not self.ping_interval or self.ping_interval <= 0:
+            return
 
-        The websocket library will automatically send ping frames. However, to
-        ensure the connection to Bybit stays open, we need to send a custom
-        ping message separately from this. When we receive the response to the
-        ping frame, this method is called, and we will send the custom ping as
-        a normal OPCODE_TEXT message and not an OPCODE_PING.
-        """
-        self._send_custom_ping()
+        if not self.is_connected():
+            return
 
-    def _send_custom_ping(self):
         try:
             self.ws.send(self.custom_ping_message)
         except websocket._exceptions.WebSocketConnectionClosedException as e:
-            self.ping_timer.cancel()
+            self._cancel_ping_timer()
             self._on_error(e)
+        except Exception as exc:
+            logger.debug(f"Ping failed: {exc}")
 
-    def _send_initial_ping(self):
-        """https://github.com/bybit-exchange/pybit/issues/164"""
-        if self.ping_timer:
-            self.ping_timer.cancel()
+    def _schedule_next_ping(self):
+        if not self.ping_interval or self.ping_interval <= 0:
+            return
 
-        self.ping_timer = threading.Timer(self.ping_interval, self._send_custom_ping)
+        self._cancel_ping_timer()
+        self.ping_timer = threading.Timer(self.ping_interval, self._handle_ping_timer)
+        self.ping_timer.daemon = True
         self.ping_timer.start()
 
-    @staticmethod
-    def _is_custom_pong(message):
-        """
-        Referring to OPCODE_TEXT pongs from Bybit, not OPCODE_PONG.
-        """
-        if message.get("ret_msg") == "pong" or message.get("op") == "pong":
-            return True
+    def _handle_ping_timer(self):
+        self._send_ping_message()
+        if self.is_connected():
+            self._schedule_next_ping()
+
+    def _cancel_ping_timer(self):
+        if self.ping_timer:
+            self.ping_timer.cancel()
+            self.ping_timer = None
 
     def _reset(self):
         """
@@ -361,13 +361,12 @@ class _WebSocketManager:
         """
 
         # Cancel ping thread
-        if self.ping_timer:
-            self.ping_timer.cancel()
-            self.ping_timer = None
+        self._cancel_ping_timer()
 
-        self.ws.close()
-        while self.ws.sock:
-            continue
+        if self.ws:
+            self.ws.close()
+            while self.ws.sock:
+                continue
         self.exited = True
 
     def _check_callback_directory(self, topics):
