@@ -2069,7 +2069,8 @@ class WebSocket(_SpotWebSocket):
         if not self.listenKey:
             raise Exception(f"ListenKey not found. Error: {auth}")
 
-        self.endpoint = f"{SPOT_WS}/ws?listenKey={self.listenKey}"
+        self.endpoint = f"{SPOT_WS}?listenKey={self.listenKey}"
+        assert "/ws/ws" not in self.endpoint, "Malformed listenKey endpoint"
 
         while True:
             await asyncio.sleep(3540)  # 59 min - Fixed: Using async sleep instead of blocking sleep
