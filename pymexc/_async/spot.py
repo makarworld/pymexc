@@ -2048,14 +2048,17 @@ class WebSocket(_SpotWebSocket):
         super().__init__(**kwargs)
 
         # for keep alive connection to private spot websocket
-        # need to send listen key at connection and send keep-alive request every 60 mins
+        # need to send listen key at connection and send keep-alive request ahead of the 60 minute
+        # expiry window
         if api_key and api_secret:
             # setup keep-alive connection loop - store task for later cleanup
             self._keep_alive_task = loop.create_task(self._keep_alive_loop())
 
+    _KEEP_ALIVE_INTERVAL_SECONDS = 55 * 60
+
     async def _keep_alive_loop(self):
         """
-        Runs a loop that sends a keep-alive message every 59 minutes to maintain the connection
+        Runs a loop that sends a keep-alive message every 55 minutes to maintain the connection
         with the MEXC API.
 
         :return: None
@@ -2073,7 +2076,7 @@ class WebSocket(_SpotWebSocket):
         assert "/ws/ws" not in self.endpoint, "Malformed listenKey endpoint"
 
         while True:
-            await asyncio.sleep(3540)  # 59 min - Fixed: Using async sleep instead of blocking sleep
+            await asyncio.sleep(self._KEEP_ALIVE_INTERVAL_SECONDS)
 
             if self.listenKey:
                 resp = await HTTP(api_key=self.api_key, api_secret=self.api_secret).keep_alive_listen_key(

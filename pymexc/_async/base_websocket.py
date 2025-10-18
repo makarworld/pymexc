@@ -293,12 +293,16 @@ class _AsyncWebSocketManager(_WebSocketManager):
     async def _ping_loop(self):
         try:
             while True:
+                interval = self.ping_interval if self.ping_interval and self.ping_interval > 0 else 0
+                buffer = min(5, interval * 0.1) if interval else 0
+                wait_time = max(0.1, interval - buffer) if interval else 0.1
+
                 if not self.is_connected() or not self.ws or self.ws.closed:
-                    await asyncio.sleep(self.ping_interval)
+                    await asyncio.sleep(wait_time)
                     continue
 
                 await self._send_ping()
-                await asyncio.sleep(self.ping_interval)
+                await asyncio.sleep(wait_time)
         except asyncio.CancelledError:
             pass
 

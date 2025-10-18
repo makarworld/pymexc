@@ -2027,7 +2027,8 @@ class WebSocket(_SpotWebSocket):
         super().__init__(**kwargs)
 
         # for keep alive connection to private spot websocket
-        # need to send listen key at connection and send keep-alive request every 60 mins
+        # need to send listen key at connection and send keep-alive request ahead of the 60 minute
+        # expiry window
         if api_key and api_secret:
             if not self.listenKey:
                 auth = HTTP(api_key=api_key, api_secret=api_secret).create_listen_key()
@@ -2044,16 +2045,18 @@ class WebSocket(_SpotWebSocket):
             self.kal.daemon = True
             self.kal.start()
 
+    _KEEP_ALIVE_INTERVAL_SECONDS = 55 * 60
+
     def _keep_alive_loop(self):
         """
-        Runs a loop that sends a keep-alive message every 59 minutes to maintain the connection
+        Runs a loop that sends a keep-alive message every 55 minutes to maintain the connection
         with the MEXC API.
 
         :return: None
         """
 
         while True:
-            time.sleep(59 * 60)  # 59 min
+            time.sleep(self._KEEP_ALIVE_INTERVAL_SECONDS)
             if self.listenKey:
                 resp = HTTP(api_key=self.api_key, api_secret=self.api_secret).keep_alive_listen_key(self.listenKey)
                 logger.debug(f"keep-alive listenKey - {self.listenKey}. Response: {resp}")
