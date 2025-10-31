@@ -316,7 +316,8 @@ class _AsyncWebSocketManager(_WebSocketManager):
         try:
             await self.ws.send_str(self.custom_ping_message)
         except (aiohttp.ClientError, ConnectionError, asyncio.TimeoutError) as exc:
-            logger.debug(f"Ping failed: {exc}")
+            logger.warning(f"Ping failed: {exc}. Triggering reconnection.")
+            await self._on_error(exc)
 
 
 # # # # # # # # # #
