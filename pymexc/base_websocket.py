@@ -48,7 +48,7 @@ class _WebSocketManager:
         http_no_proxy=None,
         http_proxy_auth=None,
         http_proxy_timeout=None,
-        proto=False,
+        proto=True,
         extend_proto_body=False,
     ):
         # Set API keys.
@@ -107,6 +107,8 @@ class _WebSocketManager:
 
         self.last_subsctiption: Union[str, None] = None
         self.ping_timer = None
+        self.ws = None
+        self.wst = None
 
     @property
     def is_spot(self):
@@ -281,11 +283,14 @@ class _WebSocketManager:
         """
         Exit on errors and raise exception, or attempt reconnect.
         """
-        if type(error).__name__ not in [
-            "WebSocketConnectionClosedException",
-            "ConnectionResetError",
-            "WebSocketTimeoutException",
-        ]:
+        recoverable_errors = (
+            websocket.WebSocketConnectionClosedException,
+            websocket.WebSocketTimeoutException,
+            ConnectionResetError,
+            BrokenPipeError,
+        )
+
+        if not isinstance(error, recoverable_errors):
             # Raises errors not related to websocket disconnection.
             self.exit()
             raise error
@@ -300,7 +305,10 @@ class _WebSocketManager:
         # Reconnect.
         if self.restart_on_error and not self.attempting_connection:
             self._reset()
-            self._connect(self.endpoint)
+            try:
+                self._connect(self.endpoint)
+            except Exception:
+                logger.exception(f"WebSocket {self.ws_name} reconnect failed")
 
     def _on_close(self):
         """
@@ -357,15 +365,31 @@ class _WebSocketManager:
         """
 
         # Cancel ping thread
-        self.ping_timer.cancel()
-        self.ping_timer = None
+        if self.ping_timer:
+            self.ping_timer.cancel()
+            self.ping_timer = None
 
-        self.ws.close()
-        while self.ws.sock:
-            continue
+        if self.ws:
+            try:
+                self.ws.close()
+            except Exception:
+                logger.exception(f"WebSocket {self.ws_name} close failed")
+
+            wait_until = time.time() + 5
+            while getattr(self.ws, "sock", None) and time.time() < wait_until:
+                time.sleep(0.05)
+
+        if self.wst and self.wst.is_alive():
+            self.wst.join(timeout=1)
+
+        self.ws = None
+        self.wst = None
         self.exited = True
 
     def _check_callback_directory(self, topics):
+        if isinstance(topics, (str, bytes)):
+            topics = [topics]
+
         for topic in topics:
             if topic in self.callback_directory:
                 raise Exception(f"You have already subscribed to this topic: {topic}")
@@ -464,7 +488,8 @@ class _FuturesWebSocketManager(_WebSocketManager):
 
     def subscribe(self, topic, callback, params: dict = {}):
         subscription_args = {"method": topic, "param": params}
-        self._check_callback_directory(subscription_args)
+        callback_topic = self._topic(topic)
+        self._check_callback_directory(callback_topic)
 
         while not self.is_connected():
             # Wait until the connection is open before subscribing.
@@ -473,8 +498,8 @@ class _FuturesWebSocketManager(_WebSocketManager):
         subscription_message = json.dumps(subscription_args)
         self.ws.send(subscription_message)
         self.subscriptions.append(subscription_args)
-        self._set_callback(self._topic(topic), callback)
-        self.last_subsctiption = self._topic(topic)
+        self._set_callback(callback_topic, callback)
+        self.last_subsctiption = callback_topic
 
     def unsubscribe(self, method: str | Callable) -> None:
         if not method:
@@ -573,14 +598,14 @@ class _SpotWebSocketManager(_WebSocketManager):
             "method": "SUBSCRIPTION",
             "params": [
                 "@".join(
-                    [f"spot@{topic}.v3.api" + (".pb" if self.proto else "")] 
+                    [f"spot@{topic}.v3.api" + (".pb" if self.proto else "")]
                     + ([str(interval)] if interval else [])
                     + list(map(str, params.values()))
                 )
                 for params in params_list
             ],
         }
-        self._check_callback_directory(subscription_args)
+        self._check_callback_directory(topic)
 
         while not self.is_connected():
             # Wait until the connection is open before subscribing.

@@ -1,22 +1,19 @@
 import asyncio
-import json
 import logging
-import time
 import warnings
-from typing import TYPE_CHECKING, Awaitable, Callable, Dict, List, Union
+from typing import TYPE_CHECKING, Callable
 
 import aiohttp
-import websockets.client
-
-from pymexc.base_websocket import (
-    _WebSocketManager,
-    SPOT,
-    FUTURES,
-)
 from aiohttp import ClientSession, ClientTimeout
 
+from pymexc.base_websocket import (
+    FUTURES,
+    SPOT,
+    _WebSocketManager,
+)
+
 if TYPE_CHECKING:
-    from .spot import HTTP
+    from pymexc._async.spot import HTTP
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +40,7 @@ class _AsyncWebSocketManager(_WebSocketManager):
         http_proxy_auth=None,
         http_proxy_timeout=None,
         loop=None,
-        proto=False,
+        proto=True,
         extend_proto_body=False,
     ):
         super().__init__(
@@ -73,6 +70,43 @@ class _AsyncWebSocketManager(_WebSocketManager):
             warnings.warn(
                 "ping_timeout is deprecated for async websockets, please use just ping_interval.",
             )
+
+    def exit(self):
+        if getattr(self, "exited", False):
+            return
+
+        if hasattr(self, "ping_timer") and self.ping_timer:
+            self.ping_timer.cancel()
+            self.ping_timer = None
+
+        async def _shutdown():
+            if getattr(self, "ws", None) and not self.ws.closed:
+                await self.ws.close()
+            session = getattr(self, "session", None)
+            if session and not session.closed:
+                await session.close()
+
+        try:
+            running_loop = None
+            try:
+                running_loop = asyncio.get_running_loop()
+            except RuntimeError:
+                pass
+
+            if self.loop and self.loop.is_running():
+                if running_loop is self.loop:
+                    self.loop.create_task(_shutdown())
+                else:
+                    asyncio.run_coroutine_threadsafe(_shutdown(), self.loop)
+            else:
+                asyncio.run(_shutdown())
+        except Exception:
+            logger.exception(f"WebSocket {self.ws_name} shutdown failed")
+        finally:
+            self.ws = None
+            if hasattr(self, "session"):
+                self.session = None
+            self.exited = True
 
     async def _on_open(self):
         self.connected = True
@@ -208,16 +242,17 @@ class _FuturesWebSocketManager(_AsyncWebSocketManager):
 
     async def subscribe(self, topic, callback, params: dict = {}):
         subscription_args = {"method": topic, "param": params}
-        self._check_callback_directory(subscription_args)
+        callback_topic = self._topic(topic)
+        self._check_callback_directory(callback_topic)
 
         while not self.is_connected():
             # Wait until the connection is open before subscribing.
-            time.sleep(0.1)
+            await asyncio.sleep(0.1)
 
         await self.ws.send_json(subscription_args)
         self.subscriptions.append(subscription_args)
-        self._set_callback(self._topic(topic), callback)
-        self.last_subsctiption = self._topic(topic)
+        self._set_callback(callback_topic, callback)
+        self.last_subsctiption = callback_topic
 
     async def unsubscribe(self, method: str | Callable) -> None:
         if not method:
@@ -335,14 +370,14 @@ class _SpotWebSocketManager(_AsyncWebSocketManager):
             "method": "SUBSCRIPTION",
             "params": [
                 "@".join(
-                    [f"spot@{topic}.v3.api" + (".pb" if self.proto else "")] 
+                    [f"spot@{topic}.v3.api" + (".pb" if self.proto else "")]
                     + ([str(interval)] if interval else [])
                     + list(map(str, params.values()))
                 )
                 for params in params_list
             ],
         }
-        self._check_callback_directory(subscription_args)
+        self._check_callback_directory(topic)
 
         while not self.is_connected():
             # Wait until the connection is open before subscribing.

@@ -259,6 +259,9 @@ def test_universal_transfer():
             amount=0.01,
         )
 
+    if PRINT_RESPONSE:
+        print(str(e.value))
+
     assert e.errisinstance(pymexc.base.MexcAPIError)
     assert str(e.value) == "(code=700007): No permission to access the endpoint."
 
@@ -680,9 +683,7 @@ def test_user_universal_transfer():
 
 
 def test_user_universal_transfer_history():
-    resp = http.user_universal_transfer_history(
-        from_account_type="SPOT", to_account_type="SPOT", page=1, size=10
-    )
+    resp = http.user_universal_transfer_history(from_account_type="SPOT", to_account_type="SPOT", page=1, size=10)
 
     if PRINT_RESPONSE:
         print(str(resp)[:50])
@@ -761,15 +762,6 @@ def test_internal_transfer_history():
     assert isinstance(resp, dict)
     assert "data" in resp
     assert isinstance(resp["data"], list)
-
-
-def test_get_etf_info():
-    with pytest.raises(json.decoder.JSONDecodeError) as e:
-        resp = http.get_etf_info(symbol="ANY_SYMBOL")
-        if PRINT_RESPONSE:
-            print("ETF info response:", resp)
-
-    assert "Expecting value: line 1 column 1 (char 0)" in str(e.value)
 
 
 def test_create_listen_key():

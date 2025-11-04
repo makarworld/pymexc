@@ -84,7 +84,8 @@ class _SpotHTTP(MexcSDK):
     def __init__(self, api_key: str = None, api_secret: str = None, proxies: dict = None):
         super().__init__(SPOT, api_key, api_secret, proxies=proxies)
 
-        self.session.headers.update({"X-MEXC-APIKEY": self.api_key})
+        if self.api_key:
+            self.session.headers.update({"X-MEXC-APIKEY": self.api_key})
 
     def sign(self, query_string: str) -> str:
         """
@@ -156,7 +157,9 @@ class _FuturesHTTP(MexcSDK):
                 "[pymexc] You can bypass Futures API maintance. See https://github.com/makarworld/pymexc/issues/15 for more information."
             )
 
-        self.session.headers.update({"Content-Type": "application/json", "ApiKey": self.api_key})
+        self.session.headers.update({"Content-Type": "application/json"})
+        if self.api_key:
+            self.session.headers.update({"ApiKey": self.api_key})
 
     def sign(self, timestamp: str, **kwargs) -> str:
         """
@@ -243,12 +246,10 @@ class _WebHTTP(MexcSDK):
         proxies: dict = None,
     ):
         super().__init__(WEB, u_id=u_id, proxies=proxies)
-        self.session.headers.update(
-            {
-                "content-Type": "application/json",
-                "authorization": self.u_id,
-            }
-        )
+        headers = {"content-Type": "application/json"}
+        if self.u_id:
+            headers["authorization"] = self.u_id
+        self.session.headers.update(headers)
 
     def call(
         self,

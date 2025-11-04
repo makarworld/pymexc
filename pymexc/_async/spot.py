@@ -2009,14 +2009,18 @@ class WebSocket(_SpotWebSocket):
             extend_proto_body=extend_proto_body,
         )
         self.listenKey = listenKey
+        self._keepalive_stop = asyncio.Event()
+        self._keepalive_task: Optional[asyncio.Task] = None
+        self._keepalive_http: Optional[HTTP] = None
 
         super().__init__(**kwargs)
 
         # for keep alive connection to private spot websocket
         # need to send listen key at connection and send keep-alive request every 60 mins
         if api_key and api_secret:
+            self._keepalive_http = HTTP(api_key=api_key, api_secret=api_secret)
             # setup keep-alive connection loop
-            loop.create_task(self._keep_alive_loop())
+            self._keepalive_task = loop.create_task(self._keep_alive_loop())
 
     async def _keep_alive_loop(self):
         """
@@ -2026,26 +2030,73 @@ class WebSocket(_SpotWebSocket):
         :return: None
         """
 
-        if not self.listenKey:
-            auth = await HTTP(api_key=self.api_key, api_secret=self.api_secret).create_listen_key()
+        if not self._keepalive_http and self.api_key and self.api_secret:
+            self._keepalive_http = HTTP(api_key=self.api_key, api_secret=self.api_secret)
+
+        if not self.listenKey and self._keepalive_http:
+            auth = await self._keepalive_http.create_listen_key()
             self.listenKey = auth.get("listenKey")
             logger.debug(f"create listenKey: {self.listenKey}")
 
         if not self.listenKey:
-            raise Exception(f"ListenKey not found. Error: {auth}")
+            raise Exception("ListenKey not found for keep-alive task")
 
         self.endpoint = f"{SPOT_WS}/ws?listenKey={self.listenKey}"
 
-        while True:
-            await asyncio.sleep(59 * 60)  # 59 min
+        while not self._keepalive_stop.is_set():
+            try:
+                await asyncio.wait_for(self._keepalive_stop.wait(), timeout=59 * 60)
+            except asyncio.TimeoutError:
+                pass
 
-            if self.listenKey:
-                resp = await HTTP(api_key=self.api_key, api_secret=self.api_secret).keep_alive_listen_key(
-                    self.listenKey
-                )
-                logger.debug(f"keep-alive listenKey - {self.listenKey}. Response: {resp}")
-            else:
+            if self._keepalive_stop.is_set() or not self.listenKey:
                 break
+
+            if not self._keepalive_http:
+                continue
+
+            try:
+                resp = await self._keepalive_http.keep_alive_listen_key(self.listenKey)
+                logger.debug(f"keep-alive listenKey - {self.listenKey}. Response: {resp}")
+            except Exception as exc:
+                logger.exception(f"Keep-alive listenKey failed: {exc}")
+                await asyncio.sleep(5)
+
+    async def close(self):
+        """Stop keep-alive loop and close websocket connection."""
+
+        self._keepalive_stop.set()
+        if self._keepalive_task:
+            try:
+                await asyncio.shield(self._keepalive_task)
+            except Exception as exc:
+                logger.exception(f"Keep-alive task shutdown failed: {exc}")
+            self._keepalive_task = None
+
+        self.listenKey = None
+
+        if self.ws and not self.ws.closed:
+            await self.ws.close()
+
+    def exit(self):
+        if getattr(self, "_keepalive_stop", None):
+            if self.loop and self.loop.is_running():
+                self.loop.call_soon_threadsafe(self._keepalive_stop.set)
+            else:
+                self._keepalive_stop.set()
+
+        if getattr(self, "_keepalive_task", None):
+            if self._keepalive_task and not self._keepalive_task.done():
+                if self.loop and self.loop.is_running():
+                    self.loop.call_soon_threadsafe(self._keepalive_task.cancel)
+                else:
+                    self._keepalive_task.cancel()
+            self._keepalive_task = None
+
+        self._keepalive_http = None
+        self.listenKey = None
+
+        super().exit()
 
     # <=================================================================>
     #

@@ -62,7 +62,8 @@ class _SpotHTTP(MexcSDK):
     def __init__(self, api_key: str = None, api_secret: str = None, proxies: dict = None):
         super().__init__(api_key, api_secret, SPOT, proxies=proxies)
 
-        self.session.headers.update({"X-MEXC-APIKEY": self.api_key})
+        if self.api_key:
+            self.session.headers.update({"X-MEXC-APIKEY": self.api_key})
 
     def sign(self, query_string: str) -> str:
         """
@@ -138,9 +139,10 @@ class _FuturesHTTP(MexcSDK):
         self.session.headers.update(
             {
                 "Content-Type": "application/json",
-                "ApiKey": self.api_key,
             }
         )
+        if self.api_key:
+            self.session.headers.update({"ApiKey": self.api_key})
 
     def sign(self, timestamp: str, **kwargs) -> str:
         """

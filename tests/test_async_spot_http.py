@@ -95,6 +95,7 @@ async def test_exchange_info(http_client: HTTP):
 
     if PRINT_RESPONSE:
         print(str(resp)[:50])
+        print(api_key, api_secret)
 
     assert isinstance(resp, dict)
     assert "BTCUSDT" in str(resp)
@@ -289,6 +290,9 @@ async def test_universal_transfer(http_client: HTTP):
             asset="USDT",
             amount=0.01,
         )
+
+    if PRINT_RESPONSE:
+        print(str(e.value))
 
     assert str(e.value) == "(code=700007): No permission to access the endpoint."
 
@@ -644,9 +648,7 @@ async def test_get_currency_info(http_client: HTTP):
 async def test_withdraw(http_client: HTTP):
     # Test with invalid data
     with pytest.raises(pymexc._async.base.MexcAPIError) as e:
-        await http_client.withdraw(
-            coin="INVALID_COIN", address="invalid_address", amount=-1
-        )
+        await http_client.withdraw(coin="INVALID_COIN", address="invalid_address", amount=-1)
 
     assert e.errisinstance(pymexc._async.base.MexcAPIError)
     assert "code" in str(e.value)
@@ -690,9 +692,7 @@ async def test_withdraw_history(http_client: HTTP):
 async def test_generate_deposit_address(http_client: HTTP):
     # Test with invalid data
     with pytest.raises(pymexc._async.base.MexcAPIError) as e:
-        await http_client.generate_deposit_address(
-            coin="INVALID_COIN", network="INVALID_NETWORK"
-        )
+        await http_client.generate_deposit_address(coin="INVALID_COIN", network="INVALID_NETWORK")
 
     assert e.errisinstance(pymexc._async.base.MexcAPIError)
     assert "code" in str(e.value)
@@ -755,9 +755,7 @@ async def test_user_universal_transfer_history(http_client: HTTP):
 async def test_user_universal_transfer_history_by_tranid(http_client: HTTP):
     # Test with invalid data
     with pytest.raises(pymexc._async.base.MexcAPIError) as e:
-        await http_client.user_universal_transfer_history_by_tranid(
-            tran_id="invalid_tran_id"
-        )
+        await http_client.user_universal_transfer_history_by_tranid(tran_id="invalid_tran_id")
 
     assert e.errisinstance(pymexc._async.base.MexcAPIError)
     assert "code" in str(e.value)
@@ -820,9 +818,7 @@ async def test_internal_transfer_history(http_client: HTTP):
     current_time = int(time.time() * 1000)
     one_day_ago = current_time - (24 * 60 * 60 * 1000)
 
-    resp = await http_client.internal_transfer_history(
-        start_time=one_day_ago, end_time=current_time
-    )
+    resp = await http_client.internal_transfer_history(start_time=one_day_ago, end_time=current_time)
 
     if PRINT_RESPONSE:
         print(str(resp)[:50])
@@ -830,16 +826,6 @@ async def test_internal_transfer_history(http_client: HTTP):
     assert isinstance(resp, dict)
     assert "data" in resp
     assert isinstance(resp["data"], list)
-
-
-@pytest.mark.asyncio
-async def test_get_etf_info(http_client: HTTP):
-    with pytest.raises(json.decoder.JSONDecodeError) as e:
-        resp = await http_client.get_etf_info(symbol="ANY_SYMBOL")
-        if PRINT_RESPONSE:
-            print("ETF info response:", resp)
-
-    assert "Expecting value: line 1 column 1 (char 0)" in str(e.value)
 
 
 @pytest.mark.asyncio

@@ -1992,14 +1992,17 @@ class WebSocket(_SpotWebSocket):
             extend_proto_body=extend_proto_body,
         )
         self.listenKey = listenKey
+        self._keepalive_http: Optional[HTTP] = None
+        self._keepalive_stop = threading.Event()
 
         super().__init__(**kwargs)
 
         # for keep alive connection to private spot websocket
         # need to send listen key at connection and send keep-alive request every 60 mins
         if api_key and api_secret:
+            self._keepalive_http = HTTP(api_key=api_key, api_secret=api_secret)
             if not self.listenKey:
-                auth = HTTP(api_key=api_key, api_secret=api_secret).create_listen_key()
+                auth = self._keepalive_http.create_listen_key()
                 self.listenKey = auth.get("listenKey")
                 logger.debug(f"create listenKey: {self.listenKey}")
 
@@ -2009,7 +2012,7 @@ class WebSocket(_SpotWebSocket):
             self.endpoint = f"wss://wbs-api.mexc.com/ws?listenKey={self.listenKey}"
 
             # setup keep-alive connection loop
-            self.kal = threading.Thread(target=lambda: self._keep_alive_loop())
+            self.kal = threading.Thread(target=self._keep_alive_loop)
             self.kal.daemon = True
             self.kal.start()
 
@@ -2021,13 +2024,28 @@ class WebSocket(_SpotWebSocket):
         :return: None
         """
 
-        while True:
+        while not self._keepalive_stop.is_set():
             time.sleep(59 * 60)  # 59 min
-            if self.listenKey:
-                resp = HTTP(api_key=self.api_key, api_secret=self.api_secret).keep_alive_listen_key(self.listenKey)
-                logger.debug(f"keep-alive listenKey - {self.listenKey}. Response: {resp}")
-            else:
+            if self._keepalive_stop.is_set() or not self.listenKey:
                 break
+
+            if not self._keepalive_http:
+                self._keepalive_http = HTTP(api_key=self.api_key, api_secret=self.api_secret)
+
+            try:
+                resp = self._keepalive_http.keep_alive_listen_key(self.listenKey)
+                logger.debug(f"keep-alive listenKey - {self.listenKey}. Response: {resp}")
+            except Exception as exc:
+                logger.exception(f"keep-alive listenKey failed: {exc}")
+                time.sleep(5)
+
+    def exit(self):
+        if getattr(self, "_keepalive_stop", None):
+            self._keepalive_stop.set()
+        self.listenKey = None
+        super().exit()
+        if getattr(self, "kal", None) and self.kal.is_alive():
+            self.kal.join(timeout=1)
 
     # <=================================================================>
     #
