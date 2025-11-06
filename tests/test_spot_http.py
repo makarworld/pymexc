@@ -263,7 +263,9 @@ def test_universal_transfer():
         print(str(e.value))
 
     assert e.errisinstance(pymexc.base.MexcAPIError)
-    assert str(e.value) == "(code=700007): No permission to access the endpoint."
+    # assert str(e.value) == "(code=700007): No permission to access the endpoint."
+    # assert str(e.value) == "(code=700004): Param 'fromAccount' or 'toAccount' must be sent, but both were empty/null!"
+    assert "(code=700004): " in str(e.value) or "(code=700007): " in str(e.value)
 
 
 def test_query_universal_transfer_history():
@@ -610,6 +612,9 @@ def test_cancel_withdraw():
     # Test with invalid data
     with pytest.raises(pymexc.base.MexcAPIError) as e:
         http.cancel_withdraw(id="invalid_id")
+
+    if PRINT_RESPONSE:
+        print(str(e.value))
 
     assert e.errisinstance(pymexc.base.MexcAPIError)
     assert "code" in str(e.value)

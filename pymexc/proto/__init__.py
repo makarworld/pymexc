@@ -1,5 +1,6 @@
 from __future__ import annotations
-from typing import Any, Literal, Optional, Self, Union
+from typing import Any, Literal, Optional, Self, TypeAlias, Union, cast
+from typing import Type, TypeVar
 
 
 import pymexc.proto.PublicDealsV3Api_pb2 as PublicDealsV3Api__pb2
@@ -241,58 +242,52 @@ class ProtoTyping:
         sendTime: Optional[int]
 
 
-PublicSpotKlineV3Api: ProtoTyping.PublicSpotKlineV3Api = (
-    PublicSpotKlineV3Api__pb2.PublicSpotKlineV3Api
+PublicSpotKlineV3ApiClass: TypeAlias = "type[ProtoTyping.PublicSpotKlineV3Api]"
+PublicSpotKlineV3Api = cast(PublicSpotKlineV3ApiClass, PublicSpotKlineV3Api__pb2.PublicSpotKlineV3Api)
+PublicDealsV3ApiClass: TypeAlias = "type[ProtoTyping.PublicDealsV3Api]"
+PublicDealsV3Api = cast(PublicDealsV3ApiClass, PublicDealsV3Api__pb2.PublicDealsV3Api)
+PublicIncreaseDepthV3ApiItemClass: TypeAlias = "type[ProtoTyping.PublicIncreaseDepthV3ApiItem]"
+PublicIncreaseDepthV3ApiItem = cast(
+    PublicIncreaseDepthV3ApiItemClass, PublicIncreaseDepthsV3Api__pb2.PublicIncreaseDepthV3ApiItem
 )
-PublicDealsV3Api: ProtoTyping.PublicDealsV3Api = PublicDealsV3Api__pb2.PublicDealsV3Api
-PublicIncreaseDepthV3ApiItem: ProtoTyping.PublicIncreaseDepthV3ApiItem = (
-    PublicIncreaseDepthsV3Api__pb2.PublicIncreaseDepthV3ApiItem
+PublicIncreaseDepthsV3ApiClass: TypeAlias = "type[ProtoTyping.PublicIncreaseDepthsV3Api]"
+PublicIncreaseDepthsV3Api = cast(
+    PublicIncreaseDepthsV3ApiClass, PublicIncreaseDepthsV3Api__pb2.PublicIncreaseDepthsV3Api
 )
-PublicIncreaseDepthsV3Api: ProtoTyping.PublicIncreaseDepthsV3Api = (
-    PublicIncreaseDepthsV3Api__pb2.PublicIncreaseDepthsV3Api
+PublicLimitDepthV3ApiItemClass: TypeAlias = "type[ProtoTyping.PublicLimitDepthV3ApiItem]"
+PublicLimitDepthV3ApiItem = cast(PublicLimitDepthV3ApiItemClass, PublicLimitDepthsV3Api__pb2.PublicLimitDepthV3ApiItem)
+PublicLimitDepthsV3ApiClass: TypeAlias = "type[ProtoTyping.PublicLimitDepthsV3Api]"
+PublicLimitDepthsV3Api = cast(PublicLimitDepthsV3ApiClass, PublicLimitDepthsV3Api__pb2.PublicLimitDepthsV3Api)
+PrivateOrdersV3ApiClass: TypeAlias = "type[ProtoTyping.PrivateOrdersV3Api]"
+PrivateOrdersV3Api = cast(PrivateOrdersV3ApiClass, PrivateOrdersV3Api__pb2.PrivateOrdersV3Api)
+PublicBookTickerV3ApiClass: TypeAlias = "type[ProtoTyping.PublicBookTickerV3Api]"
+PublicBookTickerV3Api = cast(PublicBookTickerV3ApiClass, PublicBookTickerV3Api__pb2.PublicBookTickerV3Api)
+PrivateDealsV3ApiClass: TypeAlias = "type[ProtoTyping.PrivateDealsV3Api]"
+PrivateDealsV3Api = cast(PrivateDealsV3ApiClass, PrivateDealsV3Api__pb2.PrivateDealsV3Api)
+PrivateAccountV3ApiClass: TypeAlias = "type[ProtoTyping.PrivateAccountV3Api]"
+PrivateAccountV3Api = cast(PrivateAccountV3ApiClass, PrivateAccountV3Api__pb2.PrivateAccountV3Api)
+PublicMiniTickerV3ApiClass: TypeAlias = "type[ProtoTyping.PublicMiniTickerV3Api]"
+PublicMiniTickerV3Api = cast(PublicMiniTickerV3ApiClass, PublicMiniTickerV3Api__pb2.PublicMiniTickerV3Api)
+PublicMiniTickersV3ApiClass: TypeAlias = "type[ProtoTyping.PublicMiniTickersV3Api]"
+PublicMiniTickersV3Api = cast(PublicMiniTickersV3ApiClass, PublicMiniTickersV3Api__pb2.PublicMiniTickersV3Api)
+PublicBookTickerBatchV3ApiClass: TypeAlias = "type[ProtoTyping.PublicBookTickerBatchV3Api]"
+PublicBookTickerBatchV3Api = cast(
+    PublicBookTickerBatchV3ApiClass, PublicBookTickerBatchV3Api__pb2.PublicBookTickerBatchV3Api
 )
-PublicLimitDepthV3ApiItem: ProtoTyping.PublicLimitDepthV3ApiItem = (
-    PublicLimitDepthsV3Api__pb2.PublicLimitDepthV3ApiItem
+PublicIncreaseDepthsBatchV3ApiClass: TypeAlias = "type[ProtoTyping.PublicIncreaseDepthsBatchV3Api]"
+PublicIncreaseDepthsBatchV3Api = cast(
+    PublicIncreaseDepthsBatchV3ApiClass, PublicIncreaseDepthsBatchV3Api__pb2.PublicIncreaseDepthsBatchV3Api
 )
-PublicLimitDepthsV3Api: ProtoTyping.PublicLimitDepthsV3Api = (
-    PublicLimitDepthsV3Api__pb2.PublicLimitDepthsV3Api
+PublicAggreDepthsV3ApiClass: TypeAlias = "type[ProtoTyping.PublicAggreDepthsV3Api]"
+PublicAggreDepthsV3Api = cast(PublicAggreDepthsV3ApiClass, PublicAggreDepthsV3Api__pb2.PublicAggreDepthsV3Api)
+PublicAggreDealsV3ApiClass: TypeAlias = "type[ProtoTyping.PublicAggreDealsV3Api]"
+PublicAggreDealsV3Api = cast(PublicAggreDealsV3ApiClass, PublicAggreDealsV3Api__pb2.PublicAggreDealsV3Api)
+PublicAggreBookTickerV3ApiClass: TypeAlias = "type[ProtoTyping.PublicAggreBookTickerV3Api]"
+PublicAggreBookTickerV3Api = cast(
+    PublicAggreBookTickerV3ApiClass, PublicAggreBookTickerV3Api__pb2.PublicAggreBookTickerV3Api
 )
-PrivateOrdersV3Api: ProtoTyping.PrivateOrdersV3Api = (
-    PrivateOrdersV3Api__pb2.PrivateOrdersV3Api
-)
-PublicBookTickerV3Api: ProtoTyping.PublicBookTickerV3Api = (
-    PublicBookTickerV3Api__pb2.PublicBookTickerV3Api
-)
-PrivateDealsV3Api: ProtoTyping.PrivateDealsV3Api = (
-    PrivateDealsV3Api__pb2.PrivateDealsV3Api
-)
-PrivateAccountV3Api: ProtoTyping.PrivateAccountV3Api = (
-    PrivateAccountV3Api__pb2.PrivateAccountV3Api
-)
-PublicMiniTickerV3Api: ProtoTyping.PublicMiniTickerV3Api = (
-    PublicMiniTickerV3Api__pb2.PublicMiniTickerV3Api
-)
-PublicMiniTickersV3Api: ProtoTyping.PublicMiniTickersV3Api = (
-    PublicMiniTickersV3Api__pb2.PublicMiniTickersV3Api
-)
-PublicBookTickerBatchV3Api: ProtoTyping.PublicBookTickerBatchV3Api = (
-    PublicBookTickerBatchV3Api__pb2.PublicBookTickerBatchV3Api
-)
-PublicIncreaseDepthsBatchV3Api: ProtoTyping.PublicIncreaseDepthsBatchV3Api = (
-    PublicIncreaseDepthsBatchV3Api__pb2.PublicIncreaseDepthsBatchV3Api
-)
-PublicAggreDepthsV3Api: ProtoTyping.PublicAggreDepthsV3Api = (
-    PublicAggreDepthsV3Api__pb2.PublicAggreDepthsV3Api
-)
-PublicAggreDealsV3Api: ProtoTyping.PublicAggreDealsV3Api = (
-    PublicAggreDealsV3Api__pb2.PublicAggreDealsV3Api
-)
-PublicAggreBookTickerV3Api: ProtoTyping.PublicAggreBookTickerV3Api = (
-    PublicAggreBookTickerV3Api__pb2.PublicAggreBookTickerV3Api
-)
-PushDataV3ApiWrapper: ProtoTyping.PushDataV3ApiWrapper = (
-    PushDataV3ApiWrapper__pb2.PushDataV3ApiWrapper
-)
+PushDataV3ApiWrapperClass: TypeAlias = "type[ProtoTyping.PushDataV3ApiWrapper]"
+PushDataV3ApiWrapper = cast(PushDataV3ApiWrapperClass, PushDataV3ApiWrapper__pb2.PushDataV3ApiWrapper)
 
 
 __all__ = [

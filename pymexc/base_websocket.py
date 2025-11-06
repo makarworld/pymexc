@@ -11,7 +11,7 @@ from pymexc.proto import ProtoTyping, PublicSpotKlineV3Api, PushDataV3ApiWrapper
 
 logger = logging.getLogger(__name__)
 
-SPOT = "wss://wbs-api.mexc.com/ws"
+SPOT = "ws://wbs-api.mexc.com/ws"
 FUTURES = "wss://contract.mexc.com/edge"
 FUTURES_PERSONAL_TOPICS = [
     "order",
@@ -29,6 +29,17 @@ FUTURES_PERSONAL_TOPICS = [
 
 class _WebSocketManager:
     endpoint: str
+    func_to_topic: dict[Callable, str] = {
+        "deals": "public.aggre.deals",
+        "depth": "public.aggre.depth",
+        "limit.depth": "public.limit.depth",
+        "book.ticker": "public.aggre.bookTicker",
+        "book.ticker.batch": "public.bookTicker.batch",
+        "account.update": "private.account",
+        "account.deals": "private.deals",
+        "account.orders": "private.orders",
+    }
+    sub_state: dict[str, bool] = {}
 
     def __init__(
         self,
@@ -86,7 +97,7 @@ class _WebSocketManager:
 
         # Record the subscriptions made so that we can resubscribe if the WSS
         # connection is broken.
-        self.subscriptions: List[dict] = []
+        self.subscriptions: dict[str, dict] = {}
 
         # Set ping settings.
         self.ping_interval: int = ping_interval
@@ -175,7 +186,7 @@ class _WebSocketManager:
                 # no previous WSS connection.
                 return
 
-            for subscription_message in self.subscriptions:
+            for subscription_message in self.subscriptions.values():
                 self.ws.send(json.dumps(subscription_message))
 
         self.attempting_connection = True
@@ -190,7 +201,8 @@ class _WebSocketManager:
             infinitely_reconnect = False
 
         while (infinitely_reconnect or retries > 0) and not self.is_connected():
-            logger.info(f"WebSocket {self.ws_name} attempting connection...")
+            logger.debug(f"WebSocket {self.ws_name} attempting connection... to {url}")
+
             self.ws = websocket.WebSocketApp(
                 url=url,
                 on_message=lambda ws, msg: self._on_message(msg),
@@ -314,7 +326,7 @@ class _WebSocketManager:
         """
         Log WS close.
         """
-        logger.debug(f"WebSocket {self.ws_name} closed.")
+        logger.info(f"WebSocket {self.ws_name} closed.")
 
     def _on_pong(self):
         """
@@ -411,9 +423,11 @@ class _WebSocketManager:
         bodies = {
             "public.kline": "publicSpotKline",
             "public.deals": "publicDeals",
-            "public.increase.depth": "publicIncreaseDepths",
+            "public.aggre.deals": "publicAggreDeals",
+            "public.aggre.depth": "publicAggreDepths",
             "public.limit.depth": "publicLimitDepths",
-            "public.bookTicker": "publicBookTicker",
+            "public.aggre.bookTicker": "publicAggreBookTicker",
+            "public.bookTicker.batch": "publicBookTickerBatch",
             "private.account": "privateAccount",
             "private.deals": "privateDeals",
             "private.orders": "privateOrders",
@@ -423,7 +437,7 @@ class _WebSocketManager:
             return getattr(message, bodies[topic])  # default=message
 
         else:
-            logger.warning(f"Body for topic {topic} not found. | Message: {message.__dict__}")
+            logger.warning(f"Body for topic {topic} not found. | Message: {message}")
             return message
 
     def _process_normal_message(self, message: dict | ProtoTyping.PushDataV3ApiWrapper, parse_only: bool = False):
@@ -439,7 +453,7 @@ class _WebSocketManager:
 
         callback_function = self._get_callback(topic)
         if not callback_function:
-            logger.warning(f"Callback for topic {topic} not found. | Message: {message}")
+            logger.error(f"Callback for topic {topic} not found. | Message: {message}")
             return None, None
         else:
             if parse_only:
@@ -448,9 +462,29 @@ class _WebSocketManager:
             callback_function(callback_data)
 
     def _process_subscription_message(self, message: dict):
+        """
+        process message after sub on any topic and check is subscription successful or not
+        """
+
         if message.get("id") == 0 and message.get("code") == 0:
+            # idk what to do with this message
+            if "msg format invalid" in message.get("msg", ""):
+                # disable error logging for a while
+                # logger.error(f"Subscription: Got error message: {message.get('msg', '')}")
+                return
+
+            if "Not Subscribed successfully!" in message.get("msg", ""):
+                logger.error(f"Subscription: Not Subscribed successfully! | Message: {message.get('msg', '')}")
+                if self.last_subsctiption:
+                    self._pop_callback(self.last_subsctiption)
+                return
+
+            # if not message.get("msg"):
+            #    logger.debug(f"Unsubscription successful.")
+            #    return
+
             # If we get successful SPOT subscription, notify user
-            logger.debug(f"Subscription to {message['msg']} successful.")
+            logger.info(f"Subscription / Unsubscription to {message['msg']} successful.")
             return
 
         elif (
@@ -497,7 +531,7 @@ class _FuturesWebSocketManager(_WebSocketManager):
 
         subscription_message = json.dumps(subscription_args)
         self.ws.send(subscription_message)
-        self.subscriptions.append(subscription_args)
+        self.subscriptions[topic] = subscription_args
         self._set_callback(callback_topic, callback)
         self.last_subsctiption = callback_topic
 
@@ -511,17 +545,10 @@ class _FuturesWebSocketManager(_WebSocketManager):
             # send unsub message
             self.ws.send(json.dumps({"method": f"unsub.{method}", "param": {}}))
             # remove subscription from list
-            for sub in self.subscriptions:
+            for topic, sub in self.subscriptions.items():
                 if sub["method"] == f"sub.{method}":
-                    self.subscriptions.remove(sub)
+                    self.subscriptions.pop(topic)
                     break
-
-            logger.debug(f"Unsubscribed from {method}")
-        else:
-            # this is a func, get name
-            topic_name = method.__name__.replace("_stream", "").replace("_", ".")
-
-            return self.unsubscribe(topic_name)
 
     def _process_auth_message(self, message):
         # If we get successful futures auth, notify user
@@ -553,7 +580,7 @@ class _FuturesWebSocketManager(_WebSocketManager):
         elif is_pong_message():
             pass
         elif is_error_message():
-            print(f"WebSocket return error: {message}")
+            logger.error(f"WebSocket return error: {message}")
         else:
             self._process_normal_message(message)
 
@@ -613,7 +640,7 @@ class _SpotWebSocketManager(_WebSocketManager):
 
         subscription_message = json.dumps(subscription_args)
         self.ws.send(subscription_message)
-        self.subscriptions.append(subscription_args)
+        self.subscriptions[topic] = subscription_args
         self._set_callback(topic, callback)
         self.last_subsctiption = topic
 
@@ -642,13 +669,8 @@ class _SpotWebSocketManager(_WebSocketManager):
             )
 
             # remove subscriptions from list
-            for i, sub in enumerate(self.subscriptions):
-                new_params = [x for x in sub["params"] for _topic in topics if _topic not in x]
-                if new_params:
-                    self.subscriptions[i]["params"] = new_params
-                else:
-                    self.subscriptions.remove(sub)
-                break
+            for topic in topics:
+                self.subscriptions.pop(topic, None)
 
             logger.debug(f"Unsubscribed from {topics}")
         else:

@@ -146,7 +146,7 @@ class _AsyncWebSocketManager(_WebSocketManager):
                 # no previous WSS connection.
                 return
 
-            for subscription_message in self.subscriptions:
+            for subscription_message in self.subscriptions.values():
                 await self.ws.send_json(subscription_message)
 
         self.attempting_connection = True
@@ -161,7 +161,7 @@ class _AsyncWebSocketManager(_WebSocketManager):
             infinitely_reconnect = False
 
         while (infinitely_reconnect or retries > 0) and not self.is_connected():
-            logger.info(f"WebSocket {self.ws_name} attempting connection...")
+            logger.debug(f"WebSocket {self.ws_name} attempting connection... to {url}")
 
             self.session = ClientSession()
             timeout = ClientTimeout(total=60)
@@ -250,7 +250,7 @@ class _FuturesWebSocketManager(_AsyncWebSocketManager):
             await asyncio.sleep(0.1)
 
         await self.ws.send_json(subscription_args)
-        self.subscriptions.append(subscription_args)
+        self.subscriptions[topic] = subscription_args
         self._set_callback(callback_topic, callback)
         self.last_subsctiption = callback_topic
 
@@ -265,9 +265,9 @@ class _FuturesWebSocketManager(_AsyncWebSocketManager):
             await self.ws.send_json({"method": f"unsub.{method}", "param": {}})
 
             # remove subscription from list
-            for sub in self.subscriptions:
+            for topic, sub in self.subscriptions.items():
                 if sub["method"] == f"sub.{method}":
-                    self.subscriptions.remove(sub)
+                    self.subscriptions.pop(topic)
                     break
 
             logger.debug(f"Unsubscribed from {method}")
@@ -307,7 +307,7 @@ class _FuturesWebSocketManager(_AsyncWebSocketManager):
         elif is_pong_message():
             pass
         elif is_error_message():
-            print(f"WebSocket return error: {message}")
+            logger.error(f"WebSocket return error: {message}")
         else:
             await self._process_normal_message(message)
 
@@ -383,43 +383,47 @@ class _SpotWebSocketManager(_AsyncWebSocketManager):
             # Wait until the connection is open before subscribing.
             await asyncio.sleep(0.1)
 
+        logger.debug(f"subscription_args: {subscription_args}")
         await self.ws.send_json(subscription_args)
-        self.subscriptions.append(subscription_args)
+
+        self.subscriptions[topic] = subscription_args
+        print(self.subscriptions)
+
         self._set_callback(topic, callback)
         self.last_subsctiption = topic
 
     async def unsubscribe(self, *topics: str | Callable):
+        if isinstance(topics, str):
+            topics = [topics]
+
+        elif isinstance(topics, tuple):
+            topics = list(topics)
+
+        for i in range(len(topics)):
+            topic = topics[i]
+            if isinstance(topic, str) and topic not in self.subscriptions:
+                logger.error(f"[unsubscribe] Topic {topic} not found in subscriptions, skipping")
+                topics.pop(i)
+                continue
+
         if all([isinstance(topic, str) for topic in topics]):
-            topics = [
-                f"private.{topic}"
-                if topic in self.private_topics
-                else f"public.{topic}"
-                # if user provide function .book_ticker_stream()
-                .replace("book.ticker", "bookTicker")
-                for topic in topics
-            ]
+            # send unsub message
+            unsubscribe_message = {
+                "method": "UNSUBSCRIPTION",
+                "params": [],
+            }
+
             # remove callbacks
+            # remove subscriptions from list
             for topic in topics:
                 self._pop_callback(topic)
+                unsubscribe_message["params"] += self.subscriptions[topic]["params"]
+                self.subscriptions.pop(topic)
 
-            # send unsub message
-            await self.ws.send_json(
-                {
-                    "method": "UNSUBSCRIPTION",
-                    "params": ["@".join([f"spot@{t}.v3.api" + (".pb" if self.proto else "")]) for t in topics],
-                }
-            )
+            logger.debug(f"Unsubscribe message: {unsubscribe_message}")
+            await self.ws.send_json(unsubscribe_message)
 
-            # remove subscriptions from list
-            for i, sub in enumerate(self.subscriptions):
-                new_params = [x for x in sub["params"] for _topic in topics if _topic not in x]
-                if new_params:
-                    self.subscriptions[i]["params"] = new_params
-                else:
-                    self.subscriptions.remove(sub)
-                break
-
-            logger.debug(f"Unsubscribed from {topics}")
+            logger.info(f"Unsubscribed from {topics}")
         else:
             # some funcs in list
             topics = [
@@ -427,11 +431,15 @@ class _SpotWebSocketManager(_AsyncWebSocketManager):
                 #
                 for x in topics
             ]
+
+            topics = [self.func_to_topic[x] if x in self.func_to_topic else x for x in topics]
             return await self.unsubscribe(*topics)
 
     async def _handle_incoming_message(self, message):
+        logger.debug(f"_handle_incoming_message: {message}")
+
         def is_subscription_message():
-            if message.get("id") == 0 and message.get("code") == 0 and message.get("msg"):
+            if message.get("id") == 0 and message.get("code") == 0:
                 return True
             else:
                 return False
@@ -464,7 +472,14 @@ class _SpotWebSocket(_SpotWebSocketManager):
         super().__init__(self.ws_name, api_key=api_key, api_secret=api_secret, loop=loop, **kwargs)
 
     async def _ws_subscribe(self, topic, callback, params: list = [], interval: str = None):
+        if isinstance(topic, str) and topic.startswith("private."):
+            ensure_listen_key = getattr(self, "_ensure_listen_key", None)
+            logger.debug(f"ensure_listen_key: {ensure_listen_key}")
+            if ensure_listen_key:
+                await ensure_listen_key()
+
         if not self.is_connected():
             await self._connect(self.endpoint)
 
+        logger.info(f"Subscribing to topic: {topic} | params: {params} | interval: {interval}")
         await self.subscribe(topic, callback, params, interval)

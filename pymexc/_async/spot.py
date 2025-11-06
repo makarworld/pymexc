@@ -34,18 +34,38 @@ while True:
 
 import asyncio
 import logging
+import warnings
 from asyncio import AbstractEventLoop
 from typing import Callable, List, Literal, Optional, Union
-import warnings
+
+from pymexc.proto import (
+    PrivateAccountV3Api,
+    PrivateDealsV3Api,
+    PrivateOrdersV3Api,
+    PublicAggreBookTickerV3Api,
+    PublicAggreDealsV3Api,
+    PublicAggreDepthsV3Api,
+    PublicBookTickerBatchV3Api,
+    PublicIncreaseDepthsBatchV3Api,
+    PublicIncreaseDepthsV3Api,
+    PublicLimitDepthsV3Api,
+    PublicMiniTickersV3Api,
+    PublicMiniTickerV3Api,
+    PublicSpotKlineV3Api,
+)
 
 logger = logging.getLogger(__name__)
 
 try:
-    from .base import _SpotHTTP, SPOT as SPOT_HTTP
-    from .base_websocket import _SpotWebSocket, SPOT as SPOT_WS
+    from .base import SPOT as SPOT_HTTP
+    from .base import _SpotHTTP
+    from .base_websocket import SPOT as SPOT_WS
+    from .base_websocket import _SpotWebSocket
 except ImportError:
-    from pymexc._async.base import _SpotHTTP, SPOT as SPOT_HTTP
-    from pymexc._async.base_websocket import _SpotWebSocket, SPOT as SPOT_WS
+    from pymexc._async.base import SPOT as SPOT_HTTP
+    from pymexc._async.base import _SpotHTTP
+    from pymexc._async.base_websocket import SPOT as SPOT_WS
+    from pymexc._async.base_websocket import _SpotWebSocket
 
 
 class HTTP(_SpotHTTP):
@@ -1934,7 +1954,7 @@ class WebSocket(_SpotWebSocket):
         http_proxy_auth: Optional[tuple] = None,
         http_proxy_timeout: Optional[int] = None,
         loop: Optional[AbstractEventLoop] = None,
-        proto: Optional[bool] = False,
+        proto: Optional[bool] = True,
         extend_proto_body: Optional[bool] = False,
     ):
         """
@@ -2012,8 +2032,12 @@ class WebSocket(_SpotWebSocket):
         self._keepalive_stop = asyncio.Event()
         self._keepalive_task: Optional[asyncio.Task] = None
         self._keepalive_http: Optional[HTTP] = None
+        self._listen_key_lock: Optional[asyncio.Lock] = None
 
         super().__init__(**kwargs)
+
+        if self.listenKey:
+            self.endpoint = self._build_private_endpoint()
 
         # for keep alive connection to private spot websocket
         # need to send listen key at connection and send keep-alive request every 60 mins
@@ -2021,6 +2045,35 @@ class WebSocket(_SpotWebSocket):
             self._keepalive_http = HTTP(api_key=api_key, api_secret=api_secret)
             # setup keep-alive connection loop
             self._keepalive_task = loop.create_task(self._keep_alive_loop())
+
+    def _build_private_endpoint(self) -> str:
+        base_endpoint = SPOT_WS.split("?")[0]
+        return f"{base_endpoint}?listenKey={self.listenKey}"
+
+    async def _ensure_listen_key(self):
+        if self.listenKey:
+            self.endpoint = self._build_private_endpoint()
+            return
+
+        if not (self.api_key and self.api_secret):
+            raise Exception("Private websocket topics require a listenKey or API credentials to generate one.")
+
+        if not self._keepalive_http:
+            self._keepalive_http = HTTP(api_key=self.api_key, api_secret=self.api_secret)
+
+        if not self._listen_key_lock:
+            self._listen_key_lock = asyncio.Lock()
+
+        async with self._listen_key_lock:
+            if not self.listenKey:
+                auth = await self._keepalive_http.create_listen_key()
+                self.listenKey = auth.get("listenKey")
+                logger.debug(f"create listenKey: {self.listenKey}")
+
+                if not self.listenKey:
+                    raise Exception(f"ListenKey not found. Error: {auth}")
+
+        self.endpoint = self._build_private_endpoint()
 
     async def _keep_alive_loop(self):
         """
@@ -2030,18 +2083,11 @@ class WebSocket(_SpotWebSocket):
         :return: None
         """
 
-        if not self._keepalive_http and self.api_key and self.api_secret:
-            self._keepalive_http = HTTP(api_key=self.api_key, api_secret=self.api_secret)
-
-        if not self.listenKey and self._keepalive_http:
-            auth = await self._keepalive_http.create_listen_key()
-            self.listenKey = auth.get("listenKey")
-            logger.debug(f"create listenKey: {self.listenKey}")
-
-        if not self.listenKey:
-            raise Exception("ListenKey not found for keep-alive task")
-
-        self.endpoint = f"{SPOT_WS}/ws?listenKey={self.listenKey}"
+        try:
+            await self._ensure_listen_key()
+        except Exception as exc:
+            logger.exception(f"Failed to obtain listenKey for keep-alive task: {exc}")
+            return
 
         while not self._keepalive_stop.is_set():
             try:
@@ -2051,9 +2097,6 @@ class WebSocket(_SpotWebSocket):
 
             if self._keepalive_stop.is_set() or not self.listenKey:
                 break
-
-            if not self._keepalive_http:
-                continue
 
             try:
                 resp = await self._keepalive_http.keep_alive_listen_key(self.listenKey)
@@ -2104,7 +2147,12 @@ class WebSocket(_SpotWebSocket):
     #
     # <=================================================================>
 
-    async def deals_stream(self, callback: Callable[..., None], symbol: Union[str, List[str]], interval: str = None):
+    async def deals_stream(
+        self,
+        callback: Callable[..., PublicAggreDealsV3Api],
+        symbol: Union[str, List[str]],
+        interval: str = "100ms",
+    ):
         """
         ### Trade Streams
         The Trade Streams push raw trade information; each trade has a unique buyer and seller.
@@ -2112,11 +2160,11 @@ class WebSocket(_SpotWebSocket):
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#trade-streams
 
         :param callback: the callback function
-        :type callback: Callable[..., None]
+        :type callback: Callable[..., PublicAggreDealsV3Api]
         :param symbol: the name of the contract
         :type symbol: Union[str,List[str]]
-        :param interval: the interval for the stream, default is None. Possible values '100ms' or '10s'
-        :type symbol: str
+        :param interval: the interval for the stream, default is '100ms'. Possible values '100ms' or '10s'
+        :type interval: str
 
         :return: None
         """
@@ -2128,19 +2176,26 @@ class WebSocket(_SpotWebSocket):
         topic = "public.aggre.deals"
         await self._ws_subscribe(topic, callback, params, interval)
 
-    async def kline_stream(self, callback: Callable[..., None], symbol: str, interval: int):
+    async def kline_stream(
+        self,
+        callback: Callable[..., PublicSpotKlineV3Api],
+        symbol: str,
+        interval: Literal[
+            "Min1", "Min5", "Min15", "Min30", "Min60", "Hour4", "Hour8", "Day1", "Week1", "Month1"
+        ] = "Min1",
+    ):
         """
         ### Kline Streams
         The Kline/Candlestick Stream push updates to the current klines/candlestick every second.
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#kline-streams
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#k-line-streams
 
         :param callback: the callback function
-        :type callback: Callable[..., None]
+        :type callback: Callable[..., PublicSpotKlineV3Api]
         :param symbol: the name of the contract
         :type symbol: str
         :param interval: the interval of the kline
-        :type interval: int
+        :type interval: Literal["Min1", "Min5", "Min15", "Min30", "Min60", "Hour4", "Hour8", "Day1", "Week1", "Month1"]
 
         :return: None
         """
@@ -2148,7 +2203,12 @@ class WebSocket(_SpotWebSocket):
         topic = "public.kline"
         await self._ws_subscribe(topic, callback, params)
 
-    async def depth_stream(self, callback: Callable[..., None], symbol: str):
+    async def depth_stream(
+        self,
+        callback: Callable[..., PublicIncreaseDepthsV3Api],
+        symbol: str,
+        interval: Literal["100ms", "10ms"] = "100ms",
+    ):
         """
         ### Diff.Depth Stream
         If the quantity is 0, it means that the order of the price has been cancel or traded,remove the price level.
@@ -2156,17 +2216,21 @@ class WebSocket(_SpotWebSocket):
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#diff-depth-stream
 
         :param callback: the callback function
-        :type callback: Callable[..., None]
+        :type callback: Callable[..., PublicIncreaseDepthsV3Api]
         :param symbol: the name of the contract
         :type symbol: str
+        :param interval: the interval for the stream, default is '100ms'. Possible values '100ms' or '10s'
+        :type interval: str
 
         :return: None
         """
-        params = [dict(symbol=symbol)]
+        params = [dict(interval=interval, symbol=symbol)]
         topic = "public.aggre.depth"
         await self._ws_subscribe(topic, callback, params)
 
-    async def limit_depth_stream(self, callback: Callable[..., None], symbol: str, level: int):
+    async def limit_depth_stream(
+        self, callback: Callable[..., PublicLimitDepthsV3Api], symbol: str, level: Literal[5, 10, 20] = 5
+    ):
         """
         ### Partial Book Depth Streams
         Top bids and asks, Valid are 5, 10, or 20.
@@ -2174,7 +2238,7 @@ class WebSocket(_SpotWebSocket):
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#partial-book-depth-streams
 
         :param callback: the callback function
-        :type callback: Callable[..., None]
+        :type callback: Callable[..., PublicLimitDepthsV3Api]
         :param symbol: the name of the contract
         :type symbol: str
         :param level: the level of the depth. Valid are 5, 10, or 20.
@@ -2186,25 +2250,32 @@ class WebSocket(_SpotWebSocket):
         topic = "public.limit.depth"
         await self._ws_subscribe(topic, callback, params)
 
-    async def book_ticker_stream(self, callback: Callable[..., None], symbol: str):
+    async def book_ticker_stream(
+        self,
+        callback: Callable[..., PublicAggreBookTickerV3Api],
+        symbol: str,
+        interval: Literal["100ms", "10ms"] = "100ms",
+    ):
         """
         ### Individual Symbol Book Ticker Streams
         Pushes any update to the best bid or ask's price or quantity in real-time for a specified symbol.
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#partial-book-depth-streams
+        https://mexcdevelop.github.io/apidocs/spot_v3_en/#individual-symbol-book-ticker-streams
 
         :param callback: the callback function
-        :type callback: Callable[..., None]
-        :param symbols: the names of the contracts
-        :type symbols: str
+        :type callback: Callable[..., PublicAggreBookTickerV3Api]
+        :param symbol: the name of the contract
+        :type symbol: str
+        :param interval: the interval for the stream, default is '100ms'. Possible values '100ms' or '10s'
+        :type interval: str
 
         :return: None
         """
-        params = [dict(symbol=symbol)]
+        params = [dict(interval=interval, symbol=symbol)]
         topic = "public.aggre.bookTicker"
         await self._ws_subscribe(topic, callback, params)
 
-    async def book_ticker_batch_stream(self, callback: Callable[..., None], symbols: List[str]):
+    async def book_ticker_batch_stream(self, callback: Callable[..., PublicBookTickerBatchV3Api], symbol: str):
         """
         ### Individual Symbol Book Ticker Streams (Batch Aggregation)
         This batch aggregation version pushes the best order information for a specified trading pair.
@@ -2212,13 +2283,13 @@ class WebSocket(_SpotWebSocket):
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#individual-symbol-book-ticker-streams-batch-aggregation
 
         :param callback: the callback function
-        :type callback: Callable[..., None]
-        :param symbols: the names of the contracts
-        :type symbols: List[str]
+        :type callback: Callable[..., PublicBookTickerBatchV3Api]
+        :param symbol: the name of the contract
+        :type symbol: str
 
         :return: None
         """
-        params = [dict(symbol=symbol) for symbol in symbols]
+        params = [dict(symbol=symbol)]
         topic = "public.bookTicker.batch"
         await self._ws_subscribe(topic, callback, params)
 
@@ -2228,7 +2299,7 @@ class WebSocket(_SpotWebSocket):
     #
     # <=================================================================>
 
-    async def account_update(self, callback: Callable[..., None]):
+    async def account_update(self, callback: Callable[..., PrivateAccountV3Api]):
         """
         ### Spot Account Update
         The server will push an update of the account assets when the account balance changes.
@@ -2236,7 +2307,7 @@ class WebSocket(_SpotWebSocket):
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#websocket-user-data-streams
 
         :param callback: the callback function
-        :type callback: Callable[..., None]
+        :type callback: Callable[..., PrivateAccountV3Api]
 
         :return: None
         """
@@ -2244,14 +2315,14 @@ class WebSocket(_SpotWebSocket):
         topic = "private.account"
         await self._ws_subscribe(topic, callback, params)
 
-    async def account_deals(self, callback: Callable[..., None]):
+    async def account_deals(self, callback: Callable[..., PrivateDealsV3Api]):
         """
         ### Spot Account Deals
 
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#spot-account-deals
 
         :param callback: the callback function
-        :type callback: Callable[..., None]
+        :type callback: Callable[..., PrivateDealsV3Api]
 
         :return: None
         """
@@ -2259,14 +2330,14 @@ class WebSocket(_SpotWebSocket):
         topic = "private.deals"
         await self._ws_subscribe(topic, callback, params)
 
-    async def account_orders(self, callback: Callable[..., None]):
+    async def account_orders(self, callback: Callable[..., PrivateOrdersV3Api]):
         """
         ### Spot Account Orders
 
         https://mexcdevelop.github.io/apidocs/spot_v3_en/#spot-account-orders
 
         :param callback: the callback function
-        :type callback: Callable[..., None]
+        :type callback: Callable[..., PrivateOrdersV3Api]
 
         :return: None
         """

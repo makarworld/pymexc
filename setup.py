@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 """
 
 
-version = "1.2.14"
+version = "1.2.15"
 
 with open("README.md", "r") as f:
     long_description = f.read()
@@ -40,14 +40,13 @@ setup(
         "Topic :: Communications :: Email",
         "Operating System :: OS Independent",
         "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.12",
         "Intended Audience :: Developers",
         "Intended Audience :: Customer Service",
         "Intended Audience :: Financial and Insurance Industry",
     ],
     include_package_data=True,  # for MANIFEST.in
-    python_requires=">=3.6.0",
+    python_requires=">=3.9.0",
     package_data={
         package: [
             "py.typed",
