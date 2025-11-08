@@ -212,10 +212,17 @@ class _FuturesHTTP(MexcSDK):
             timestamp = str(int(time.time() * 1000))
             payload = kwargs.get("json") or kwargs.get("params") or {}
 
-            kwargs["headers"] = {
-                "Request-Time": timestamp,
-                "Signature": self.sign(timestamp, **payload),
-            }
+            # Merge headers if they exist, otherwise create new dict
+            if "headers" in kwargs:
+                kwargs["headers"].update({
+                    "Request-Time": timestamp,
+                    "Signature": self.sign(timestamp, **payload),
+                })
+            else:
+                kwargs["headers"] = {
+                    "Request-Time": timestamp,
+                    "Signature": self.sign(timestamp, **payload),
+                }
 
         response = await self.session.request(method, f"{self.base_url}{router}", *args, **kwargs)
 

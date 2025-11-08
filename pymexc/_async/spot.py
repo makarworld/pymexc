@@ -33,6 +33,7 @@ while True:
 """
 
 import asyncio
+import json
 import logging
 import warnings
 from asyncio import AbstractEventLoop
@@ -148,7 +149,7 @@ class HTTP(_SpotHTTP):
         """
         return await self.call("GET", "/api/v3/depth", params=dict(symbol=symbol, limit=limit), auth=False)
 
-    async def trades(self, symbol: str, limit: Optional[int] = 500) -> dict:
+    async def trades(self, symbol: str, limit: Optional[int] = 500) -> list:
         """
         ### Recent Trades List
 
@@ -161,8 +162,8 @@ class HTTP(_SpotHTTP):
         :param limit: An optional integer representing the maximum number of trades to retrieve. Defaults to 500. Max is 1000.
         :type limit: int
 
-        :return: A dictionary containing information about the trades.
-        :rtype: dict
+        :return: A list containing information about the trades.
+        :rtype: list
         """
 
         return await self.call("GET", "/api/v3/trades", params=dict(symbol=symbol, limit=limit), auth=False)
@@ -173,7 +174,7 @@ class HTTP(_SpotHTTP):
         start_time: Optional[int] = None,
         end_time: Optional[int] = None,
         limit: Optional[int] = 500,
-    ) -> dict:
+    ) -> list:
         """
         ### Compressed/Aggregate Trades List
 
@@ -194,8 +195,8 @@ class HTTP(_SpotHTTP):
         :param limit: (optional) The maximum number of trades to retrieve. Default is 500. Max is 1000.
         :type limit: int
 
-        :return: A dictionary containing the retrieved trades.
-        :rtype: dict
+        :return: A list containing the retrieved trades.
+        :rtype: list
         """
         return await self.call(
             "GET",
@@ -211,7 +212,7 @@ class HTTP(_SpotHTTP):
         start_time: Optional[int] = None,
         end_time: Optional[int] = None,
         limit: Optional[int] = 500,
-    ) -> dict:
+    ) -> list:
         """
         ### Kline/Candlestick Data
 
@@ -232,8 +233,8 @@ class HTTP(_SpotHTTP):
         :param limit: (optional) The maximum number of klines to retrieve. Default is 500. Max is 1000.
         :type limit: int
 
-        :return: A dictionary containing the klines.
-        :rtype: dict
+        :return: A list containing the klines.
+        :rtype: list
         """
         return await self.call(
             "GET",
@@ -245,7 +246,7 @@ class HTTP(_SpotHTTP):
                 endTime=end_time,
                 limit=limit,
             ),
-            auth=True,
+            auth=False,
         )
 
     async def avg_price(self, symbol: str):
@@ -262,9 +263,9 @@ class HTTP(_SpotHTTP):
         :return: A dictionary containing average price.
         :rtype: dict
         """
-        return await self.call("GET", "/api/v3/avgPrice", params=dict(symbol=symbol), auth=True)
+        return await self.call("GET", "/api/v3/avgPrice", params=dict(symbol=symbol), auth=False)
 
-    async def ticker_24h(self, symbol: Optional[str] = None):
+    async def ticker_24h(self, symbol: Optional[str] = None, symbols: Optional[List[str]] = None):
         """
         ### 24hr Ticker Price Change Statistics
 
@@ -275,13 +276,20 @@ class HTTP(_SpotHTTP):
 
         :param symbol: (optional) If the symbol is not sent, tickers for all symbols will be returned in an array.
         :type symbol: str
+        :param symbols: (optional) List of symbols. If provided, returns tickers for specified symbols.
+        :type symbols: Optional[List[str]]
 
-        :return: A dictionary.
-        :rtype: dict
+        :return: A dictionary or list of dictionaries.
+        :rtype: Union[dict, list]
         """
-        return await self.call("GET", "/api/v3/ticker/24hr", params=dict(symbol=symbol), auth=False)
+        params = {}
+        if symbol:
+            params["symbol"] = symbol
+        elif symbols:
+            params["symbols"] = ",".join(symbols)
+        return await self.call("GET", "/api/v3/ticker/24hr", params=params if params else None, auth=False)
 
-    async def ticker_price(self, symbol: Optional[str] = None):
+    async def ticker_price(self, symbol: Optional[str] = None, symbols: Optional[List[str]] = None):
         """
         ### Symbol Price Ticker
 
@@ -292,11 +300,18 @@ class HTTP(_SpotHTTP):
 
         :param symbol: (optional) If the symbol is not sent, all symbols will be returned in an array.
         :type symbol: str
+        :param symbols: (optional) List of symbols. If provided, returns prices for specified symbols.
+        :type symbols: Optional[List[str]]
 
-        :return: A dictionary.
-        :rtype: dict
+        :return: A dictionary or list of dictionaries.
+        :rtype: Union[dict, list]
         """
-        return await self.call("GET", "/api/v3/ticker/price", params=dict(symbol=symbol), auth=False)
+        params = {}
+        if symbol:
+            params["symbol"] = symbol
+        elif symbols:
+            params["symbols"] = ",".join(symbols)
+        return await self.call("GET", "/api/v3/ticker/price", params=params if params else None, auth=False)
 
     async def ticker_book_price(self, symbol: Optional[str] = None):
         """
@@ -329,7 +344,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#create-a-sub-account-for-master-account
+        https://www.mexc.com/api-docs/spot-v3/sub-account-endpoints#create-a-sub-account-for-master-account
 
         :param sub_account: Sub-account Name
         :type sub_account: str
@@ -358,7 +373,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-sub-account-list-for-master-account
+        https://www.mexc.com/api-docs/spot-v3/sub-account-endpoints#query-sub-account-list-for-master-account
 
         :param sub_account: (optional) Sub-account Name
         :type sub_account: str
@@ -407,7 +422,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#create-an-apikey-for-a-sub-account-for-master-account
+        https://www.mexc.com/api-docs/spot-v3/sub-account-endpoints#create-an-apikey-for-a-sub-account-for-master-account
 
         :param sub_account: Sub-account Name
         :type sub_account: str
@@ -440,7 +455,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-the-apikey-of-a-sub-account-for-master-account
+        https://www.mexc.com/api-docs/spot-v3/sub-account-endpoints#query-the-apikey-of-a-sub-account-for-master-account
 
         :param sub_account: Sub-account Name
         :type sub_account: str
@@ -457,7 +472,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#delete-the-apikey-of-a-sub-account-for-master-account
+        https://www.mexc.com/api-docs/spot-v3/sub-account-endpoints#delete-the-apikey-of-a-sub-account-for-master-account
 
         :param sub_account: Sub-account Name
         :type sub_account: str
@@ -488,7 +503,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-universal-transfer-history-for-master-account
+        https://www.mexc.com/api-docs/spot-v3/sub-account-endpoints#universal-transfer-for-master-account
 
         :param from_account: (optional) Transfer from master account by default if fromAccount is not sent
         :type from_account: str
@@ -536,7 +551,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-universal-transfer-history-for-master-account
+        https://www.mexc.com/api-docs/spot-v3/sub-account-endpoints#universal-transfer-for-master-account
 
         :param from_account: (optional) Transfer from master account by default if fromAccount is not sent
         :type from_account: str
@@ -573,19 +588,23 @@ class HTTP(_SpotHTTP):
             ),
         )
 
-    async def sub_account_asset(self, sub_account: str, account_type: str = "SPOT") -> dict:
+    async def sub_account_asset(
+        self,
+        sub_account: str,
+        account_type: Literal["SPOT", "FUTURES"],
+    ) -> dict:
         """
-        ### Query Sub-account Assets
-        #### Required permission: SPOT_ACCOUNT_READ
+        ### Query Sub-account Asset
+        #### Required permission: SPOT_TRANSFER_READ
 
         Weight(IP): 1
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-sub-account-assets
+        https://www.mexc.com/api-docs/spot-v3/sub-account-endpoints#query-sub-account-asset
 
-        :param sub_account: Sub-account name
+        :param sub_account: subAccount
         :type sub_account: str
-        :param account_type: Account type (SPOT/MARGIN)
-        :type account_type: str
+        :param account_type: accountType:"SPOT","FUTURES"
+        :type account_type: Literal["SPOT", "FUTURES"]
 
         :return: response dictionary
         :rtype: dict
@@ -604,7 +623,7 @@ class HTTP(_SpotHTTP):
 
     async def get_kyc_status(self) -> dict:
         """
-        ### Get KYC Status
+        ### Query KYC status
         #### Required permission: SPOT_ACCOUNT_READ
 
         Weight(IP): 1
@@ -614,7 +633,7 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return await self.call("GET", "/api/v3/kyc/status")
+        return await self.call("GET", "api/v3/kyc/status")
 
     async def get_uid(self) -> dict:
         """
@@ -633,11 +652,11 @@ class HTTP(_SpotHTTP):
     async def get_default_symbols(self) -> dict:
         """
         ### User API default symbol.
-        #### Required permission: SPOT_ACCOUNT_R
+        #### Required permission: SPOT_ACCOUNT_READ
 
         Weight(IP): 1
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#user-api-default-symbol
+        https://www.mexc.com/api-docs/spot-v3/spot-account-trade#user-api-default-symbol
 
         :return: response dictionary
         :rtype: dict
@@ -660,6 +679,7 @@ class HTTP(_SpotHTTP):
         stop_price: Optional[int] = None,
         iceberg_qty: Optional[int] = None,
         time_in_force: Optional[str] = None,
+        stp_mode: Optional[str] = None,
     ) -> dict:
         """
         ### Test New Order.
@@ -667,20 +687,20 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1, Weight(UID): 1
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#test-new-order
+        https://www.mexc.com/api-docs/spot-v3/spot-account-trade#test-new-order
 
-        :param symbol: Trading pair
+        :param symbol: symbol
         :type symbol: str
         :param side: Order side (BUY/SELL)
         :type side: str
         :param order_type: Order type (LIMIT/MARKET)
         :type order_type: str
         :param quantity: Order quantity
-        :type quantity: Optional[int]
+        :type quantity: Optional[Union[float, str]]
         :param quote_order_qty: Quote order quantity
-        :type quote_order_qty: Optional[int]
+        :type quote_order_qty: Optional[Union[float, str]]
         :param price: Order price
-        :type price: Optional[int]
+        :type price: Optional[Union[float, str]]
         :param new_client_order_id: Client order ID
         :type new_client_order_id: Optional[str]
         :param stop_price: Stop price
@@ -689,6 +709,8 @@ class HTTP(_SpotHTTP):
         :type iceberg_qty: Optional[int]
         :param time_in_force: Time in force
         :type time_in_force: Optional[str]
+        :param stp_mode: Self-trade prevention mode. "" - Default value, no restriction on self-trading. "cancel_maker" - Cancel the maker order. "cancel_taker" - Cancel the taker order. "cancel_both" - Cancel both sides.
+        :type stp_mode: Optional[str]
 
         :return: Empty dict if successful
         :rtype: dict
@@ -715,6 +737,7 @@ class HTTP(_SpotHTTP):
                 stopPrice=stop_price,
                 icebergQty=iceberg_qty,
                 timeInForce=time_in_force,
+                stpMode=stp_mode,
             ),
         )
 
@@ -734,6 +757,7 @@ class HTTP(_SpotHTTP):
         stop_price: Optional[int] = None,
         iceberg_qty: Optional[int] = None,
         time_in_force: Optional[str] = None,
+        stp_mode: Optional[str] = None,
     ) -> dict:
         """
         ### New Order.
@@ -743,7 +767,7 @@ class HTTP(_SpotHTTP):
 
         https://www.mexc.com/api-docs/spot-v3/spot-account-trade#new-order
 
-        :param symbol: Trading pair
+        :param symbol: symbol
         :type symbol: str
         :param side: Order side (BUY/SELL)
         :type side: str
@@ -763,6 +787,8 @@ class HTTP(_SpotHTTP):
         :type iceberg_qty: Optional[int]
         :param time_in_force: Time in force
         :type time_in_force: Optional[str]
+        :param stp_mode: Self-trade prevention mode. "" - Default value, no restriction on self-trading. "cancel_maker" - Cancel the maker order. "cancel_taker" - Cancel the taker order. "cancel_both" - Cancel both sides.
+        :type stp_mode: Optional[str]
 
         :return: Order response dictionary
         :rtype: dict
@@ -789,12 +815,13 @@ class HTTP(_SpotHTTP):
                 stopPrice=stop_price,
                 icebergQty=iceberg_qty,
                 timeInForce=time_in_force,
+                stpMode=stp_mode,
             ),
         )
 
     async def batch_orders(
         self,
-        batch_orders: List[str],
+        batch_orders: List[dict],
         symbol: str,
         side: Literal["BUY", "SELL"],
         order_type: Literal["LIMIT", "MARKET", "LIMIT_MARKET", "IMMEDIATE_OR_CANCEL", "FILL_OR_KILL"],
@@ -802,7 +829,8 @@ class HTTP(_SpotHTTP):
         quote_order_qty: Optional[Union[float, str]] = None,
         price: Optional[Union[float, str]] = None,
         new_client_order_id: Optional[str] = None,
-    ) -> dict:
+        stp_mode: Optional[str] = None,
+    ) -> list:
         """
         ### Batch Orders
         #### Supports 20 orders with a same symbol in a batch,rate limit:2 times/s.
@@ -829,24 +857,51 @@ class HTTP(_SpotHTTP):
         :type price: Optional[Union[float, str]]
         :param new_client_order_id: (optional) ClientOrderId
         :type new_client_order_id: str
+        :param stp_mode: (optional) Self-trade prevention mode. "" - Default value, no restriction on self-trading. "cancel_maker" - Cancel the maker order. "cancel_taker" - Cancel the taker order. "cancel_both" - Cancel both sides.
+        :type stp_mode: Optional[str]
 
 
-        :return: response dictionary
-        :rtype: dict
+        :return: list of order responses
+        :rtype: list
         """
+        # Validate required parameters based on order type
+        if order_type == "LIMIT":
+            if not quantity or not price:
+                raise ValueError("LIMIT orders require both quantity and price")
+        elif order_type == "MARKET":
+            if not quantity and not quote_order_qty:
+                raise ValueError("MARKET orders require either quantity or quoteOrderQty")
+
+        # Prepare batch orders
+        orders = []
+        for order in batch_orders:
+            order_data = {
+                "symbol": symbol,
+                "side": side,
+                "type": order_type,
+            }
+
+            if quantity:
+                order_data["quantity"] = str(quantity)
+            if quote_order_qty:
+                order_data["quoteOrderQty"] = str(quote_order_qty)
+            if price:
+                order_data["price"] = str(price)
+            if new_client_order_id:
+                order_data["newClientOrderId"] = new_client_order_id
+
+            # Add any additional fields from the batch order
+            order_data.update(order)
+            orders.append(order_data)
+
+        params = dict(batchOrders=json.dumps(orders))
+        if stp_mode is not None:
+            params["stpMode"] = stp_mode
+
         return await self.call(
             "POST",
             "api/v3/batchOrders",
-            params=dict(
-                batchOrders=batch_orders,
-                symbol=symbol,
-                side=side,
-                type=order_type,
-                quantity=quantity,
-                quoteOrderQty=quote_order_qty,
-                price=price,
-                newClientOrderId=new_client_order_id,
-            ),
+            params=params,
         )
 
     async def cancel_order(
@@ -917,7 +972,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 2
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-order
+        https://www.mexc.com/api-docs/spot-v3/spot-account-trade#query-order
 
         :param symbol:
         :type symbol: str
@@ -944,7 +999,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 3
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#current-open-orders
+        https://www.mexc.com/api-docs/spot-v3/spot-account-trade#current-open-orders
 
         :param symbol:
         :type symbol: str
@@ -967,7 +1022,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 10
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#all-orders
+        https://www.mexc.com/api-docs/spot-v3/spot-account-trade#all-orders
 
         Get all account orders including active, cancelled or completed orders(the query period is the latest 24 hours by default). You can query a maximum of the latest 7 days.
 
@@ -998,7 +1053,7 @@ class HTTP(_SpotHTTP):
 
         Get current account information,rate limit:2 times/s.
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#account-information
+        https://www.mexc.com/api-docs/spot-v3/spot-account-trade#account-information
 
         :return: response dictionary
         :rtype: dict
@@ -1022,9 +1077,9 @@ class HTTP(_SpotHTTP):
         Get trades for a specific account and symbol,
         Only the transaction records in the past 1 month can be queried.
         If you want to view more transaction records, please use the export function on the web side,
-        which supports exporting transaction records of the past 3 years at most.
+        which supports exporting transaction records of the past 540 days at most.
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#account-trade-list
+        https://www.mexc.com/api-docs/spot-v3/spot-account-trade#account-trade-list
 
         :param symbol:
         :type symbol: str
@@ -1034,7 +1089,7 @@ class HTTP(_SpotHTTP):
         :type start_time: int
         :param end_time: (optional)
         :type end_time: int
-        :param limit: (optional) Default 500; max 1000;
+        :param limit: (optional) Default 100; max 100;
         :type limit: int
 
         :return: response dictionary
@@ -1060,7 +1115,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#enable-mx-deduct
+        https://www.mexc.com/api-docs/spot-v3/spot-account-trade#enable-mx-deduct
 
         :param mx_deduct_enable: true:enable,false:disable
         :type mx_deduct_enable: bool
@@ -1081,7 +1136,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-mx-deduct-status
+        https://www.mexc.com/api-docs/spot-v3/spot-account-trade#query-mx-deduct-status
 
         :return: response dictionary
         :rtype: dict
@@ -1189,11 +1244,11 @@ class HTTP(_SpotHTTP):
         ### Query Symbol Commission
         #### Required permission: SPOT_ACCOUNT_READ
 
-        Weight(IP): 1
+        Weight(IP): 20
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-symbol-commission
+        https://www.mexc.com/api-docs/spot-v3/wallet-endpoints#query-symbol-commission
 
-        :param symbol: Trading pair
+        :param symbol: symbol
         :type symbol: str
 
         :return: response dictionary
@@ -1207,35 +1262,39 @@ class HTTP(_SpotHTTP):
         to_account: str,
         asset: str,
         amount: float,
+        area_code: Optional[str] = None,
     ) -> dict:
         """
         ### Internal Transfer
-        #### Required permission: SPOT_ACCOUNT_WRITE
+        #### Required permission: SPOT_WITHDRAW_WRITE
 
         Weight(IP): 1
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#internal-transfer
+        https://www.mexc.com/api-docs/spot-v3/wallet-endpoints#internal-transfer
 
-        :param to_account_type: Account type (SPOT/MARGIN)
+        :param to_account_type: toAccountType:"EMAIL","UID","MOBILE"
         :type to_account_type: str
-        :param to_account: Account name
+        :param to_account: toAccount
         :type to_account: str
-        :param asset: Asset name
+        :param asset: asset
         :type asset: str
-        :param amount: Transfer amount
+        :param amount: amount
         :type amount: float
+        :param area_code: (optional) areaCode of mobile
+        :type area_code: Optional[str]
 
         :return: response dictionary
         :rtype: dict
         """
         return await self.call(
             "POST",
-            "/api/v3/capital/transfer",
+            "api/v3/capital/transfer/internal",
             params=dict(
                 toAccountType=to_account_type,
                 toAccount=to_account,
                 asset=asset,
                 amount=amount,
+                areaCode=area_code,
             ),
         )
 
@@ -1244,24 +1303,27 @@ class HTTP(_SpotHTTP):
         start_time: Optional[int] = None,
         end_time: Optional[int] = None,
         page: Optional[int] = None,
-        size: Optional[int] = None,
+        limit: Optional[int] = None,
+        tran_id: Optional[str] = None,
     ) -> dict:
         """
-        ### Internal Transfer History
-        #### Required permission: SPOT_ACCOUNT_READ
+        ### Internal Transfer History.
+        #### Required permission: SPOT_WITHDRAW_READ
 
         Weight(IP): 1
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#internal-transfer-history
+        https://www.mexc.com/api-docs/spot-v3/wallet-endpoints#query-internal-transfer-history
 
-        :param start_time: Start time in milliseconds
-        :type start_time: Optional[int]
-        :param end_time: End time in milliseconds
-        :type end_time: Optional[int]
-        :param page: Page number
-        :type page: Optional[int]
-        :param size: Page size
-        :type size: Optional[int]
+        :param start_time: (optional) startTime
+        :type start_time: int
+        :param end_time: (optional) endTime
+        :type end_time: int
+        :param page: (optional) page, default 1
+        :type page: int
+        :param limit: (optional) limit, default 10
+        :type limit: int
+        :param tran_id: (optional) tranId
+        :type tran_id: str
 
         :return: response dictionary
         :rtype: dict
@@ -1269,12 +1331,7 @@ class HTTP(_SpotHTTP):
         return await self.call(
             "GET",
             "api/v3/capital/transfer/internal",
-            params=dict(
-                startTime=start_time,
-                endTime=end_time,
-                page=page,
-                size=size,
-            ),
+            params=dict(startTime=start_time, endTime=end_time, page=page, limit=limit, tranId=tran_id),
         )
 
     async def get_currency_info(self) -> dict:
@@ -1296,6 +1353,7 @@ class HTTP(_SpotHTTP):
         coin: str,
         address: str,
         amount: Union[float, str],
+        contract_address: Optional[str] = None,
         withdraw_order_id: Optional[str] = None,
         network: Optional[str] = None,
         memo: Optional[str] = None,
@@ -1307,7 +1365,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://www.mexc.com/api-docs/spot-v3/wallet-endpoints#withdraw
+        https://www.mexc.com/api-docs/spot-v3/wallet-endpoints#withdraw-new
 
         :param coin: coin
         :type coin: str
@@ -1315,6 +1373,8 @@ class HTTP(_SpotHTTP):
         :type withdraw_order_id: str
         :param network: (optional) withdraw network
         :type network: str
+        :param contract_address: (optional) contract address
+        :type contract_address: str
         :param address: withdraw address
         :type address: str
         :param memo: (optional) memo(If memo is required in the address, it must be passed in)
@@ -1329,11 +1389,12 @@ class HTTP(_SpotHTTP):
         """
         return await self.call(
             "POST",
-            "api/v3/capital/withdraw/apply",
+            "api/v3/capital/withdraw",
             params=dict(
                 coin=coin,
                 withdrawOrderId=withdraw_order_id,
-                network=network,
+                netWork=network,
+                contractAddress=contract_address,
                 address=address,
                 memo=memo,
                 amount=amount,
@@ -1344,11 +1405,11 @@ class HTTP(_SpotHTTP):
     async def cancel_withdraw(self, id: str) -> dict:
         """
         ### Cancel withdraw.
-        #### Required permission: SPOT_WITHDRAW_W
+        #### Required permission: SPOT_WITHDRAW_WRITE
 
         Weight(IP): 1
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#cancel-withdraw
+        https://www.mexc.com/api-docs/spot-v3/wallet-endpoints#cancel-withdraw
 
         :param id: withdraw id
         :type id: str
@@ -1372,7 +1433,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#deposit-history-supporting-network
+        https://www.mexc.com/api-docs/spot-v3/wallet-endpoints#deposit-history-supporting-network
 
         Ensure that the default timestamp of 'startTime' and 'endTime' does not exceed 90 days.
 
@@ -1451,7 +1512,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#generate-deposit-address-supporting-network
+        https://www.mexc.com/api-docs/spot-v3/wallet-endpoints#generate-deposit-address-supporting-network
 
         :param coin: coin
         :type coin: str
@@ -1474,7 +1535,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 10
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#deposit-address-supporting-network
+        https://www.mexc.com/api-docs/spot-v3/wallet-endpoints#deposit-address-supporting-network
 
         :param coin: coin
         :type coin: str
@@ -1501,7 +1562,7 @@ class HTTP(_SpotHTTP):
     ) -> dict:
         """
         ### Withdraw Address (supporting network).
-        #### Required permission: SPOT_WITHDRAW_R
+        #### Required permission: SPOT_WITHDRAW_READ
 
         Weight(IP): 10
 
@@ -1526,7 +1587,7 @@ class HTTP(_SpotHTTP):
         )
 
     async def user_universal_transfer(
-        self, from_account_type: str, to_account_type: str, asset: str, amount: int
+        self, from_account_type: str, to_account_type: str, asset: str, amount: Union[float, str]
     ) -> dict:
         """
         ### User Universal Transfer.
@@ -1610,12 +1671,12 @@ class HTTP(_SpotHTTP):
     async def user_universal_transfer_history_by_tranid(self, tran_id: str) -> dict:
         """
         ### Query User Universal Transfer History (by tranId).
-        #### Required permission: SPOT_TRANSFER_R
+        #### Required permission: SPOT_TRANSFER_READ
         Only can quary the data for the last six months
 
         Weight(IP): 1
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-user-universal-transfer-history-by-tranid
+        https://www.mexc.com/api-docs/spot-v3/wallet-endpoints#query-user-universal-transfer-history-by-tranid
 
         :param tran_id: tranId
         :type tran_id: str
@@ -1632,7 +1693,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-assets-that-can-be-converted-into-mx
+        https://www.mexc.com/api-docs/spot-v3/wallet-endpoints#get-assets-that-can-be-converted-into-mx
 
         :return: response dictionary
         :rtype: dict
@@ -1642,11 +1703,11 @@ class HTTP(_SpotHTTP):
     async def dust_transfer(self, asset: Union[str, List[str]]) -> dict:
         """
         ### Dust Transfer.
-        #### Required permission: SPOT_ACCOUNT_W
+        #### Required permission: SPOT_ACCOUNT_WRITE
 
         Weight(IP): 10
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#dust-transfer
+        https://www.mexc.com/api-docs/spot-v3/wallet-endpoints#dust-transfer
 
         :param asset: The asset being converted.(max 15 assert)eg:asset=BTC,FIL,ETH
         :type asset: Union[str, List[str]]
@@ -1673,7 +1734,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#dustlog
+        https://www.mexc.com/api-docs/spot-v3/wallet-endpoints#dustlog
 
 
         :param start_time: (optional) startTime
@@ -1714,7 +1775,7 @@ class HTTP(_SpotHTTP):
         ### Create a ListenKey.
         #### Required permission: SPOT_ACCOUNT_R
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#listen-key
+        https://www.mexc.com/api-docs/spot-v3/websocket-user-data-streams#listen-key
 
         Start a new user data stream. The stream will close after 60 minutes unless a keepalive is sent.
 
@@ -1728,7 +1789,7 @@ class HTTP(_SpotHTTP):
         ### Get Valid Listen Keys.
         #### Required permission: SPOT_ACCOUNT_R
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#listen-key
+        https://www.mexc.com/api-docs/spot-v3/websocket-user-data-streams#listen-key
 
         Retrieves all currently valid listen keys.
 
@@ -1742,7 +1803,7 @@ class HTTP(_SpotHTTP):
         ### Keep-alive a ListenKey.
         #### Required permission: SPOT_ACCOUNT_R
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#listen-key
+        https://www.mexc.com/api-docs/spot-v3/websocket-user-data-streams#listen-key
 
         Extends the validity to 60 minutes from the time of this call. It is recommended to send a request every 30 minutes.
 
@@ -1759,7 +1820,7 @@ class HTTP(_SpotHTTP):
         ### Close a ListenKey.
         #### Required permission: SPOT_ACCOUNT_R
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#listen-key
+        https://www.mexc.com/api-docs/spot-v3/websocket-user-data-streams#listen-key
 
         Closes the user data stream.
 
@@ -1773,7 +1834,7 @@ class HTTP(_SpotHTTP):
 
     # <=================================================================>
     #
-    #                          Rabate Endpoints
+    #                          Rebate Endpoints
     #
     # <=================================================================>
     async def get_rebate_history_records(
@@ -1788,7 +1849,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#rebate-endpoints
+        https://www.mexc.com/api-docs/spot-v3/rebate-endpoints#get-rebate-history-records
 
 
         :param start_time: (optional)
@@ -1819,7 +1880,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-rebate-records-detail
+        https://www.mexc.com/api-docs/spot-v3/rebate-endpoints#get-rebate-records-detail
 
 
         :param start_time: (optional)
@@ -1851,7 +1912,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-self-rebate-records-detail
+        https://www.mexc.com/api-docs/spot-v3/rebate-endpoints#get-self-rebate-records-detail
 
         :param start_time: (optional)
         :type start_time: int
@@ -1876,12 +1937,12 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-refercode
+        https://www.mexc.com/api-docs/spot-v3/rebate-endpoints#query-refercode
 
         :return: response dictionary
         :rtype: dict
         """
-        return await self.call("GET", "api/v3/rebate/referCode", params=dict(please_sign_me=None))
+        return await self.call("GET", "api/v3/rebate/referCode")
 
     async def affiliate_commission_record(
         self,
@@ -1897,7 +1958,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-affiliate-commission-record-affiliate-only
+        https://www.mexc.com/api-docs/spot-v3/rebate-endpoints#get-affiliate-commission-record-affiliate-only
 
         :param start_time: (optional)
         :type start_time: int
@@ -1939,7 +2000,7 @@ class HTTP(_SpotHTTP):
 
         Weight(IP): 1
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-affiliate-withdraw-record-affiliate-only
+        https://www.mexc.com/api-docs/spot-v3/rebate-endpoints#get-affiliate-withdraw-record-affiliate-only
 
         :param start_time: (optional)
         :type start_time: int
@@ -2101,6 +2162,7 @@ class HTTP(_SpotHTTP):
         self,
         start_time: Optional[int] = None,
         end_time: Optional[int] = None,
+        invite_code: Optional[str] = None,
         page: Optional[int] = None,
         page_size: Optional[int] = None,
     ) -> dict:
@@ -2116,6 +2178,8 @@ class HTTP(_SpotHTTP):
         :type start_time: int
         :param end_time: (optional) endTime
         :type end_time: int
+        :param invite_code: (optional) inviteCode
+        :type invite_code: str
         :param page: (optional) page, default 1
         :type page: int
         :param page_size: (optional) pageSize, default 10
@@ -2130,6 +2194,7 @@ class HTTP(_SpotHTTP):
             params=dict(
                 startTime=start_time,
                 endTime=end_time,
+                inviteCode=invite_code,
                 page=page,
                 pageSize=page_size,
             ),
@@ -2166,7 +2231,7 @@ class WebSocket(_SpotWebSocket):
         :type api_secret: str
 
         :param listenKey: The listen key for the connection to private channels.
-                          If not provided, a listen key will be generated from HTTP api [Permission: SPOT_ACCOUNT_R] (Optional)
+                          If not provided, a listen key will be generated from HTTP api [Permission: SPOT_ACCOUNT_READ] (Optional)
         :type listenKey: str
 
         :param ping_interval: The interval in seconds to send a ping request. (Optional)
@@ -2356,7 +2421,7 @@ class WebSocket(_SpotWebSocket):
         ### Trade Streams
         The Trade Streams push raw trade information; each trade has a unique buyer and seller.
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#trade-streams
+        https://www.mexc.com/api-docs/spot-v3/websocket-market-streams#trade-streams
 
         :param callback: the callback function
         :type callback: Callable[..., PublicAggreDealsV3Api]
@@ -2387,7 +2452,7 @@ class WebSocket(_SpotWebSocket):
         ### Kline Streams
         The Kline/Candlestick Stream push updates to the current klines/candlestick every second.
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#k-line-streams
+        https://www.mexc.com/api-docs/spot-v3/websocket-market-streams#k-line-streams
 
         :param callback: the callback function
         :type callback: Callable[..., PublicSpotKlineV3Api]
@@ -2550,7 +2615,7 @@ class WebSocket(_SpotWebSocket):
         ### Spot Account Update
         The server will push an update of the account assets when the account balance changes.
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#websocket-user-data-streams
+        https://www.mexc.com/api-docs/spot-v3/websocket-user-data-streams#spot-account-update
 
         :param callback: the callback function
         :type callback: Callable[..., PrivateAccountV3Api]
@@ -2565,7 +2630,7 @@ class WebSocket(_SpotWebSocket):
         """
         ### Spot Account Deals
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#spot-account-deals
+        https://www.mexc.com/api-docs/spot-v3/websocket-user-data-streams#spot-account-deals
 
         :param callback: the callback function
         :type callback: Callable[..., PrivateDealsV3Api]
@@ -2580,7 +2645,7 @@ class WebSocket(_SpotWebSocket):
         """
         ### Spot Account Orders
 
-        https://mexcdevelop.github.io/apidocs/spot_v3_en/#spot-account-orders
+        https://www.mexc.com/api-docs/spot-v3/websocket-user-data-streams#spot-account-orders
 
         :param callback: the callback function
         :type callback: Callable[..., PrivateOrdersV3Api]

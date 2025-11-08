@@ -35,7 +35,6 @@ while True:
 import logging
 import threading
 import time
-from tkinter import N
 from typing import Callable, List, Literal, Optional, Union
 import warnings
 import json
@@ -254,7 +253,7 @@ class HTTP(_SpotHTTP):
         """
         return self.call("GET", "/api/v3/avgPrice", params=dict(symbol=symbol), auth=False)
 
-    def ticker_24h(self, symbol: Optional[str] = None):
+    def ticker_24h(self, symbol: Optional[str] = None, symbols: Optional[List[str]] = None):
         """
         ### 24hr Ticker Price Change Statistics
 
@@ -265,13 +264,20 @@ class HTTP(_SpotHTTP):
 
         :param symbol: (optional) If the symbol is not sent, tickers for all symbols will be returned in an array.
         :type symbol: str
+        :param symbols: (optional) List of symbols. If provided, returns tickers for specified symbols.
+        :type symbols: Optional[List[str]]
 
         :return: A dictionary or list of dictionaries containing 24hr ticker statistics.
         :rtype: Union[dict, list]
         """
-        return self.call("GET", "/api/v3/ticker/24hr", params=dict(symbol=symbol), auth=False)
+        params = {}
+        if symbol:
+            params["symbol"] = symbol
+        elif symbols:
+            params["symbols"] = ",".join(symbols)
+        return self.call("GET", "/api/v3/ticker/24hr", params=params if params else None, auth=False)
 
-    def ticker_price(self, symbol: Optional[str] = None):
+    def ticker_price(self, symbol: Optional[str] = None, symbols: Optional[List[str]] = None):
         """
         ### Symbol Price Ticker
 
@@ -282,11 +288,18 @@ class HTTP(_SpotHTTP):
 
         :param symbol: (optional) If the symbol is not sent, all symbols will be returned in an array.
         :type symbol: str
+        :param symbols: (optional) List of symbols. If provided, returns prices for specified symbols.
+        :type symbols: Optional[List[str]]
 
         :return: A dictionary or list of dictionaries containing price ticker information.
         :rtype: Union[dict, list]
         """
-        return self.call("GET", "/api/v3/ticker/price", params=dict(symbol=symbol), auth=False)
+        params = {}
+        if symbol:
+            params["symbol"] = symbol
+        elif symbols:
+            params["symbols"] = ",".join(symbols)
+        return self.call("GET", "/api/v3/ticker/price", params=params if params else None, auth=False)
 
     def ticker_book_price(self, symbol: Optional[str] = None):
         """
@@ -630,7 +643,7 @@ class HTTP(_SpotHTTP):
     def get_default_symbols(self) -> dict:
         """
         ### User API default symbol.
-        #### Required permission: SPOT_ACCOUNT_R
+        #### Required permission: SPOT_ACCOUNT_READ
 
         Weight(IP): 1
 
@@ -657,6 +670,7 @@ class HTTP(_SpotHTTP):
         stop_price: Optional[int] = None,
         iceberg_qty: Optional[int] = None,
         time_in_force: Optional[str] = None,
+        stp_mode: Optional[str] = None,
     ) -> dict:
         """
         ### Test New Order.
@@ -686,6 +700,8 @@ class HTTP(_SpotHTTP):
         :type iceberg_qty: Optional[int]
         :param time_in_force: Time in force
         :type time_in_force: Optional[str]
+        :param stp_mode: Self-trade prevention mode. "" - Default value, no restriction on self-trading. "cancel_maker" - Cancel the maker order. "cancel_taker" - Cancel the taker order. "cancel_both" - Cancel both sides.
+        :type stp_mode: Optional[str]
 
         :return: Empty dict if successful
         :rtype: dict
@@ -712,6 +728,7 @@ class HTTP(_SpotHTTP):
                 stopPrice=stop_price,
                 icebergQty=iceberg_qty,
                 timeInForce=time_in_force,
+                stpMode=stp_mode,
             ),
         )
 
@@ -731,6 +748,7 @@ class HTTP(_SpotHTTP):
         stop_price: Optional[int] = None,
         iceberg_qty: Optional[int] = None,
         time_in_force: Optional[str] = None,
+        stp_mode: Optional[str] = None,
     ) -> dict:
         """
         ### New Order.
@@ -760,6 +778,8 @@ class HTTP(_SpotHTTP):
         :type iceberg_qty: Optional[int]
         :param time_in_force: Time in force
         :type time_in_force: Optional[str]
+        :param stp_mode: Self-trade prevention mode. "" - Default value, no restriction on self-trading. "cancel_maker" - Cancel the maker order. "cancel_taker" - Cancel the taker order. "cancel_both" - Cancel both sides.
+        :type stp_mode: Optional[str]
 
         :return: Order response dictionary
         :rtype: dict
@@ -786,6 +806,7 @@ class HTTP(_SpotHTTP):
                 stopPrice=stop_price,
                 icebergQty=iceberg_qty,
                 timeInForce=time_in_force,
+                stpMode=stp_mode,
             ),
         )
 
@@ -799,6 +820,7 @@ class HTTP(_SpotHTTP):
         quote_order_qty: Optional[float] = None,
         price: Optional[float] = None,
         new_client_order_id: Optional[str] = None,
+        stp_mode: Optional[str] = None,
     ) -> list:
         """
         ### Batch Orders.
@@ -826,6 +848,8 @@ class HTTP(_SpotHTTP):
         :type price: Optional[float]
         :param new_client_order_id: ClientOrderId
         :type new_client_order_id: Optional[str]
+        :param stp_mode: Self-trade prevention mode. "" - Default value, no restriction on self-trading. "cancel_maker" - Cancel the maker order. "cancel_taker" - Cancel the taker order. "cancel_both" - Cancel both sides.
+        :type stp_mode: Optional[str]
 
         :return: list of order responses
         :rtype: list
@@ -860,7 +884,11 @@ class HTTP(_SpotHTTP):
             order_data.update(order)
             orders.append(order_data)
 
-        return self.call("POST", "api/v3/batchOrders", params=dict(batchOrders=json.dumps(orders)))
+        params = dict(batchOrders=json.dumps(orders))
+        if stp_mode is not None:
+            params["stpMode"] = stp_mode
+
+        return self.call("POST", "api/v3/batchOrders", params=params)
 
     def cancel_order(
         self,
@@ -1035,7 +1063,7 @@ class HTTP(_SpotHTTP):
         Get trades for a specific account and symbol,
         Only the transaction records in the past 1 month can be queried.
         If you want to view more transaction records, please use the export function on the web side,
-        which supports exporting transaction records of the past 3 years at most.
+        which supports exporting transaction records of the past 540 days at most.
 
         https://www.mexc.com/api-docs/spot-v3/spot-account-trade#account-trade-list
 
@@ -1047,7 +1075,7 @@ class HTTP(_SpotHTTP):
         :type start_time: int
         :param end_time: (optional)
         :type end_time: int
-        :param limit: (optional) Default 500; max 1000;
+        :param limit: (optional) Default 100; max 100;
         :type limit: int
 
         :return: response dictionary
@@ -1285,7 +1313,7 @@ class HTTP(_SpotHTTP):
     def cancel_withdraw(self, id: str) -> dict:
         """
         ### Cancel withdraw.
-        #### Required permission: SPOT_WITHDRAW_W
+        #### Required permission: SPOT_WITHDRAW_WRITE
 
         Weight(IP): 1
 
@@ -1315,13 +1343,13 @@ class HTTP(_SpotHTTP):
 
         https://www.mexc.com/api-docs/spot-v3/wallet-endpoints#deposit-history-supporting-network
 
-        Default return the records of the last 7 days. Ensure that the default timestamp of 'startTime' and 'endTime' does not exceed 7 days. Can query 90 days data at most.
+        Ensure that the default timestamp of 'startTime' and 'endTime' does not exceed 90 days.
 
         :param coin: (optional) coin
         :type coin: str
         :param status: (optional) status
         :type status: str
-        :param start_time: (optional) default: 7 days ago from current time
+        :param start_time: (optional) default: 90 days ago from current time
         :type start_time: int
         :param end_time: (optional) default: current time
         :type end_time: int
@@ -1359,15 +1387,13 @@ class HTTP(_SpotHTTP):
 
         https://www.mexc.com/api-docs/spot-v3/wallet-endpoints#withdraw-history-supporting-network
 
-        Default return the records of the last 7 days. Ensure that the default timestamp of 'startTime' and 'endTime' does not exceed 7 days. Can query 90 days data at most.
-
         :param coin: (optional) coin
         :type coin: str
         :param status: (optional) withdraw status
         :type status: str
         :param limit: (optional) default:1000, max:1000
         :type limit: int
-        :param start_time: (optional) default: 7 days ago from current time
+        :param start_time: (optional) default: 90 days ago from current time
         :type start_time: str
         :param end_time: (optional) default: current time
         :type end_time: str
@@ -1444,7 +1470,7 @@ class HTTP(_SpotHTTP):
     ) -> dict:
         """
         ### Withdraw Address (supporting network).
-        #### Required permission: SPOT_WITHDRAW_R
+        #### Required permission: SPOT_WITHDRAW_READ
 
         Weight(IP): 10
 
@@ -1468,7 +1494,7 @@ class HTTP(_SpotHTTP):
             params=dict(coin=coin, page=page, limit=limit),
         )
 
-    def user_universal_transfer(self, from_account_type: str, to_account_type: str, asset: str, amount: int) -> dict:
+    def user_universal_transfer(self, from_account_type: str, to_account_type: str, asset: str, amount: Union[float, str]) -> dict:
         """
         ### User Universal Transfer.
         #### Required permission: SPOT_TRANSFER_WRITE
@@ -1551,7 +1577,7 @@ class HTTP(_SpotHTTP):
     def user_universal_transfer_history_by_tranid(self, tran_id: str) -> dict:
         """
         ### Query User Universal Transfer History (by tranId).
-        #### Required permission: SPOT_TRANSFER_R
+        #### Required permission: SPOT_TRANSFER_READ
         Only can quary the data for the last six months
 
         Weight(IP): 1
@@ -1583,7 +1609,7 @@ class HTTP(_SpotHTTP):
     def dust_transfer(self, asset: Union[str, List[str]]) -> dict:
         """
         ### Dust Transfer.
-        #### Required permission: SPOT_ACCOUNT_W
+        #### Required permission: SPOT_ACCOUNT_WRITE
 
         Weight(IP): 10
 
@@ -1636,7 +1662,9 @@ class HTTP(_SpotHTTP):
             params=dict(startTime=start_time, endTime=end_time, page=page, limit=limit),
         )
 
-    def internal_transfer(self, to_account_type: str, to_account: str, asset: str, amount: float) -> dict:
+    def internal_transfer(
+        self, to_account_type: str, to_account: str, asset: str, amount: float, area_code: Optional[str] = None
+    ) -> dict:
         """
         ### Internal Transfer.
         #### Required permission: SPOT_WITHDRAW_WRITE
@@ -1653,6 +1681,8 @@ class HTTP(_SpotHTTP):
         :type asset: str
         :param amount: amount
         :type amount: float
+        :param area_code: (optional) areaCode of mobile
+        :type area_code: Optional[str]
 
         :return: response dictionary
         :rtype: dict
@@ -1666,6 +1696,7 @@ class HTTP(_SpotHTTP):
                 toAccount=to_account,
                 asset=asset,
                 amount=amount,
+                areaCode=area_code,
             ),
         )
 
@@ -1783,7 +1814,7 @@ class HTTP(_SpotHTTP):
 
     # <=================================================================>
     #
-    #                          Rabate Endpoints
+    #                          Rebate Endpoints
     #
     # <=================================================================>
     def get_rebate_history_records(
@@ -1891,13 +1922,13 @@ class HTTP(_SpotHTTP):
         :return: response dictionary
         :rtype: dict
         """
-        return self.call("GET", "api/v3/rebate/referCode", params=dict(please_sign_me=None))
+        return self.call("GET", "api/v3/rebate/referCode")
 
     def affiliate_commission_record(
         self,
         start_time: Optional[int] = None,
         end_time: Optional[int] = None,
-        invite_code: Optional[int] = None,
+        invite_code: Optional[str] = None,
         page: Optional[int] = None,
         page_size: Optional[int] = None,
     ) -> dict:
@@ -1913,8 +1944,8 @@ class HTTP(_SpotHTTP):
         :type start_time: int
         :param end_time: (optional)
         :type end_time: int
-        :param invite_code: (optional)
-        :type invite_code: int
+        :param invite_code: (optional) invite code
+        :type invite_code: str
         :param page: (optional) default 1
         :type page: int
         :param page_size: (optional) default 10
@@ -1939,7 +1970,7 @@ class HTTP(_SpotHTTP):
         self,
         start_time: Optional[int] = None,
         end_time: Optional[int] = None,
-        invite_code: Optional[int] = None,
+        invite_code: Optional[str] = None,
         page: Optional[int] = None,
         page_size: Optional[int] = None,
     ) -> dict:
@@ -1955,8 +1986,8 @@ class HTTP(_SpotHTTP):
         :type start_time: int
         :param end_time: (optional)
         :type end_time: int
-        :param invite_code: (optional)
-        :type invite_code: int
+        :param invite_code: (optional) invite code
+        :type invite_code: str
         :param page: (optional) default 1
         :type page: int
         :param page_size: (optional) default 10
@@ -1981,7 +2012,7 @@ class HTTP(_SpotHTTP):
         self,
         start_time: Optional[int] = None,
         end_time: Optional[int] = None,
-        invite_code: Optional[int] = None,
+        invite_code: Optional[str] = None,
         page: Optional[int] = None,
         page_size: Optional[int] = None,
         type: Optional[Literal[1, 2, 3]] = None,
@@ -2179,7 +2210,7 @@ class WebSocket(_SpotWebSocket):
         :type api_secret: str
 
         :param listenKey: The listen key for the connection to private channels.
-                          If not provided, a listen key will be generated from HTTP api [Permission: SPOT_ACCOUNT_R] (Optional)
+                          If not provided, a listen key will be generated from HTTP api [Permission: SPOT_ACCOUNT_READ] (Optional)
         :type listenKey: str
 
         :param ping_interval: The interval in seconds to send a ping request. (Optional)
