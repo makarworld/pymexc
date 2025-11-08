@@ -246,7 +246,7 @@ class HTTP(_SpotHTTP):
                 endTime=end_time,
                 limit=limit,
             ),
-            auth=False,
+            auth=True,
         )
 
     async def avg_price(self, symbol: str):
@@ -263,7 +263,7 @@ class HTTP(_SpotHTTP):
         :return: A dictionary containing average price.
         :rtype: dict
         """
-        return await self.call("GET", "/api/v3/avgPrice", params=dict(symbol=symbol), auth=False)
+        return await self.call("GET", "/api/v3/avgPrice", params=dict(symbol=symbol), auth=True)
 
     async def ticker_24h(self, symbol: Optional[str] = None, symbols: Optional[List[str]] = None):
         """

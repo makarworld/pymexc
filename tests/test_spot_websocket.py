@@ -374,7 +374,7 @@ def test_multiple_subscriptions(ws_client: WebSocket):
     def handle_message(msg):
         messages.append(msg)
         logger.info(f"Received message type: {type(msg)}")
-        if len(messages) >= 4:
+        if len(messages) >= 20:
             ws_client.unsubscribe(ws_client.deals_stream, ws_client.book_ticker_stream)
             done.set()
 
@@ -382,7 +382,7 @@ def test_multiple_subscriptions(ws_client: WebSocket):
     ws_client.book_ticker_stream(handle_message, "BTCUSDT")
 
     _wait_or_fail(done, 15, "Не получили сообщения от обоих потоков")
-    assert len(messages) >= 4
+    assert len(messages) >= 20
 
     message_types = {type(msg) for msg in messages}
     assert PublicAggreDealsV3Api in message_types

@@ -234,7 +234,7 @@ class HTTP(_SpotHTTP):
                 endTime=end_time,
                 limit=limit,
             ),
-            auth=False,
+            auth=True,
         )
 
     def avg_price(self, symbol: str):
@@ -251,7 +251,7 @@ class HTTP(_SpotHTTP):
         :return: A dictionary containing average price information.
         :rtype: dict
         """
-        return self.call("GET", "/api/v3/avgPrice", params=dict(symbol=symbol), auth=False)
+        return self.call("GET", "/api/v3/avgPrice", params=dict(symbol=symbol), auth=True)
 
     def ticker_24h(self, symbol: Optional[str] = None, symbols: Optional[List[str]] = None):
         """
@@ -1494,7 +1494,9 @@ class HTTP(_SpotHTTP):
             params=dict(coin=coin, page=page, limit=limit),
         )
 
-    def user_universal_transfer(self, from_account_type: str, to_account_type: str, asset: str, amount: Union[float, str]) -> dict:
+    def user_universal_transfer(
+        self, from_account_type: str, to_account_type: str, asset: str, amount: Union[float, str]
+    ) -> dict:
         """
         ### User Universal Transfer.
         #### Required permission: SPOT_TRANSFER_WRITE

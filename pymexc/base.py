@@ -135,7 +135,9 @@ class _SpotHTTP(MexcSDK):
         if self.api_key and self.api_secret and auth:
             params["signature"] = self.sign(encoded_params)
 
-        response = self.session.request(method, f"{self.base_url}{router}", params=params, *args, **kwargs)
+        response: requests.Response = self.session.request(
+            method, f"{self.base_url}{router}", params=params, *args, **kwargs
+        )
 
         if not response.ok:
             raise MexcAPIError(f"(code={response.json()['code']}): {response.json()['msg']}")
@@ -144,6 +146,15 @@ class _SpotHTTP(MexcSDK):
 
 
 class _FuturesHTTP(MexcSDK):
+    __en__ = {
+        "没有权限!": "System internal error!",
+        "禁止访问!": "Access denied!",
+        "请求参数错误!": "Request parameter error!",
+        "请求频率过快!": "Request frequency is too high!",
+        "合约不存在!": "The contract does not exist!",
+        "签名验证失败!": "Signature verification failed!",
+    }
+
     def __init__(
         self,
         api_key: str = None,
@@ -231,17 +242,26 @@ class _FuturesHTTP(MexcSDK):
 
             # Merge headers if they exist, otherwise create new dict
             if "headers" in kwargs:
-                kwargs["headers"].update({
-                    "Request-Time": timestamp,
-                    "Signature": self.sign(timestamp, **payload),
-                })
+                kwargs["headers"].update(
+                    {
+                        "Request-Time": timestamp,
+                        "Signature": self.sign(timestamp, **payload),
+                    }
+                )
             else:
                 kwargs["headers"] = {
                     "Request-Time": timestamp,
                     "Signature": self.sign(timestamp, **payload),
                 }
 
-        response = self.session.request(method, f"{self.base_url}{router}", *args, **kwargs)
+        response: requests.Response = self.session.request(method, f"{self.base_url}{router}", *args, **kwargs)
+        resp_json: dict = response.json()
+
+        if not response.ok or resp_json.get("success") is False:
+            if resp_json.get("message") and resp_json.get("message") in self.__en__:
+                resp_json["message"] = self.__en__.get(resp_json["message"], resp_json["message"])
+
+            raise MexcAPIError(f"(code={resp_json['code']}): {resp_json['message']}")
 
         return response.json()
 
@@ -295,6 +315,9 @@ class _WebHTTP(MexcSDK):
             if kwargs.get(variant):
                 kwargs[variant] = {k: v for k, v in kwargs[variant].items() if v is not None}
 
-        response = self.session.request(method, f"{self.base_url}{router}", *args, **kwargs)
+        response: requests.Response = self.session.request(method, f"{self.base_url}{router}", *args, **kwargs)
+
+        # if not response.ok:
+        #    raise MexcAPIError(f"(code={response.json()['code']}): {response.json()['message']}")
 
         return response.json()
