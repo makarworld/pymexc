@@ -16,6 +16,8 @@ from pymexc.proto import (
     PublicAggreDepthsV3Api,
     PublicBookTickerBatchV3Api,
     PublicLimitDepthsV3Api,
+    PublicMiniTickerV3Api,
+    PublicMiniTickersV3Api,
     PublicSpotKlineV3Api,
 )
 from pymexc.spot import HTTP, WebSocket
@@ -131,7 +133,7 @@ def test_increase_depth_stream(ws_client: WebSocket):
     assert len(messages) >= 2
     for msg in messages:
         assert isinstance(msg, PublicAggreDepthsV3Api)
-        assert msg.eventType == "spot@public.aggre.depth.v3.api.pb"
+        assert msg.eventType == "spot@public.aggre.depth.v3.api.pb@100ms"
         assert msg.fromVersion is not None
         assert msg.asks
         assert msg.bids
@@ -204,6 +206,51 @@ def test_book_ticker_batch_stream(ws_client: WebSocket):
         assert first.bidQuantity is not None and float(first.bidQuantity) > 0
         assert first.askPrice is not None and float(first.askPrice) > 0
         assert first.askQuantity is not None and float(first.askQuantity) > 0
+
+
+def test_mini_tickers_stream(ws_client: WebSocket):
+    messages: list[PublicMiniTickersV3Api] = []
+    done = threading.Event()
+
+    def handle_message(msg: PublicMiniTickersV3Api):
+        messages.append(msg)
+        logger.info(f"Received mini tickers message: {msg}")
+        if len(messages) >= 1:  # Mini tickers push every 3 seconds, so wait for at least 1
+            ws_client.unsubscribe(ws_client.mini_tickers_stream)
+            done.set()
+
+    ws_client.mini_tickers_stream(handle_message, timezone="UTC+8")
+
+    _wait_or_fail(done, 15, "Did not receive mini tickers messages")  # Increased timeout for 3-second interval
+    assert len(messages) >= 1
+    for msg in messages:
+        assert isinstance(msg, PublicMiniTickersV3Api)
+        assert hasattr(msg, "items") and msg.items
+        assert len(msg.items) > 0
+        first = msg.items[0]
+        assert hasattr(first, "symbol") and first.symbol
+        assert hasattr(first, "price") and first.price is not None
+
+
+def test_mini_ticker_stream(ws_client: WebSocket):
+    messages: list[PublicMiniTickerV3Api] = []
+    done = threading.Event()
+
+    def handle_message(msg: PublicMiniTickerV3Api):
+        messages.append(msg)
+        logger.info(f"Received mini ticker message: {msg}")
+        if len(messages) >= 1:  # Mini ticker pushes every 3 seconds, so wait for at least 1
+            ws_client.unsubscribe(ws_client.mini_ticker_stream)
+            done.set()
+
+    ws_client.mini_ticker_stream(handle_message, "BTCUSDT", timezone="UTC+8")
+
+    _wait_or_fail(done, 15, "Did not receive mini ticker messages")  # Increased timeout for 3-second interval
+    assert len(messages) >= 1
+    for msg in messages:
+        assert isinstance(msg, PublicMiniTickerV3Api)
+        assert hasattr(msg, "symbol") and msg.symbol == "BTCUSDT"
+        assert hasattr(msg, "price") and msg.price is not None
 
 
 def test_account_update(ws_client: WebSocket):
@@ -321,11 +368,12 @@ def test_account_orders(ws_client: WebSocket):
 
 
 def test_multiple_subscriptions(ws_client: WebSocket):
-    messages: list[PublicAggreDealsV3Api | PublicAggreBookTickerV3Api] = []
+    messages: list = []
     done = threading.Event()
 
-    def handle_message(msg: PublicAggreDealsV3Api | PublicAggreBookTickerV3Api):
+    def handle_message(msg):
         messages.append(msg)
+        logger.info(f"Received message type: {type(msg)}")
         if len(messages) >= 4:
             ws_client.unsubscribe(ws_client.deals_stream, ws_client.book_ticker_stream)
             done.set()

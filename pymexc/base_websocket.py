@@ -35,6 +35,8 @@ class _WebSocketManager:
         "limit.depth": "public.limit.depth",
         "book.ticker": "public.aggre.bookTicker",
         "book.ticker.batch": "public.bookTicker.batch",
+        "mini.tickers": "public.miniTickers",
+        "mini.ticker": "public.miniTicker",
         "account.update": "private.account",
         "account.deals": "private.deals",
         "account.orders": "private.orders",
@@ -102,7 +104,7 @@ class _WebSocketManager:
         # Set ping settings.
         self.ping_interval: int = ping_interval
         self.ping_timeout: int = ping_timeout
-        self.custom_ping_message: str = json.dumps({"method": "ping"})
+        self.custom_ping_message: str = json.dumps({"method": "PING"})
         self.retries: int = retries
 
         # Other optional data handling settings.
@@ -428,6 +430,8 @@ class _WebSocketManager:
             "public.limit.depth": "publicLimitDepths",
             "public.aggre.bookTicker": "publicAggreBookTicker",
             "public.bookTicker.batch": "publicBookTickerBatch",
+            "public.miniTickers": "publicMiniTickers",
+            "public.miniTicker": "publicMiniTicker",
             "private.account": "privateAccount",
             "private.deals": "privateDeals",
             "private.orders": "privateOrders",
@@ -471,6 +475,10 @@ class _WebSocketManager:
             if "msg format invalid" in message.get("msg", ""):
                 # disable error logging for a while
                 # logger.error(f"Subscription: Got error message: {message.get('msg', '')}")
+                return
+
+            if message.get("msg") == "PONG":
+                # logger.info(f"Received PONG message: {message}")
                 return
 
             if "Not Subscribed successfully!" in message.get("msg", ""):

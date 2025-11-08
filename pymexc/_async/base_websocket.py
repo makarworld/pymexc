@@ -195,8 +195,18 @@ class _AsyncWebSocketManager(_WebSocketManager):
             await self._auth()
 
         await resubscribe_to_topics()
+        self.ping_task = self.loop.create_task(self._ping_loop())
 
         self.attempting_connection = False
+
+    async def _ping_loop(self):
+        while True:
+            try:
+                await self.ws.send_str(self.custom_ping_message)
+            except aiohttp.ClientPayloadError as e:
+                await self._on_error(e)
+
+            await asyncio.sleep(self.ping_interval)
 
     async def _auth(self):
         msg = super()._auth(parse_only=True)
