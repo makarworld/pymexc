@@ -50,8 +50,9 @@ import asyncio
 import os
 
 try:
-    from . import futures, spot
+    from . import broker, futures, spot
 except ImportError:
+    import pymexc._async.broker as broker
     import pymexc._async.futures as futures
     import pymexc._async.spot as spot
 
@@ -70,4 +71,4 @@ if os.name == "nt":
     """
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-__all__ = ["futures", "spot"]
+__all__ = ["broker", "futures", "spot"]

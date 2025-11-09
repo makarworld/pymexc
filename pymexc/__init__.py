@@ -49,25 +49,30 @@ while True:
 import logging
 
 try:
-    from . import _async, futures, proto, spot, web
+    from . import _async, broker, futures, proto, spot, web
+    from ._async.broker import HTTP as AsyncBrokerHTTP
     from ._async.futures import HTTP as AsyncFuturesHTTP
     from ._async.futures import WebSocket as AsyncFuturesWebSocket
     from ._async.spot import HTTP as AsyncSpotHTTP
     from ._async.spot import WebSocket as AsyncSpotWebSocket
+    from .broker import HTTP as BrokerHTTP
     from .futures import HTTP as FuturesHTTP
     from .futures import WebSocket as FuturesWebSocket
     from .spot import HTTP as SpotHTTP
     from .spot import WebSocket as SpotWebSocket
 except ImportError:
     import pymexc._async as _async
+    import pymexc.broker as broker
     import pymexc.futures as futures
     import pymexc.proto as proto
     import pymexc.spot as spot
     import pymexc.web as web
+    from pymexc._async.broker import HTTP as AsyncBrokerHTTP
     from pymexc._async.futures import HTTP as AsyncFuturesHTTP
     from pymexc._async.futures import WebSocket as AsyncFuturesWebSocket
     from pymexc._async.spot import HTTP as AsyncSpotHTTP
     from pymexc._async.spot import WebSocket as AsyncSpotWebSocket
+    from pymexc.broker import HTTP as BrokerHTTP
     from pymexc.futures import HTTP as FuturesHTTP
     from pymexc.futures import WebSocket as FuturesWebSocket
     from pymexc.spot import HTTP as SpotHTTP
@@ -78,14 +83,17 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     "_async",
+    "broker",
     "futures",
     "spot",
     "web",
     "proto",
+    "AsyncBrokerHTTP",
     "AsyncFuturesHTTP",
     "AsyncFuturesWebSocket",
     "AsyncSpotHTTP",
     "AsyncSpotWebSocket",
+    "BrokerHTTP",
     "FuturesHTTP",
     "FuturesWebSocket",
     "SpotHTTP",

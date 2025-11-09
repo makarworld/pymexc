@@ -2517,7 +2517,7 @@ class WebSocket(_FuturesWebSocket):
         http_no_proxy: Optional[list] = None,
         http_proxy_auth: Optional[tuple] = None,
         http_proxy_timeout: Optional[int] = None,
-        proto: Optional[bool] = False,
+        proto: Optional[bool] = True,
     ):
         super().__init__(
             api_key=api_key,

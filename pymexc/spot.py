@@ -14,9 +14,9 @@ def handle_message(message):
     # handle websocket message
     print(message)
 
-# initialize HTTP client
+# initialize HTTP client (synchronous)
 spot_client = spot.HTTP(api_key = api_key, api_secret = api_secret)
-# initialize WebSocket client
+# initialize WebSocket client (synchronous)
 ws_spot_client = spot.WebSocket(api_key = api_key, api_secret = api_secret)
 
 # make http request to api
@@ -29,6 +29,18 @@ ws_spot_client.deals_stream(handle_message, "BTCUSDT")
 # loop forever for save websocket connection
 while True:
     ...
+
+# Async usage:
+# initialize HTTP client (asynchronous)
+async_spot_client = spot.AsyncHTTP(api_key = api_key, api_secret = api_secret)
+# initialize WebSocket client (asynchronous)
+async_ws_spot_client = spot.AsyncWebSocket(api_key = api_key, api_secret = api_secret)
+
+# make async http request to api
+print(await async_spot_client.exchange_info())
+
+# create async websocket connection
+await async_ws_spot_client.deals_stream(handle_message, "BTCUSDT")
 
 """
 
@@ -136,6 +148,24 @@ class HTTP(_SpotHTTP):
         :rtype: dict
         """
         return self.call("GET", "/api/v3/depth", params=dict(symbol=symbol, limit=limit), auth=False)
+
+    def depth(self, symbol: str, limit: Optional[int] = 100) -> dict:
+        """
+        ### Order Book (Alias for order_book)
+
+        Weight(IP): 1
+
+        https://www.mexc.com/api-docs/spot-v3/market-data-endpoints#order-book
+
+        :param symbol: A string representing the trading pair symbol, e.g. "BTCUSDT".
+        :type symbol: str
+        :param limit: An integer representing the number of order book levels to retrieve. Defaults to 100. Max is 5000.
+        :type limit: int
+
+        :return: The order book data in JSON format.
+        :rtype: dict
+        """
+        return self.order_book(symbol, limit)
 
     def trades(self, symbol: str, limit: Optional[int] = 500) -> list:
         """
@@ -276,6 +306,25 @@ class HTTP(_SpotHTTP):
         elif symbols:
             params["symbols"] = ",".join(symbols)
         return self.call("GET", "/api/v3/ticker/24hr", params=params if params else None, auth=False)
+
+    def ticker24h(self, symbol: Optional[str] = None, symbols: Optional[List[str]] = None):
+        """
+        ### 24hr Ticker Price Change Statistics (Alias for ticker_24h)
+
+        Weight(IP): 1 - 1 symbol;
+        Weight(IP): 40 - all symbols;
+
+        https://www.mexc.com/api-docs/spot-v3/market-data-endpoints#24hr-ticker-price-change-statistics
+
+        :param symbol: (optional) If the symbol is not sent, tickers for all symbols will be returned in an array.
+        :type symbol: str
+        :param symbols: (optional) List of symbols. If provided, returns tickers for specified symbols.
+        :type symbols: Optional[List[str]]
+
+        :return: A dictionary or list of dictionaries containing 24hr ticker statistics.
+        :rtype: Union[dict, list]
+        """
+        return self.ticker_24h(symbol, symbols)
 
     def ticker_price(self, symbol: Optional[str] = None, symbols: Optional[List[str]] = None):
         """
@@ -2199,7 +2248,7 @@ class WebSocket(_SpotWebSocket):
         http_no_proxy: Optional[list] = None,
         http_proxy_auth: Optional[tuple] = None,
         http_proxy_timeout: Optional[int] = None,
-        proto: Optional[bool] = False,
+        proto: Optional[bool] = True,
         extend_proto_body: Optional[bool] = False,
     ):
         """

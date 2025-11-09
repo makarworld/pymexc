@@ -14,9 +14,9 @@ def handle_message(message):
     # handle websocket message
     print(message)
 
-# initialize HTTP client
+# initialize HTTP client (synchronous)
 futures_client = futures.HTTP(api_key = api_key, api_secret = api_secret)
-# initialize WebSocket client
+# initialize WebSocket client (synchronous)
 ws_futures_client = futures.WebSocket(api_key = api_key, api_secret = api_secret)
 
 # make http request to api
@@ -29,6 +29,18 @@ ws_futures_client.tickers_stream(handle_message)
 # loop forever for save websocket connection
 while True:
     ...
+
+# Async usage:
+# initialize HTTP client (asynchronous)
+async_futures_client = futures.AsyncHTTP(api_key = api_key, api_secret = api_secret)
+# initialize WebSocket client (asynchronous)
+async_ws_futures_client = futures.AsyncWebSocket(api_key = api_key, api_secret = api_secret)
+
+# make async http request to api
+print(await async_futures_client.index_price("MX_USDT"))
+
+# create async websocket connection
+await async_ws_futures_client.tickers_stream(handle_message)
 
 """
 

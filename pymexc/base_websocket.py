@@ -11,7 +11,7 @@ from pymexc.proto import ProtoTyping, PublicSpotKlineV3Api, PushDataV3ApiWrapper
 
 logger = logging.getLogger(__name__)
 
-SPOT = "ws://wbs-api.mexc.com/ws"
+SPOT = "wss://wbs-api.mexc.com/ws"
 FUTURES = "wss://contract.mexc.com/edge"
 FUTURES_PERSONAL_TOPICS = [
     "order",

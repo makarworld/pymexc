@@ -15,7 +15,7 @@ env = dotenv_values(".env")
 api_key = env["API_KEY"]
 api_secret = env["API_SECRET"]
 
-PRINT_RESPONSE = True
+PRINT_RESPONSE = False
 
 
 @pytest_asyncio.fixture
