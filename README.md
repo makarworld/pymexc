@@ -210,15 +210,23 @@ print(f"Net Cost: {total_cost} USDT")
 
 ```python
 from pymexc import spot
+from pymexc.proto import PublicMiniTickerV3Api
 import time
 
 def handle_price_update(message):
     """Handle real-time price updates"""
-    if 'd' in message:
-        data = message['d']
-        symbol = data.get('symbol', 'N/A')
-        price = data.get('p', 'N/A')
-        volume = data.get('v', 'N/A')
+    # WebSocket uses protobuf by default, so message is a protobuf object
+    if isinstance(message, PublicMiniTickerV3Api):
+        symbol = message.symbol if hasattr(message, "symbol") else "N/A"
+        price = message.price if hasattr(message, "price") else "N/A"
+        volume = message.volume if hasattr(message, "volume") else "N/A"
+        print(f"{symbol}: Price={price}, Volume={volume}")
+    elif isinstance(message, dict) and "d" in message:
+        # Fallback for JSON format (if proto=False)
+        data = message["d"]
+        symbol = data.get("symbol", "N/A")
+        price = data.get("p", "N/A")
+        volume = data.get("v", "N/A")
         print(f"{symbol}: Price={price}, Volume={volume}")
 
 # Initialize WebSocket client
@@ -240,20 +248,33 @@ except KeyboardInterrupt:
 
 ```python
 from pymexc import spot
+from pymexc.proto import PublicAggreDepthsV3Api
 import time
 
 def handle_depth_update(message):
     """Handle order book depth updates"""
-    if 'd' in message:
-        data = message['d']
-        symbol = data.get('symbol', 'N/A')
-        bids = data.get('bids', [])
-        asks = data.get('asks', [])
+    # WebSocket uses protobuf by default, so message is a protobuf object
+    if isinstance(message, PublicAggreDepthsV3Api):
+        bids = list(message.bids) if hasattr(message, "bids") else []
+        asks = list(message.asks) if hasattr(message, "asks") else []
         
         if bids and asks:
-            best_bid = bids[0][0] if bids else 'N/A'
-            best_ask = asks[0][0] if asks else 'N/A'
-            spread = float(best_ask) - float(best_bid) if best_ask != 'N/A' and best_bid != 'N/A' else 0
+            best_bid_price = float(bids[0].price) if bids and hasattr(bids[0], "price") else None
+            best_ask_price = float(asks[0].price) if asks and hasattr(asks[0], "price") else None
+            if best_bid_price and best_ask_price:
+                spread = best_ask_price - best_bid_price
+                print(f"Bid={best_bid_price}, Ask={best_ask_price}, Spread={spread:.2f}")
+    elif isinstance(message, dict) and "d" in message:
+        # Fallback for JSON format (if proto=False)
+        data = message["d"]
+        symbol = data.get("symbol", "N/A")
+        bids = data.get("bids", [])
+        asks = data.get("asks", [])
+        
+        if bids and asks:
+            best_bid = bids[0][0] if bids else "N/A"
+            best_ask = asks[0][0] if asks else "N/A"
+            spread = float(best_ask) - float(best_bid) if best_ask != "N/A" and best_bid != "N/A" else 0
             print(f"{symbol}: Bid={best_bid}, Ask={best_ask}, Spread={spread:.2f}")
 
 # Initialize WebSocket client
@@ -477,17 +498,27 @@ asyncio.run(main())
 
 ```python
 from pymexc import spot
+from pymexc.proto import PrivateAccountV3Api, PrivateOrdersV3Api
 import time
 
 def handle_account_update(message):
     """Handle account balance updates"""
-    if 'd' in message:
-        data = message['d']
-        balances = data.get('B', [])
+    # WebSocket uses protobuf by default, so message is a protobuf object
+    if isinstance(message, PrivateAccountV3Api):
+        # PrivateAccountV3Api has fields: vcoinName, coinId, balanceAmount, frozenAmount, etc.
+        vcoin_name = message.vcoinName if hasattr(message, "vcoinName") else "N/A"
+        balance = float(message.balanceAmount) if hasattr(message, "balanceAmount") and message.balanceAmount else 0
+        frozen = float(message.frozenAmount) if hasattr(message, "frozenAmount") and message.frozenAmount else 0
+        if balance > 0 or frozen > 0:
+            print(f"{vcoin_name}: Balance={balance}, Frozen={frozen}")
+    elif isinstance(message, dict) and "d" in message:
+        # Fallback for JSON format (if proto=False)
+        data = message["d"]
+        balances = data.get("B", [])
         for balance in balances:
-            asset = balance.get('a', '')
-            free = balance.get('f', '0')
-            locked = balance.get('l', '0')
+            asset = balance.get("a", "")
+            free = balance.get("f", "0")
+            locked = balance.get("l", "0")
             if float(free) > 0 or float(locked) > 0:
                 print(f"{asset}: Free={free}, Locked={locked}")
 
@@ -500,8 +531,17 @@ ws_client.account_update(handle_account_update)
 # Also subscribe to order updates
 def handle_order_update(message):
     """Handle order status updates"""
-    if 'd' in message:
-        order = message['d']
+    # WebSocket uses protobuf by default, so message is a protobuf object
+    if isinstance(message, PrivateOrdersV3Api):
+        # PrivateOrdersV3Api has fields: id, clientId, price, quantity, amount, status, etc.
+        order_id = message.id if hasattr(message, "id") else "N/A"
+        price = message.price if hasattr(message, "price") else "N/A"
+        quantity = message.quantity if hasattr(message, "quantity") else "N/A"
+        status = message.status if hasattr(message, "status") else "N/A"
+        print(f"Order Update: ID={order_id}, Price={price}, Quantity={quantity}, Status={status}")
+    elif isinstance(message, dict) and "d" in message:
+        # Fallback for JSON format (if proto=False)
+        order = message["d"]
         print(f"Order Update: {order.get('s')} {order.get('S')} "
               f"{order.get('q')} @ {order.get('p')} - Status: {order.get('X')}")
 
@@ -516,7 +556,7 @@ except KeyboardInterrupt:
 
 # Documentation
 
-You can find the official documentation for the MEXC API [here](https://mexcdevelop.github.io/apidocs/spot_v3_en/#introduction).
+You can find the official documentation for the MEXC API [here](https://www.mexc.com/api-docs/spot-v3/introduction).
 
 ## API Reference
 
