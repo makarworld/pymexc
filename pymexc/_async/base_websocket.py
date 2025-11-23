@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 import warnings
 from typing import TYPE_CHECKING, Callable
@@ -376,74 +377,74 @@ class _SpotWebSocketManager(_AsyncWebSocketManager):
         self.private_topics = ["account", "deals", "orders"]
 
     async def subscribe(self, topic: str, callback: Callable, params_list: list, interval: str = None):
+        topics = [
+            self._build_topic_key(topic, params, interval)
+            #
+            for params in params_list
+        ]
+
         subscription_args = {
             "method": "SUBSCRIPTION",
-            "params": [
-                "@".join(
-                    [f"spot@{topic}.v3.api" + (".pb" if self.proto else "")]
-                    + ([str(interval)] if interval else [])
-                    + list(map(str, params.values()))
-                )
-                for params in params_list
-            ],
+            "params": topics,
         }
-        self._check_callback_directory(topic)
+
+        # Create unique topic keys for each params combination
+        for topic_key in topics:
+            self._check_callback_directory(topic_key)
+            # Set callback for each unique topic key
+            self._set_callback(topic_key, callback)
 
         while not self.is_connected():
             # Wait until the connection is open before subscribing.
             await asyncio.sleep(0.1)
 
-        logger.debug(f"subscription_args: {subscription_args}")
-        await self.ws.send_json(subscription_args)
+        subscription_message = json.dumps(subscription_args)
+        await self.ws.send_str(subscription_message)
+        # Store subscription by base topic (for backward compatibility with unsubscribe)
+        # But store all topic keys with params in callback_directory
+        for topic in topics:
+            self.subscriptions[topic] = subscription_args
+            self.subscriptions[topic]["params"] = [topic]
+            self.last_subsctiption = topic
 
-        self.subscriptions[topic] = subscription_args
-        print(self.subscriptions)
+        return topics[0] if len(topics) <= 1 else topics
 
-        self._set_callback(topic, callback)
-        self.last_subsctiption = topic
-
-    async def unsubscribe(self, *topics: str | Callable):
-        if isinstance(topics, str):
-            topics = [topics]
-
-        elif isinstance(topics, tuple):
-            topics = list(topics)
-
-        for i in range(len(topics)):
-            topic = topics[i]
-            if isinstance(topic, str) and topic not in self.subscriptions:
-                logger.error(f"[unsubscribe] Topic {topic} not found in subscriptions, skipping")
-                topics.pop(i)
-                continue
-
+    async def unsubscribe(self, *topics: str):
         if all([isinstance(topic, str) for topic in topics]):
-            # send unsub message
             unsubscribe_message = {
                 "method": "UNSUBSCRIPTION",
-                "params": [],
+                "params": list(topics),
             }
 
-            # remove callbacks
-            # remove subscriptions from list
+            # remove callbacks and collect params for unsubscription
             for topic in topics:
-                self._pop_callback(topic)
-                unsubscribe_message["params"] += self.subscriptions[topic]["params"]
-                self.subscriptions.pop(topic)
+                # Find subscription by base topic
+                if topic in self.subscriptions:
+                    # unsubscribe_message["params"].extend(self.subscriptions[topic]["params"])
+                    self.subscriptions.pop(topic, None)
 
-            logger.debug(f"Unsubscribe message: {unsubscribe_message}")
-            await self.ws.send_json(unsubscribe_message)
+                # Remove all callbacks that start with this topic (including params)
+                # Find all keys in callback_directory that match this topic
+                keys_to_remove = [
+                    k for k in list(self.callback_directory.keys()) if k == topic or k.startswith(topic + "@")
+                ]
+                for key in keys_to_remove:
+                    self._pop_callback(key)
 
-            logger.info(f"Unsubscribed from {topics}")
+            # send unsub message
+            if unsubscribe_message["params"]:
+                await self.ws.send_str(json.dumps(unsubscribe_message))
+
+            logger.debug(f"Unsubscribed from {topics}")
         else:
             # some funcs in list
-            topics = [
-                x.__name__.replace("_stream", "").replace("_", ".") if getattr(x, "__name__", None) else x
-                #
-                for x in topics
-            ]
-
-            topics = [self.func_to_topic[x] if x in self.func_to_topic else x for x in topics]
-            return await self.unsubscribe(*topics)
+            # topics = [
+            #     x.__name__.replace("_stream", "").replace("_", ".") if getattr(x, "__name__", None) else x
+            #     #
+            #     for x in topics
+            # ]
+            # eturn self.unsubscribe(*topics)
+            raise ValueError(f"Invalid topics, only `str` is allowed, got {[type(t) for t in topics]}: {topics}")
 
     async def _handle_incoming_message(self, message):
         logger.debug(f"_handle_incoming_message: {message}")
@@ -492,4 +493,4 @@ class _SpotWebSocket(_SpotWebSocketManager):
             await self._connect(self.endpoint)
 
         logger.info(f"Subscribing to topic: {topic} | params: {params} | interval: {interval}")
-        await self.subscribe(topic, callback, params, interval)
+        return await self.subscribe(topic, callback, params, interval)

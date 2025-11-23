@@ -131,15 +131,85 @@ class _WebSocketManager:
     def is_futures(self):
         return self.endpoint.startswith(FUTURES)
 
-    def _topic(self, topic):
-        return (
+    def _base_topic(self, topic):
+        """
+        Extract base topic name without parameters from channel string.
+        For spot channels: spot@public.kline.v3.api.pb@Min1@BTCUSDT -> public.kline
+        """
+        cleaned = (
             topic.replace("sub.", "")
             .replace("push.", "")
             .replace("rs.sub.", "")
             .replace("spot@", "")
             .replace(".pb", "")
-            .split(".v3.api")[0]
         )
+        return cleaned.split(".v3.api")[0]
+
+    def _topic(self, topic):
+        """
+        Extract topic name with parameters from channel string.
+        For spot channels with params: spot@public.kline.v3.api.pb@Min1@BTCUSDT
+        Returns: public.kline@Min1@BTCUSDT (with params) or just public.kline (without params)
+        """
+        # Remove prefixes
+        cleaned = (
+            topic.replace("sub.", "")
+            .replace("push.", "")
+            .replace("rs.sub.", "")
+            .replace("spot@", "")
+            .replace(".pb", "")
+        )
+
+        # Split by .v3.api to separate topic from params
+        parts = cleaned.split(".v3.api")
+        base_topic = parts[0]
+
+        # Check if there are params after .v3.api (format: topic.v3.api@param1@param2...)
+        if len(parts) > 1 and "@" in parts[1]:
+            # Extract params (everything after .v3.api, split by @)
+            params_part = parts[1].lstrip("@")
+            params = params_part.split("@") if params_part else []
+            # Filter out empty params
+            params = [p for p in params if p]
+            if params:
+                # Join topic with params (keep original order from channel)
+                return f"{base_topic}@{'@'.join(params)}"
+
+        return base_topic
+
+    def _build_topic_key(self, raw_topic: str, params: dict | list | str, interval: str = None):
+        """
+        Build unique topic key for callback_directory.
+        Format: topic@param1@param2@...
+        For kline: public.kline@symbol@interval
+        For other topics: topic@param1@param2@...
+        """
+
+        if self.is_spot:
+            raw_topic = "spot@" + raw_topic + ".v3.api" + (".pb" if self.proto else "")
+            # spot@public.aggre.deals.v3.api.pb@100ms@BTCUSDT
+
+        # Extract all parameter values
+        param_values = []
+
+        # Add interval first if present (for consistency with subscription format)
+        if interval:
+            param_values.append(str(interval))
+
+        # Add other params (sorted for consistency)
+        if isinstance(params, dict):
+            # Sort keys for consistent ordering
+            sorted_params = sorted(params.items())
+            param_values.extend([str(v) for k, v in sorted_params])
+        elif isinstance(params, list):
+            param_values.extend([str(p) for p in params])
+        elif isinstance(params, str):
+            param_values.append(params)
+
+        if param_values:
+            return f"{raw_topic}@{'@'.join(param_values)}"
+
+        return raw_topic
 
     def _on_open(self):
         """
@@ -421,7 +491,7 @@ class _WebSocketManager:
         if self.extend_proto_body:
             return message
 
-        topic = self._topic(message.channel)
+        topic = self._base_topic(message.channel)
         bodies = {
             "public.kline": "publicSpotKline",
             "public.deals": "publicDeals",
@@ -444,16 +514,12 @@ class _WebSocketManager:
             logger.warning(f"Body for topic {topic} not found. | Message: {message}")
             return message
 
-    def _process_normal_message(self, message: dict | ProtoTyping.PushDataV3ApiWrapper, parse_only: bool = False):
+    def _process_normal_message(self, message: ProtoTyping.PushDataV3ApiWrapper, parse_only: bool = False):
         """
         Redirect message to callback function
         """
-        if isinstance(message, dict):
-            topic = self._topic(message.get("channel") or message.get("c"))
-            callback_data = message
-        else:
-            topic = self._topic(message.channel)
-            callback_data = self.get_proto_body(message)
+        topic = message.channel
+        callback_data = self.get_proto_body(message)
 
         callback_function = self._get_callback(topic)
         if not callback_function:
@@ -492,7 +558,12 @@ class _WebSocketManager:
             #    return
 
             # If we get successful SPOT subscription, notify user
-            logger.info(f"Subscription / Unsubscription to {message['msg']} successful.")
+            state = message["msg"] in self.subscriptions.keys()
+            if state:
+                logger.info(f"Subscription to {message['msg']} successful.")
+            else:
+                logger.info(f"Unsubscription to {message['msg']} successful.")
+
             return
 
         elif (
@@ -629,18 +700,22 @@ class _SpotWebSocketManager(_WebSocketManager):
         self.private_topics = ["account", "deals", "orders"]
 
     def subscribe(self, topic: str, callback: Callable, params_list: list, interval: str = None):
+        topics = [
+            self._build_topic_key(topic, params, interval)
+            #
+            for params in params_list
+        ]
+
         subscription_args = {
             "method": "SUBSCRIPTION",
-            "params": [
-                "@".join(
-                    [f"spot@{topic}.v3.api" + (".pb" if self.proto else "")]
-                    + ([str(interval)] if interval else [])
-                    + list(map(str, params.values()))
-                )
-                for params in params_list
-            ],
+            "params": topics,
         }
-        self._check_callback_directory(topic)
+
+        # Create unique topic keys for each params combination
+        for topic_key in topics:
+            self._check_callback_directory(topic_key)
+            # Set callback for each unique topic key
+            self._set_callback(topic_key, callback)
 
         while not self.is_connected():
             # Wait until the connection is open before subscribing.
@@ -648,56 +723,62 @@ class _SpotWebSocketManager(_WebSocketManager):
 
         subscription_message = json.dumps(subscription_args)
         self.ws.send(subscription_message)
-        self.subscriptions[topic] = subscription_args
-        self._set_callback(topic, callback)
-        self.last_subsctiption = topic
+        # Store subscription by base topic (for backward compatibility with unsubscribe)
+        # But store all topic keys with params in callback_directory
+        for topic in topics:
+            self.subscriptions[topic] = subscription_args
+            self.subscriptions[topic]["params"] = [topic]
+            self.last_subsctiption = topic
 
-    def unsubscribe(self, *topics: str | Callable):
+        return topics[0] if len(topics) <= 1 else topics
+
+    def unsubscribe(self, *topics: str):
         if all([isinstance(topic, str) for topic in topics]):
-            topics = [
-                f"private.{topic}"
-                if topic in self.private_topics
-                else f"public.{topic}"
-                # if user provide function .book_ticker_stream()
-                .replace("book.ticker", "bookTicker")
-                for topic in topics
-            ]
-            # remove callbacks
+            unsubscribe_message = {
+                "method": "UNSUBSCRIPTION",
+                "params": list(topics),
+            }
+
+            # remove callbacks and collect params for unsubscription
             for topic in topics:
-                self._pop_callback(topic)
+                # Find subscription by base topic
+                if topic in self.subscriptions:
+                    # unsubscribe_message["params"].extend(self.subscriptions[topic]["params"])
+                    self.subscriptions.pop(topic, None)
+
+                # Remove all callbacks that start with this topic (including params)
+                # Find all keys in callback_directory that match this topic
+                keys_to_remove = [
+                    k for k in list(self.callback_directory.keys()) if k == topic or k.startswith(topic + "@")
+                ]
+                for key in keys_to_remove:
+                    self._pop_callback(key)
 
             # send unsub message
-            self.ws.send(
-                json.dumps(
-                    {
-                        "method": "UNSUBSCRIPTION",
-                        "params": ["@".join([f"spot@{t}.v3.api" + (".pb" if self.proto else "")]) for t in topics],
-                    }
-                )
-            )
-
-            # remove subscriptions from list
-            for topic in topics:
-                self.subscriptions.pop(topic, None)
+            if unsubscribe_message["params"]:
+                self.ws.send(json.dumps(unsubscribe_message))
 
             logger.debug(f"Unsubscribed from {topics}")
         else:
             # some funcs in list
-            topics = [
-                x.__name__.replace("_stream", "").replace("_", ".") if getattr(x, "__name__", None) else x
-                #
-                for x in topics
-            ]
-            return self.unsubscribe(*topics)
+            # topics = [
+            #     x.__name__.replace("_stream", "").replace("_", ".") if getattr(x, "__name__", None) else x
+            #     #
+            #     for x in topics
+            # ]
+            # eturn self.unsubscribe(*topics)
+            raise ValueError(f"Invalid topics, only `str` is allowed, got {[type(t) for t in topics]}: {topics}")
 
-    def _handle_incoming_message(self, message: dict):
-        def is_subscription_message():
-            if message.get("id") == 0 and message.get("code") == 0:
+    def _handle_incoming_message(self, message: dict | ProtoTyping.PushDataV3ApiWrapper):
+        def is_subscription_or_pong_message():
+            # {'id': 0, 'code': 0, 'msg': 'spot@public.aggre.deals.v3.api.pb@100ms@BTCUSDT'}
+            # {'id': 0, 'code': 0, 'msg': 'PONG'}
+            if isinstance(message, dict) and message.get("id") == 0 and message.get("code") == 0:
                 return True
             else:
                 return False
 
-        if isinstance(message, dict) and is_subscription_message():
+        if isinstance(message, dict) and is_subscription_or_pong_message():
             self._process_subscription_message(message)
         else:
             self._process_normal_message(message)
@@ -717,4 +798,4 @@ class _SpotWebSocket(_SpotWebSocketManager):
         if not self.is_connected():
             self._connect(self.endpoint)
 
-        self.subscribe(topic, callback, params, interval)
+        return self.subscribe(topic, callback, params, interval)

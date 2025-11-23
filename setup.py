@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 """
 
 
-version = "1.2.17"
+version = "1.2.18"
 
 with open("README.md", "r") as f:
     long_description = f.read()

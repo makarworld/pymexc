@@ -2430,7 +2430,7 @@ class WebSocket(_SpotWebSocket):
         :param interval: the interval for the stream, default is '100ms'. Possible values '100ms' or '10ms'
         :type interval: Literal["100ms", "10ms"]
 
-        :return: None
+        :return: topic key(s) for unsubscribe
         """
         if isinstance(symbol, str):
             symbols = [symbol]  # str
@@ -2438,7 +2438,7 @@ class WebSocket(_SpotWebSocket):
             symbols = symbol  # list
         params = [dict(symbol=s) for s in symbols]
         topic = "public.aggre.deals"
-        await self._ws_subscribe(topic, callback, params, interval)
+        return await self._ws_subscribe(topic, callback, params, interval)
 
     async def kline_stream(
         self,
@@ -2461,11 +2461,11 @@ class WebSocket(_SpotWebSocket):
         :param interval: the interval of the kline
         :type interval: Literal["Min1", "Min5", "Min15", "Min30", "Min60", "Hour4", "Hour8", "Day1", "Week1", "Month1"]
 
-        :return: None
+        :return: topic key for unsubscribe
         """
         params = [dict(symbol=symbol, interval=interval)]
         topic = "public.kline"
-        await self._ws_subscribe(topic, callback, params)
+        return await self._ws_subscribe(topic, callback, params)
 
     async def depth_stream(
         self,
@@ -2486,11 +2486,11 @@ class WebSocket(_SpotWebSocket):
         :param interval: the interval for the stream, default is '100ms'. Possible values '100ms' or '10ms'
         :type interval: Literal["100ms", "10ms"]
 
-        :return: None
+        :return: topic key for unsubscribe
         """
         params = [dict(interval=interval, symbol=symbol)]
         topic = "public.aggre.depth"
-        await self._ws_subscribe(topic, callback, params)
+        return await self._ws_subscribe(topic, callback, params)
 
     async def limit_depth_stream(
         self, callback: Callable[..., PublicLimitDepthsV3Api], symbol: str, level: Literal[5, 10, 20] = 5
@@ -2508,11 +2508,11 @@ class WebSocket(_SpotWebSocket):
         :param level: the level of the depth. Valid are 5, 10, or 20.
         :type level: int
 
-        :return: None
+        :return: topic key for unsubscribe
         """
         params = [dict(symbol=symbol, level=level)]
         topic = "public.limit.depth"
-        await self._ws_subscribe(topic, callback, params)
+        return await self._ws_subscribe(topic, callback, params)
 
     async def book_ticker_stream(
         self,
@@ -2533,11 +2533,11 @@ class WebSocket(_SpotWebSocket):
         :param interval: the interval for the stream, default is '100ms'. Possible values '100ms' or '10ms'
         :type interval: Literal["100ms", "10ms"]
 
-        :return: None
+        :return: topic key for unsubscribe
         """
         params = [dict(interval=interval, symbol=symbol)]
         topic = "public.aggre.bookTicker"
-        await self._ws_subscribe(topic, callback, params)
+        return await self._ws_subscribe(topic, callback, params)
 
     async def book_ticker_batch_stream(self, callback: Callable[..., PublicBookTickerBatchV3Api], symbol: str):
         """
@@ -2551,11 +2551,11 @@ class WebSocket(_SpotWebSocket):
         :param symbol: the name of the trading pair
         :type symbol: str
 
-        :return: None
+        :return: topic key for unsubscribe
         """
         params = [dict(symbol=symbol)]
         topic = "public.bookTicker.batch"
-        await self._ws_subscribe(topic, callback, params)
+        return await self._ws_subscribe(topic, callback, params)
 
     async def mini_tickers_stream(
         self,
@@ -2573,11 +2573,11 @@ class WebSocket(_SpotWebSocket):
         :param timezone: (optional) timezone, default is 'UTC+8'. Valid values: 24H, UTC-10, UTC-8, UTC-7, UTC-6, UTC-5, UTC-4, UTC-3, UTC+0, UTC+1, UTC+2, UTC+3, UTC+4, UTC+4:30, UTC+5, UTC+5:30, UTC+6, UTC+7, UTC+8, UTC+9, UTC+10, UTC+11, UTC+12, UTC+12:45, UTC+13
         :type timezone: str
 
-        :return: None
+        :return: topic key for unsubscribe
         """
         params = [dict(timezone=timezone)]
         topic = "public.miniTickers"
-        await self._ws_subscribe(topic, callback, params)
+        return await self._ws_subscribe(topic, callback, params)
 
     async def mini_ticker_stream(
         self,
@@ -2598,11 +2598,11 @@ class WebSocket(_SpotWebSocket):
         :param timezone: (optional) timezone, default is 'UTC+8'. Valid values: 24H, UTC-10, UTC-8, UTC-7, UTC-6, UTC-5, UTC-4, UTC-3, UTC+0, UTC+1, UTC+2, UTC+3, UTC+4, UTC+4:30, UTC+5, UTC+5:30, UTC+6, UTC+7, UTC+8, UTC+9, UTC+10, UTC+11, UTC+12, UTC+12:45, UTC+13
         :type timezone: str
 
-        :return: None
+        :return: topic key for unsubscribe
         """
         params = [dict(symbol=symbol, timezone=timezone)]
         topic = "public.miniTicker"
-        await self._ws_subscribe(topic, callback, params)
+        return await self._ws_subscribe(topic, callback, params)
 
     # <=================================================================>
     #
@@ -2620,11 +2620,11 @@ class WebSocket(_SpotWebSocket):
         :param callback: the callback function
         :type callback: Callable[..., PrivateAccountV3Api]
 
-        :return: None
+        :return: topic key for unsubscribe
         """
         params = [{}]
         topic = "private.account"
-        await self._ws_subscribe(topic, callback, params)
+        return await self._ws_subscribe(topic, callback, params)
 
     async def account_deals(self, callback: Callable[..., PrivateDealsV3Api]):
         """
@@ -2635,11 +2635,11 @@ class WebSocket(_SpotWebSocket):
         :param callback: the callback function
         :type callback: Callable[..., PrivateDealsV3Api]
 
-        :return: None
+        :return: topic key for unsubscribe
         """
         params = [{}]
         topic = "private.deals"
-        await self._ws_subscribe(topic, callback, params)
+        return await self._ws_subscribe(topic, callback, params)
 
     async def account_orders(self, callback: Callable[..., PrivateOrdersV3Api]):
         """
@@ -2650,8 +2650,8 @@ class WebSocket(_SpotWebSocket):
         :param callback: the callback function
         :type callback: Callable[..., PrivateOrdersV3Api]
 
-        :return: None
+        :return: topic key for unsubscribe
         """
         params = [{}]
         topic = "private.orders"
-        await self._ws_subscribe(topic, callback, params)
+        return await self._ws_subscribe(topic, callback, params)

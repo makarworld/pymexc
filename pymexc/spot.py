@@ -2407,7 +2407,7 @@ class WebSocket(_SpotWebSocket):
             symbols = symbol  # list
         params = [dict(symbol=s) for s in symbols]
         topic = "public.aggre.deals"
-        self._ws_subscribe(topic, callback, params, interval)
+        return self._ws_subscribe(topic, callback, params, interval)
 
     def kline_stream(
         self,
@@ -2443,7 +2443,7 @@ class WebSocket(_SpotWebSocket):
         """
         params = [dict(symbol=symbol, interval=interval)]
         topic = "public.kline"
-        self._ws_subscribe(topic, callback, params)
+        return self._ws_subscribe(topic, callback, params)
 
     def depth_stream(
         self,
@@ -2468,7 +2468,7 @@ class WebSocket(_SpotWebSocket):
         """
         params = [dict(symbol=symbol)]
         topic = "public.aggre.depth"
-        self._ws_subscribe(topic, callback, params, interval)
+        return self._ws_subscribe(topic, callback, params, interval)
 
     def limit_depth_stream(
         self,
@@ -2493,7 +2493,7 @@ class WebSocket(_SpotWebSocket):
         """
         params = [dict(symbol=symbol, level=level)]
         topic = "public.limit.depth"
-        self._ws_subscribe(topic, callback, params)
+        return self._ws_subscribe(topic, callback, params)
 
     def book_ticker_stream(
         self,
@@ -2518,7 +2518,7 @@ class WebSocket(_SpotWebSocket):
         """
         params = [dict(symbol=symbol)]
         topic = "public.aggre.bookTicker"
-        self._ws_subscribe(topic, callback, params, interval)
+        return self._ws_subscribe(topic, callback, params, interval)
 
     def book_ticker_batch_stream(
         self,
@@ -2540,7 +2540,7 @@ class WebSocket(_SpotWebSocket):
         """
         params = [dict(symbol=symbol) for symbol in symbols]
         topic = "public.bookTicker.batch"
-        self._ws_subscribe(topic, callback, params)
+        return self._ws_subscribe(topic, callback, params)
 
     def mini_tickers_stream(
         self,
@@ -2562,7 +2562,7 @@ class WebSocket(_SpotWebSocket):
         """
         params = [dict(timezone=timezone)]
         topic = "public.miniTickers"
-        self._ws_subscribe(topic, callback, params)
+        return self._ws_subscribe(topic, callback, params)
 
     def mini_ticker_stream(
         self,
@@ -2587,7 +2587,7 @@ class WebSocket(_SpotWebSocket):
         """
         params = [dict(symbol=symbol, timezone=timezone)]
         topic = "public.miniTicker"
-        self._ws_subscribe(topic, callback, params)
+        return self._ws_subscribe(topic, callback, params)
 
     # <=================================================================>
     #
@@ -2609,7 +2609,7 @@ class WebSocket(_SpotWebSocket):
         """
         params = [{}]
         topic = "private.account"
-        self._ws_subscribe(topic, callback, params)
+        return self._ws_subscribe(topic, callback, params)
 
     def account_deals(self, callback: Callable[[dict | ProtoTyping.PrivateDealsV3Api], None]):
         """
@@ -2624,7 +2624,7 @@ class WebSocket(_SpotWebSocket):
         """
         params = [{}]
         topic = "private.deals"
-        self._ws_subscribe(topic, callback, params)
+        return self._ws_subscribe(topic, callback, params)
 
     def account_orders(self, callback: Callable[[dict | ProtoTyping.PrivateOrdersV3Api], None]):
         """
@@ -2639,4 +2639,4 @@ class WebSocket(_SpotWebSocket):
         """
         params = [{}]
         topic = "private.orders"
-        self._ws_subscribe(topic, callback, params)
+        return self._ws_subscribe(topic, callback, params)

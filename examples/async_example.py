@@ -38,12 +38,10 @@ async def main():
 
     # create websocket connection to public channel (spot@public.deals.v3.api@BTCUSDT)
     # all messages will be handled by function `handle_message`
-    await ws_spot_client.deals_stream(handle_message, "BTCUSDT")
+    topic = await ws_spot_client.deals_stream(handle_message, "BTCUSDT")
 
-    # Unsubscribe from deals topic
-    # await ws_spot_client.unsubscribe(ws_spot_client.deals_stream)
-    # OR
-    # await ws_spot_client.unsubscribe("deals")
+    # Unsubscribe from deals topic using the returned topic key
+    await ws_spot_client.unsubscribe(topic)
 
     # FUTURES
 
