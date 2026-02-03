@@ -80,12 +80,14 @@ class _AsyncWebSocketManager(_WebSocketManager):
             self.ping_timer.cancel()
             self.ping_timer = None
 
+        _ws = getattr(self, "ws", None)
+        _session = getattr(self, "session", None)
+
         async def _shutdown():
-            if getattr(self, "ws", None) and not self.ws.closed:
-                await self.ws.close()
-            session = getattr(self, "session", None)
-            if session and not session.closed:
-                await session.close()
+            if _ws and not _ws.closed:
+                await _ws.close()
+            if _session and not _session.closed:
+                await _session.close()
 
         try:
             running_loop = None
@@ -123,7 +125,8 @@ class _AsyncWebSocketManager(_WebSocketManager):
                     break
         finally:
             await self._on_close()
-            await self.session.close()
+            if self.session is not None and not self.session.closed:
+                await self.session.close()
 
     async def _on_message(self, message: str | bytes):
         """
