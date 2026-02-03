@@ -177,11 +177,7 @@ class _WebSocketManager:
 
         return base_topic
 
-    # Valid kline interval values
-    KLINE_INTERVALS = frozenset({
-        "Min1", "Min5", "Min15", "Min30", "Min60",
-        "Hour4", "Hour8", "Day1", "Week1", "Month1"
-    })
+
 
     def _build_topic_key(self, raw_topic: str, params: dict | list | str, interval: str = None):
         """
@@ -190,6 +186,12 @@ class _WebSocketManager:
         For kline (with interval): topic@symbol@interval (e.g. spot@public.kline.v3.api.pb@ETHUSDT@Min1)
         For other topics: topic@interval@param1@param2@... (interval first if present)
         """
+
+        # Valid kline interval values
+        KLINE_INTERVALS = frozenset({
+            "Min1", "Min5", "Min15", "Min30", "Min60",
+            "Hour4", "Hour8", "Day1", "Week1", "Month1"
+        })
 
         if self.is_spot:
             raw_topic = "spot@" + raw_topic + ".v3.api" + (".pb" if self.proto else "")
@@ -202,7 +204,7 @@ class _WebSocketManager:
         # Check if interval is inside params dict (for kline_stream)
         if isinstance(params, dict) and "interval" in params:
             interval_value = str(params.get("interval", ""))
-            if interval_value in self.KLINE_INTERVALS:
+            if interval_value in KLINE_INTERVALS:
                 detected_interval = interval_value
                 # Add other params first (excluding interval)
                 for key in sorted(params.keys()):
