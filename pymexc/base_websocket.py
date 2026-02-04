@@ -177,13 +177,21 @@ class _WebSocketManager:
 
         return base_topic
 
+
+
     def _build_topic_key(self, raw_topic: str, params: dict | list | str, interval: str = None):
         """
         Build unique topic key for callback_directory.
         Format: topic@param1@param2@...
-        For kline: public.kline@symbol@interval
-        For other topics: topic@param1@param2@...
+        For kline (with interval): topic@symbol@interval (e.g. spot@public.kline.v3.api.pb@ETHUSDT@Min1)
+        For other topics: topic@interval@param1@param2@... (interval first if present)
         """
+
+        # Valid kline interval values
+        KLINE_INTERVALS = frozenset({
+            "Min1", "Min5", "Min15", "Min30", "Min60",
+            "Hour4", "Hour8", "Day1", "Week1", "Month1"
+        })
 
         if self.is_spot:
             raw_topic = "spot@" + raw_topic + ".v3.api" + (".pb" if self.proto else "")
@@ -191,20 +199,50 @@ class _WebSocketManager:
 
         # Extract all parameter values
         param_values = []
+        detected_interval = interval  # interval passed as separate argument
+        
+        # Check if interval is inside params dict (for kline_stream)
+        if isinstance(params, dict) and "interval" in params:
+            interval_value = str(params.get("interval", ""))
+            if interval_value in KLINE_INTERVALS:
+                detected_interval = interval_value
+                # Add other params first (excluding interval)
+                for key in sorted(params.keys()):
+                    if key != "interval":
+                        param_values.append(str(params[key]))
+                # Add interval at the end
+                param_values.append(detected_interval)
+                if param_values:
+                    return f"{raw_topic}@{'@'.join(param_values)}"
+                return raw_topic
 
-        # Add interval first if present (for consistency with subscription format)
-        if interval:
-            param_values.append(str(interval))
+        # Check if this is a kline subscription (has valid interval passed separately)
+        is_kline = detected_interval and str(detected_interval) in self.KLINE_INTERVALS
 
-        # Add other params (sorted for consistency)
-        if isinstance(params, dict):
-            # Sort keys for consistent ordering
-            sorted_params = sorted(params.items())
-            param_values.extend([str(v) for k, v in sorted_params])
-        elif isinstance(params, list):
-            param_values.extend([str(p) for p in params])
-        elif isinstance(params, str):
-            param_values.append(params)
+        if is_kline:
+            # For kline subscriptions: params first, then interval at the end
+            # Result: spot@public.kline.v3.api.pb@ETHUSDT@Min1
+            if isinstance(params, dict):
+                sorted_params = sorted(params.items())
+                param_values.extend([str(v) for k, v in sorted_params])
+            elif isinstance(params, list):
+                param_values.extend([str(p) for p in params])
+            elif isinstance(params, str):
+                param_values.append(params)
+            # Add interval at the end for kline
+            param_values.append(str(detected_interval))
+        else:
+            # For other topics: interval first (if present), then other params
+            if detected_interval:
+                param_values.append(str(detected_interval))
+
+            if isinstance(params, dict):
+                sorted_params = sorted(params.items())
+                param_values.extend([str(v) for k, v in sorted_params])
+            elif isinstance(params, list):
+                param_values.extend([str(p) for p in params])
+            elif isinstance(params, str):
+                param_values.append(params)
 
         if param_values:
             return f"{raw_topic}@{'@'.join(param_values)}"
