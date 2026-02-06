@@ -111,6 +111,33 @@ class _AsyncWebSocketManager(_WebSocketManager):
                 self.session = None
             self.exited = True
 
+    async def __aenter__(self):
+        """Async context manager entry - ensures connection is established."""
+        if not self.is_connected() and hasattr(self, 'endpoint'):
+            await self._connect(self.endpoint)
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Async context manager exit - ensures proper cleanup."""
+        if hasattr(self, 'unsubscribe_all'):
+            try:
+                await self.unsubscribe_all()
+            except Exception:
+                pass
+
+        if self.ws and not self.ws.closed:
+            await self.ws.close()
+
+        if hasattr(self, 'session') and self.session:
+            await self.session.close()
+
+        self.connected = False
+        return False
+
+    async def close_all(self):
+        """Close all connections and cleanup resources."""
+        await self.__aexit__(None, None, None)
+
     async def _on_open(self):
         self.connected = True
         super()._on_open()
@@ -291,6 +318,17 @@ class _FuturesWebSocketManager(_AsyncWebSocketManager):
 
             return await self.unsubscribe(topic_name)
 
+    async def unsubscribe_all(self) -> None:
+        """Unsubscribe from all active subscriptions."""
+        topics = list(self.subscriptions.keys())
+        for topic in topics:
+            # Extract method name (remove "sub." prefix if present)
+            method = topic[4:] if topic.startswith("sub.") else topic
+            try:
+                await self.unsubscribe(method)
+            except Exception:
+                logger.debug(f"Failed to unsubscribe from {method}")
+
     async def _process_auth_message(self, message: dict):
         # If we get successful futures auth, notify user
         if message.get("data") == "success":
@@ -448,6 +486,15 @@ class _SpotWebSocketManager(_AsyncWebSocketManager):
             # ]
             # eturn self.unsubscribe(*topics)
             raise ValueError(f"Invalid topics, only `str` is allowed, got {[type(t) for t in topics]}: {topics}")
+
+    async def unsubscribe_all(self) -> None:
+        """Unsubscribe from all active subscriptions."""
+        topics = list(self.subscriptions.keys())
+        if topics:
+            try:
+                await self.unsubscribe(*topics)
+            except Exception:
+                logger.debug(f"Failed to unsubscribe from topics: {topics}")
 
     async def _handle_incoming_message(self, message):
         logger.debug(f"_handle_incoming_message: {message}")
