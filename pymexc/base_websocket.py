@@ -134,7 +134,7 @@ class _WebSocketManager:
     def _base_topic(self, topic):
         """
         Extract base topic name without parameters from channel string.
-        For spot channels: spot@public.kline.v3.api.pb@Min1@BTCUSDT -> public.kline
+        For spot channels: spot@public.kline.v3.api.pb@BTCUSDT@Min1 -> public.kline
         """
         cleaned = (
             topic.replace("sub.", "")
@@ -148,8 +148,8 @@ class _WebSocketManager:
     def _topic(self, topic):
         """
         Extract topic name with parameters from channel string.
-        For spot channels with params: spot@public.kline.v3.api.pb@Min1@BTCUSDT
-        Returns: public.kline@Min1@BTCUSDT (with params) or just public.kline (without params)
+        For spot channels with params: spot@public.kline.v3.api.pb@BTCUSDT@Min1
+        Returns: public.kline@BTCUSDT@Min1 (with params) or just public.kline (without params)
         """
         # Remove prefixes
         cleaned = (
@@ -177,8 +177,6 @@ class _WebSocketManager:
 
         return base_topic
 
-
-
     def _build_topic_key(self, raw_topic: str, params: dict | list | str, interval: str = None):
         """
         Build unique topic key for callback_directory.
@@ -188,10 +186,9 @@ class _WebSocketManager:
         """
 
         # Valid kline interval values
-        KLINE_INTERVALS = frozenset({
-            "Min1", "Min5", "Min15", "Min30", "Min60",
-            "Hour4", "Hour8", "Day1", "Week1", "Month1"
-        })
+        KLINE_INTERVALS = frozenset(
+            {"Min1", "Min5", "Min15", "Min30", "Min60", "Hour4", "Hour8", "Day1", "Week1", "Month1"}
+        )
 
         if self.is_spot:
             raw_topic = "spot@" + raw_topic + ".v3.api" + (".pb" if self.proto else "")
@@ -200,7 +197,7 @@ class _WebSocketManager:
         # Extract all parameter values
         param_values = []
         detected_interval = interval  # interval passed as separate argument
-        
+
         # Check if interval is inside params dict (for kline_stream)
         if isinstance(params, dict) and "interval" in params:
             interval_value = str(params.get("interval", ""))
@@ -217,7 +214,7 @@ class _WebSocketManager:
                 return raw_topic
 
         # Check if this is a kline subscription (has valid interval passed separately)
-        is_kline = detected_interval and str(detected_interval) in self.KLINE_INTERVALS
+        is_kline = detected_interval and str(detected_interval) in KLINE_INTERVALS
 
         if is_kline:
             # For kline subscriptions: params first, then interval at the end
