@@ -9,10 +9,6 @@
 
 Base of code was taken from [pybit](https://github.com/bybit-exchange/pybit) library.
 
-# Futures orders API
-
-MEXC Futures API for create orders is on maintance now. **_But you can bypass it_**. See [this issue](https://github.com/makarworld/pymexc/issues/15) for more information.
-
 ## New: Futures Trading via Web API (bypass)
 
 Futures trading via web API is now available in this repository.
