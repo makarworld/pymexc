@@ -1,5 +1,5 @@
 import logging
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -358,4 +358,206 @@ class HTTP(_WebHTTP):
     def tiered_fee_rate(self, symbol: Optional[str] = None) -> dict:
         return self.call(
             "GET", "api/v1/private/account/tiered_fee_rate", params=dict(symbol=symbol)
+        )
+
+    def change_margin(self, position_id: int, amount: int, type: str) -> dict:
+        return self.call(
+            "POST",
+            "api/v1/private/position/change_margin",
+            json=dict(positionId=position_id, amount=amount, type=type),
+        )
+
+    def get_leverage(self, symbol: str) -> dict:
+        return self.call("GET", "api/v1/private/position/leverage", params=dict(symbol=symbol))
+
+    def change_leverage(
+        self,
+        position_id: int,
+        leverage: int,
+        open_type: Optional[int] = None,
+        symbol: Optional[str] = None,
+        position_type: Optional[int] = None,
+    ) -> dict:
+        return self.call(
+            "POST",
+            "api/v1/private/position/change_leverage",
+            json=dict(
+                positionId=position_id,
+                leverage=leverage,
+                openType=open_type,
+                symbol=symbol,
+                positionType=position_type,
+            ),
+        )
+
+    def get_position_mode(self) -> dict:
+        return self.call("GET", "api/v1/private/position/position_mode")
+
+    def change_position_mode(self, position_mode: int) -> dict:
+        return self.call(
+            "POST",
+            "api/v1/private/position/change_position_mode",
+            json=dict(positionMode=position_mode),
+        )
+
+    def order(
+        self,
+        symbol: str,
+        price: float,
+        vol: float,
+        side: int,
+        type: int,
+        open_type: int,
+        position_id: Optional[int] = None,
+        leverage: Optional[int] = None,
+        external_oid: Optional[str] = None,
+        stop_loss_price: Optional[float] = None,
+        take_profit_price: Optional[float] = None,
+        position_mode: Optional[int] = None,
+        reduce_only: Optional[bool] = False,
+    ) -> dict:
+        return self.call(
+            "POST",
+            "api/v1/private/order/create",
+            json=dict(
+                symbol=symbol,
+                price=price,
+                vol=vol,
+                side=side,
+                type=type,
+                openType=open_type,
+                positionId=position_id,
+                leverage=leverage,
+                externalOid=external_oid,
+                stopLossPrice=stop_loss_price,
+                takeProfitPrice=take_profit_price,
+                positionMode=position_mode,
+                reduceOnly=reduce_only,
+            ),
+        )
+
+    def bulk_order(
+        self,
+        symbol: str,
+        price: float,
+        vol: float,
+        side: int,
+        type: int,
+        open_type: int,
+        position_id: Optional[int] = None,
+        external_oid: Optional[str] = None,
+        stop_loss_price: Optional[float] = None,
+        take_profit_price: Optional[float] = None,
+    ) -> dict:
+        return self.call(
+            "POST",
+            "api/v1/private/order/submit_batch",
+            json=dict(
+                symbol=symbol,
+                price=price,
+                vol=vol,
+                side=side,
+                type=type,
+                openType=open_type,
+                positionId=position_id,
+                externalOid=external_oid,
+                stopLossPrice=stop_loss_price,
+                takeProfitPrice=take_profit_price,
+            ),
+        )
+
+    def cancel_order(self, order_ids: Union[List[int], int]) -> dict:
+        return self.call("POST", "api/v1/private/order/cancel", json=order_ids if isinstance(order_ids, list) else [order_ids])
+
+    def cancel_order_with_external(self, symbol: str, external_oid: str) -> dict:
+        return self.call(
+            "POST",
+            "api/v1/private/order/cancel_with_external",
+            json=dict(symbol=symbol, externalOid=external_oid),
+        )
+
+    def cancel_all(self, symbol: Optional[str] = None) -> dict:
+        return self.call("POST", "api/v1/private/order/cancel_all", json=dict(symbol=symbol))
+
+    def change_risk_level(self) -> dict:
+        return self.call("POST", "api/v1/private/account/change_risk_level")
+
+    def trigger_order(
+        self,
+        symbol: str,
+        vol: float,
+        side: int,
+        open_type: int,
+        trigger_price: float,
+        trigger_type: int,
+        execute_cycle: int,
+        order_type: int,
+        trend: int,
+        price: Optional[float] = None,
+        leverage: Optional[int] = None,
+    ) -> dict:
+        return self.call(
+            "POST",
+            "api/v1/private/planorder/place",
+            json=dict(
+                symbol=symbol,
+                price=price,
+                vol=vol,
+                leverage=leverage,
+                side=side,
+                openType=open_type,
+                triggerPrice=trigger_price,
+                triggerType=trigger_type,
+                executeCycle=execute_cycle,
+                orderType=order_type,
+                trend=trend,
+            ),
+        )
+
+    def cancel_trigger_order(self, order_id: int) -> dict:
+        return self.call("POST", "api/v1/private/planorder/cancel", json=dict(order_id=order_id))
+
+    def cancel_all_trigger_orders(self, symbol: Optional[str] = None) -> dict:
+        return self.call("POST", "api/v1/private/planorder/cancel_all", json=dict(symbol=symbol))
+
+    def cancel_stop_order(self, order_id: int) -> dict:
+        return self.call("POST", "api/v1/private/stoporder/cancel", json=dict(order_id=order_id))
+
+    def cancel_all_stop_order(self, position_id: Optional[int] = None, symbol: Optional[str] = None) -> dict:
+        return self.call(
+            "POST",
+            "api/v1/private/stoporder/cancel_all",
+            json=dict(positionId=position_id, symbol=symbol),
+        )
+
+    def stop_limit_change_price(
+        self,
+        order_id: int,
+        stop_loss_price: Optional[float] = None,
+        take_profit_price: Optional[float] = None,
+    ) -> dict:
+        return self.call(
+            "POST",
+            "api/v1/private/stoporder/change_price",
+            json=dict(
+                orderId=order_id,
+                stopLossPrice=stop_loss_price,
+                takeProfitPrice=take_profit_price,
+            ),
+        )
+
+    def stop_limit_change_plan_price(
+        self,
+        stop_plan_order_id: int,
+        stop_loss_price: Optional[float] = None,
+        take_profit_price: Optional[float] = None,
+    ) -> dict:
+        return self.call(
+            "POST",
+            "api/v1/private/stoporder/change_plan_price",
+            json=dict(
+                stopPlanOrderId=stop_plan_order_id,
+                stopLossPrice=stop_loss_price,
+                takeProfitPrice=take_profit_price,
+            ),
         )

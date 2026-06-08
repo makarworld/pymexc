@@ -13,6 +13,39 @@ Base of code was taken from [pybit](https://github.com/bybit-exchange/pybit) lib
 
 MEXC Futures API for create orders is on maintance now. **_But you can bypass it_**. See [this issue](https://github.com/makarworld/pymexc/issues/15) for more information.
 
+## New: Futures Trading via Web API (bypass)
+
+Futures trading via web API is now available in this repository.
+
+- How to get u_id - https://telegra.ph/pymexc-bypass--Get-U-ID-02-19
+
+### Create order example
+
+```python
+from pymexc.web import futures
+
+client = futures.HTTP(u_id="")
+
+contract = "ETH_USDT"
+price = client.index_price(symbol=contract)["data"]["indexPrice"]
+
+order = client.order(
+    symbol=contract,  # symbol
+    side=1,  # side 1 - OPEN LONG | 3 - OPEN SHORT
+    type=5,  # market
+    open_type=1,  # isolated
+    vol=200,  # 200 USDT volume
+    price=price,  # index price
+    leverage=4,  # 4x leverage
+)
+```
+
+Total margin formula:
+
+```python
+margin = (vol / price) / contractSize * leverage
+```
+
 # Installation
 
 You can install pymexc using pip:
