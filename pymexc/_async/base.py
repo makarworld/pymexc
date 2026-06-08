@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+import json
 import logging
 import time
 from abc import ABC
@@ -12,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 SPOT = "https://api.mexc.com"
 FUTURES = "https://contract.mexc.com"
+WEB = "https://futures.mexc.com"
 
 
 class MexcAPIError(Exception):
@@ -226,4 +228,57 @@ class _FuturesHTTP(MexcSDK):
 
         response = await self.session.request(method, f"{self.base_url}{router}", *args, **kwargs)
 
+        return response.json()
+
+
+class _WebHTTP(MexcSDK):
+    def __init__(
+        self,
+        u_id: str = None,
+        proxies: dict = None,
+    ):
+        super().__init__(u_id, None, WEB, proxies=proxies)
+        self.u_id = u_id
+        headers = {"content-Type": "application/json"}
+        if self.u_id:
+            headers["authorization"] = self.u_id
+        self.session.headers.update(headers)
+
+    def sign(self, timestamp: str, **kwargs) -> str:
+        def md5(value: str):
+            return hashlib.md5(value.encode("utf-8")).hexdigest()
+
+        g = md5(self.u_id + timestamp)[7:]
+        s = json.dumps(kwargs, separators=(",", ":"))
+        signature = md5(timestamp + s + g)
+        return signature
+
+    async def call(
+        self,
+        method: Union[Literal["GET"], Literal["POST"], Literal["PUT"], Literal["DELETE"]],
+        router: str,
+        *args,
+        **kwargs,
+    ) -> dict:
+        if not router.startswith("/"):
+            router = f"/{router}"
+
+        kwargs = {k: v for k, v in kwargs.items() if v is not None}
+
+        if "json" in kwargs and "params" in kwargs:
+            raise ValueError("Only one of 'json' or 'params' can be specified.")
+
+        for variant in ("params", "json"):
+            if kwarg_variant := kwargs.get(variant):
+                if isinstance(kwarg_variant, dict):
+                    kwargs[variant] = {k: v for k, v in kwarg_variant.items() if v is not None}
+                elif isinstance(kwarg_variant, list):
+                    kwargs[variant] = [v for v in kwarg_variant if v is not None]
+
+        if self.u_id:
+            timestamp = str(int(time.time() * 1000))
+            payload = kwargs.get("json") or kwargs.get("params") or {}
+            kwargs["headers"] = {"x-mxc-nonce": timestamp, "x-mxc-sign": self.sign(timestamp, **payload)}
+
+        response = await self.session.request(method, f"{self.base_url}{router}", *args, **kwargs)
         return response.json()
